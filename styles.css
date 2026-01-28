@@ -159,12 +159,11 @@ body {
         justify-content: center;
     }
     
-    /* Stack cards system */
+    /* Stack cards system with corners visible */
     .work-item {
         position: absolute !important;
         top: 50% !important;
         left: 50% !important;
-        transform: translate(-50%, -50%) !important;
         width: 85vw;
         max-width: 400px;
         transition: transform 0.3s ease, opacity 0.3s ease;
@@ -283,4 +282,4 @@ body {
         z-index: 10;
         pointer-events: none;
     }
-}
+}   

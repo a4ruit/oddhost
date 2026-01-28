@@ -195,13 +195,34 @@ function updateCardStack() {
         const offset = index - currentCardIndex;
         const element = item.element;
         
-        if (Math.abs(offset) > 2) {
+        // Show cards in stack (current + 2 behind)
+        if (offset < 0 || offset > 2) {
             element.style.display = 'none';
         } else {
             element.style.display = 'block';
-            element.style.transform = `translate(-50%, -50%) translateX(${offset * 100}%) scale(${1 - Math.abs(offset) * 0.1})`;
-            element.style.opacity = offset === 0 ? '1' : '0.5';
-            element.style.zIndex = 100 - Math.abs(offset);
+            
+            // Stack effect: cards behind are slightly offset and scaled down
+            const stackOffset = offset * 8; // pixels to offset each card
+            const stackRotation = offset * -2; // slight rotation
+            const scale = 1 - (offset * 0.03); // subtle scale reduction
+            
+            if (offset === 0) {
+                // Current card - front and center
+                element.style.transform = `translate(-50%, -50%) scale(1)`;
+                element.style.opacity = '1';
+                element.style.zIndex = 100;
+            } else {
+                // Cards behind - offset to show corners
+                element.style.transform = `
+                    translate(-50%, -50%) 
+                    translateX(${stackOffset}px) 
+                    translateY(${stackOffset}px) 
+                    rotate(${stackRotation}deg)
+                    scale(${scale})
+                `;
+                element.style.opacity = '0.8';
+                element.style.zIndex = 100 - offset;
+            }
         }
     });
 }

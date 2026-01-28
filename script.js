@@ -17,6 +17,9 @@ let gravityY = 0;
 const gravityStrength = isMobile ? 0.5 : 0.3; // Stronger on mobile
 let gyroActive = false;
 
+// Boundary padding - allows items to float partially off-screen
+const boundaryPadding = isMobile ? 100 : 0; // 100px buffer on mobile
+
 // Info box physics properties
 let infoBoxX = window.innerWidth - 320;
 let infoBoxY = window.innerHeight / 2 - 200;
@@ -382,20 +385,22 @@ function animate() {
             item.posX += item.velX;
             item.posY += item.velY;
             
-            // Boundary collision
-            const maxX = window.innerWidth - item.element.offsetWidth;
-            const maxY = window.innerHeight - item.element.offsetHeight;
+            // Boundary collision with padding
+            const minX = -boundaryPadding;
+            const minY = -boundaryPadding;
+            const maxX = window.innerWidth - item.element.offsetWidth + boundaryPadding;
+            const maxY = window.innerHeight - item.element.offsetHeight + boundaryPadding;
             
-            if (item.posX < 0) {
-                item.posX = 0;
+            if (item.posX < minX) {
+                item.posX = minX;
                 item.velX *= -0.5;
             }
             if (item.posX > maxX) {
                 item.posX = maxX;
                 item.velX *= -0.5;
             }
-            if (item.posY < 0) {
-                item.posY = 0;
+            if (item.posY < minY) {
+                item.posY = minY;
                 item.velY *= -0.5;
             }
             if (item.posY > maxY) {

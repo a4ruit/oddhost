@@ -181,8 +181,8 @@ if (isMobile) {
     toggleButton.style.position = 'fixed';
     toggleButton.style.bottom = '30px';
     toggleButton.style.right = '30px';
-    toggleButton.style.width = '50px';
-    toggleButton.style.height = '50px';
+    toggleButton.style.width = '30px';
+    toggleButton.style.height = '30px';
     toggleButton.style.backgroundColor = '#ffffff';
     toggleButton.style.border = '1px solid #000000';
     toggleButton.style.cursor = 'pointer';

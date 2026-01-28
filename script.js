@@ -1,19 +1,30 @@
 const workItems = document.querySelectorAll('.work-item');
-const repelStrength = 0.2;
-const repelDistance = 200;
-const friction = 0.98;
+
+// Detect mobile
+const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+// Physics properties - adjusted for mobile
+const repelStrength = isMobile ? 0.1 : 0.2;
+const repelDistance = isMobile ? 150 : 200;
+const friction = isMobile ? 0.95 : 0.98;
 const collisionPadding = 20;
 let physicsActive = false;
 let activeItem = null;
 
+// Gyroscope/gravity properties
+let gravityX = 0;
+let gravityY = 0;
+const gravityStrength = 0.3;
+let gyroActive = false;
+
 // Info box physics properties
-let infoBoxX = window.innerWidth - 320; // Start at right side
-let infoBoxY = window.innerHeight / 2 - 200; // Centered vertically
+let infoBoxX = window.innerWidth - 320;
+let infoBoxY = window.innerHeight / 2 - 200;
 let infoBoxVelX = 0;
 let infoBoxVelY = 0;
 const infoBoxPullStrength = 0.05;
 const infoBoxFriction = 0.12;
-const connectionDistance = 300; // Desired distance from project to info box
+const connectionDistance = isMobile ? 200 : 300;
 
 // Create canvas for connection line
 const lineCanvas = document.createElement('canvas');
@@ -101,8 +112,13 @@ items.forEach(item => {
     item.element.style.top = item.posY + 'px';
     item.element.style.transition = 'none';
     
-    // Add click event
-    item.element.addEventListener('click', (e) => {
+    // Scale down on mobile
+    if (isMobile) {
+        item.element.style.transform = 'scale(0.85)';
+    }
+    
+    // Handle both click and touch
+    const openProject = (e) => {
         e.preventDefault();
         const img = item.element.querySelector('img');
         const imgSrc = img.getAttribute('src').split('/').pop();
@@ -117,15 +133,100 @@ items.forEach(item => {
                 <p>${info.description}</p>
             `;
             infoBox.classList.add('active');
+            
+            // Position info box on mobile
+            if (isMobile) {
+                const itemRect = item.element.getBoundingClientRect();
+                infoBoxX = Math.min(itemRect.right + 20, window.innerWidth - 320);
+                infoBoxY = itemRect.top;
+            }
         }
-    });
+    };
+    
+    item.element.addEventListener('click', openProject);
+    item.element.addEventListener('touchstart', openProject);
 });
 
 // Close button functionality
-document.getElementById('closeBtn').addEventListener('click', () => {
+const closeBtn = document.getElementById('closeBtn');
+closeBtn.addEventListener('click', closeInfoBox);
+closeBtn.addEventListener('touchstart', closeInfoBox);
+
+function closeInfoBox(e) {
+    e.preventDefault();
     document.getElementById('projectInfoBox').classList.remove('active');
     activeItem = null;
-});
+}
+
+// Gyroscope permission and handling
+async function requestGyroPermission() {
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        try {
+            const permission = await DeviceMotionEvent.requestPermission();
+            if (permission === 'granted') {
+                startGyroscope();
+            } else {
+                console.log('Gyroscope permission denied');
+            }
+        } catch (error) {
+            console.error('Error requesting gyroscope permission:', error);
+        }
+    } else {
+        // Android or older iOS - no permission needed
+        startGyroscope();
+    }
+}
+
+function startGyroscope() {
+    window.addEventListener('deviceorientation', handleOrientation);
+    gyroActive = true;
+    physicsActive = true;
+}
+
+function handleOrientation(event) {
+    if (!event.beta || !event.gamma) return;
+    
+    // beta: front-to-back tilt (-180 to 180, 0 is flat)
+    // gamma: left-to-right tilt (-90 to 90, 0 is flat)
+    
+    let beta = event.beta;
+    let gamma = event.gamma;
+    
+    // Clamp values
+    beta = Math.max(-90, Math.min(90, beta));
+    gamma = Math.max(-90, Math.min(90, gamma));
+    
+    // Convert tilt angles to gravity force
+    gravityX = (gamma / 90) * gravityStrength;
+    gravityY = (beta / 90) * gravityStrength;
+}
+
+// Add permission button for iOS
+if (isMobile && typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    const permissionBtn = document.createElement('button');
+    permissionBtn.id = 'gyroPermissionBtn';
+    permissionBtn.textContent = 'Enable Tilt Control';
+    permissionBtn.style.position = 'fixed';
+    permissionBtn.style.bottom = '20px';
+    permissionBtn.style.left = '50%';
+    permissionBtn.style.transform = 'translateX(-50%)';
+    permissionBtn.style.padding = '12px 24px';
+    permissionBtn.style.background = '#ffffff';
+    permissionBtn.style.border = '1px solid #000';
+    permissionBtn.style.cursor = 'pointer';
+    permissionBtn.style.zIndex = '1000';
+    permissionBtn.style.fontFamily = 'inherit';
+    
+    permissionBtn.addEventListener('click', async () => {
+        await requestGyroPermission();
+        permissionBtn.remove();
+    });
+    
+    document.body.appendChild(permissionBtn);
+} else if (isMobile) {
+    // Auto-start on Android
+    startGyroscope();
+}
 
 function updateInfoBoxPosition() {
     if (!activeItem) return;
@@ -205,13 +306,13 @@ function drawConnectionLine() {
     const startX = itemRect.left + itemRect.width / 2;
     const startY = itemRect.top + itemRect.height / 2;
     
-    // End point: left edge of info box, vertically centered
+    // End point: nearest edge of info box
     const endX = infoRect.left;
     const endY = infoRect.top + infoRect.height / 2;
     
     // Draw line
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = isMobile ? 0.5 : 1;
     ctx.beginPath();
     ctx.moveTo(startX, startY);
     ctx.lineTo(endX, endY);
@@ -220,7 +321,7 @@ function drawConnectionLine() {
     // Draw dot at project window end
     ctx.fillStyle = '#ffffff';
     ctx.beginPath();
-    ctx.arc(startX, startY, 4, 0, Math.PI * 2);
+    ctx.arc(startX, startY, isMobile ? 3 : 4, 0, Math.PI * 2);
     ctx.fill();
 }
 
@@ -261,63 +362,75 @@ function checkCollisions() {
 }
 
 function animate() {
-    if (!physicsActive) {
-        updateInfoBoxPosition();
-        drawConnectionLine();
-        requestAnimationFrame(animate);
-        return;
+    if (physicsActive) {
+        items.forEach(item => {
+            // Apply gyroscope gravity if active
+            if (gyroActive) {
+                item.velX += gravityX;
+                item.velY += gravityY;
+            }
+            
+            // Apply friction
+            item.velX *= friction;
+            item.velY *= friction;
+            
+            // Update position
+            item.posX += item.velX;
+            item.posY += item.velY;
+            
+            // Boundary collision
+            const maxX = window.innerWidth - item.element.offsetWidth;
+            const maxY = window.innerHeight - item.element.offsetHeight;
+            
+            if (item.posX < 0) {
+                item.posX = 0;
+                item.velX *= -0.5;
+            }
+            if (item.posX > maxX) {
+                item.posX = maxX;
+                item.velX *= -0.5;
+            }
+            if (item.posY < 0) {
+                item.posY = 0;
+                item.velY *= -0.5;
+            }
+            if (item.posY > maxY) {
+                item.posY = maxY;
+                item.velY *= -0.5;
+            }
+            
+            // Apply to DOM
+            item.element.style.left = item.posX + 'px';
+            item.element.style.top = item.posY + 'px';
+        });
+        
+        checkCollisions();
     }
     
-    items.forEach(item => {
-        item.velX *= friction;
-        item.velY *= friction;
-        
-        item.posX += item.velX;
-        item.posY += item.velY;
-        
-        const maxX = window.innerWidth - item.element.offsetWidth;
-        const maxY = window.innerHeight - item.element.offsetHeight;
-        
-        if (item.posX < 0) {
-            item.posX = 0;
-            item.velX *= -0.5;
-        }
-        if (item.posX > maxX) {
-            item.posX = maxX;
-            item.velX *= -0.5;
-        }
-        if (item.posY < 0) {
-            item.posY = 0;
-            item.velY *= -0.5;
-        }
-        if (item.posY > maxY) {
-            item.posY = maxY;
-            item.velY *= -0.5;
-        }
-        
-        item.element.style.left = item.posX + 'px';
-        item.element.style.top = item.posY + 'px';
-    });
-    
-    checkCollisions();
     updateInfoBoxPosition();
     drawConnectionLine();
     
     requestAnimationFrame(animate);
 }
 
-document.addEventListener('mousemove', (e) => {
+// Mouse/touch movement repel
+function handlePointerMove(e) {
     if (!physicsActive) {
         physicsActive = true;
     }
+    
+    const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+    const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+    
+    if (!clientX || !clientY) return;
     
     items.forEach(item => {
         const rect = item.element.getBoundingClientRect();
         const itemCenterX = rect.left + rect.width / 2;
         const itemCenterY = rect.top + rect.height / 2;
         
-        const distanceX = e.clientX - itemCenterX;
-        const distanceY = e.clientY - itemCenterY;
+        const distanceX = clientX - itemCenterX;
+        const distanceY = clientY - itemCenterY;
         const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
         
         if (distance < repelDistance) {
@@ -326,6 +439,17 @@ document.addEventListener('mousemove', (e) => {
             item.velY -= (distanceY / distance) * force * repelStrength;
         }
     });
-});
+}
+
+// Event listeners for both mouse and touch
+document.addEventListener('mousemove', handlePointerMove);
+document.addEventListener('touchmove', handlePointerMove, { passive: true });
+
+// Prevent page scroll on mobile when touching work items
+document.addEventListener('touchmove', (e) => {
+    if (e.target.closest('.work-item') || e.target.closest('#projectInfoBox')) {
+        e.preventDefault();
+    }
+}, { passive: false });
 
 animate();

@@ -181,10 +181,10 @@ if (isMobile) {
     toggleButton.style.position = 'fixed';
     toggleButton.style.bottom = '30px';
     toggleButton.style.right = '30px';
-    toggleButton.style.width = '30px';
-    toggleButton.style.height = '30px';
+    toggleButton.style.width = '50px';
+    toggleButton.style.height = '50px';
     toggleButton.style.backgroundColor = '#ffffff';
-    toggleButton.style.border = '1px solid #00000000';
+    toggleButton.style.border = '1px solid #000000';
     toggleButton.style.cursor = 'pointer';
     toggleButton.style.zIndex = '1001';
     toggleButton.style.transition = 'all 0.3s ease';
@@ -212,9 +212,15 @@ if (isMobile) {
         if (allCollapsed) {
             staticBoxes.forEach(box => box.classList.add('collapsed'));
             arrow.style.transform = 'rotate(0deg)'; // Pointing down-right when collapsed
+            // Show all borders when collapsed
+            toggleButton.style.borderTop = '1px solid #000000';
+            toggleButton.style.borderLeft = '1px solid #000000';
         } else {
             staticBoxes.forEach(box => box.classList.remove('collapsed'));
             arrow.style.transform = 'rotate(180deg)'; // Pointing up-left when expanded
+            // Hide top and left borders when expanded
+            toggleButton.style.borderTop = 'none';
+            toggleButton.style.borderLeft = 'none';
         }
     };
     

@@ -7,14 +7,14 @@ const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 const repelStrength = isMobile ? 0.1 : 0.2;
 const repelDistance = isMobile ? 150 : 200;
 const friction = isMobile ? 0.95 : 0.98;
-const collisionPadding = 20;
+const collisionPadding = isMobile ? 5 : 20; // Much smaller on mobile
 let physicsActive = false;
 let activeItem = null;
 
 // Gyroscope/gravity properties
 let gravityX = 0;
 let gravityY = 0;
-const gravityStrength = 0.3;
+const gravityStrength = isMobile ? 0.5 : 0.3; // Stronger on mobile
 let gyroActive = false;
 
 // Info box physics properties
@@ -114,7 +114,8 @@ items.forEach(item => {
     
     // Scale down on mobile
     if (isMobile) {
-        item.element.style.transform = 'scale(0.85)';
+        item.element.style.transform = 'scale(0.6)';
+        item.element.style.transformOrigin = 'center center';
     }
     
     // Handle both click and touch
@@ -342,7 +343,10 @@ function checkCollisions() {
             const dx = centerX2 - centerX1;
             const dy = centerY2 - centerY1;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            const minDistance = (rect1.width + rect2.width) / 2 + collisionPadding;
+            
+            // On mobile, use actual rendered size (accounting for scale)
+            const scale = isMobile ? 0.6 : 1;
+            const minDistance = ((rect1.width + rect2.width) / 2) * scale + collisionPadding;
             
             if (distance < minDistance) {
                 const angle = Math.atan2(dy, dx);

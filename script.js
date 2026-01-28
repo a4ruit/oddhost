@@ -15,6 +15,13 @@ const infoBoxPullStrength = 0.05;
 const infoBoxFriction = 0.12;
 const connectionDistance = 300; // Desired distance from project to info box
 
+// Mobile-specific variables
+let isMobile = window.innerWidth <= 768;
+let currentCardIndex = 0;
+let startX = 0;
+let currentX = 0;
+let isDragging = false;
+
 // Create canvas for connection line
 const lineCanvas = document.createElement('canvas');
 lineCanvas.style.position = 'fixed';
@@ -31,7 +38,19 @@ function resizeCanvas() {
     lineCanvas.height = window.innerHeight;
 }
 resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+window.addEventListener('resize', () => {
+    resizeCanvas();
+    isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+        setupMobile();
+    } else {
+        // Reset to desktop mode
+        items.forEach(item => {
+            item.element.style.display = 'block';
+            item.element.style.transform = 'none';
+        });
+    }
+});
 
 const layouts = [
     { x: 0.05, y: 0.08 }, //expo website
@@ -127,8 +146,109 @@ document.getElementById('closeBtn').addEventListener('click', () => {
     activeItem = null;
 });
 
+// Mobile setup function
+function setupMobile() {
+    if (!isMobile) return;
+    
+    // Start with all boxes collapsed
+    document.querySelector('.info-box')?.classList.add('collapsed');
+    document.querySelector('.exhibitions-box')?.classList.add('collapsed');
+    document.querySelector('.contact-box')?.classList.add('collapsed');
+    
+    // Add click handlers for collapsible boxes
+    const boxes = ['.info-box', '.exhibitions-box', '.contact-box'];
+    boxes.forEach(selector => {
+        const box = document.querySelector(selector);
+        if (box) {
+            const firstP = box.querySelector('p:first-child');
+            if (firstP) {
+                // Remove existing listeners
+                const newFirstP = firstP.cloneNode(true);
+                firstP.parentNode.replaceChild(newFirstP, firstP);
+                
+                newFirstP.addEventListener('click', () => {
+                    box.classList.toggle('collapsed');
+                });
+            }
+        }
+    });
+    
+    // Initialize card positions
+    updateCardStack();
+    
+    // Add touch handlers for swiping
+    const container = document.querySelector('.container');
+    
+    // Remove old listeners
+    const newContainer = container.cloneNode(true);
+    container.parentNode.replaceChild(newContainer, container);
+    
+    newContainer.addEventListener('touchstart', handleTouchStart, { passive: true });
+    newContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+    newContainer.addEventListener('touchend', handleTouchEnd);
+}
+
+function updateCardStack() {
+    if (!isMobile) return;
+    
+    items.forEach((item, index) => {
+        const offset = index - currentCardIndex;
+        const element = item.element;
+        
+        if (Math.abs(offset) > 2) {
+            element.style.display = 'none';
+        } else {
+            element.style.display = 'block';
+            element.style.transform = `translate(-50%, -50%) translateX(${offset * 100}%) scale(${1 - Math.abs(offset) * 0.1})`;
+            element.style.opacity = offset === 0 ? '1' : '0.5';
+            element.style.zIndex = 100 - Math.abs(offset);
+        }
+    });
+}
+
+function handleTouchStart(e) {
+    if (!isMobile) return;
+    startX = e.touches[0].clientX;
+    currentX = startX;
+    isDragging = true;
+}
+
+function handleTouchMove(e) {
+    if (!isMobile || !isDragging) return;
+    
+    currentX = e.touches[0].clientX;
+    const diff = currentX - startX;
+    
+    // Visual feedback while dragging
+    const currentCard = items[currentCardIndex].element;
+    const offset = 0;
+    currentCard.style.transform = `translate(-50%, -50%) translateX(${diff}px) scale(1)`;
+    
+    e.preventDefault();
+}
+
+function handleTouchEnd(e) {
+    if (!isMobile || !isDragging) return;
+    
+    const diff = currentX - startX;
+    const threshold = 50;
+    
+    if (diff > threshold && currentCardIndex > 0) {
+        // Swipe right - previous card
+        currentCardIndex--;
+    } else if (diff < -threshold && currentCardIndex < items.length - 1) {
+        // Swipe left - next card
+        currentCardIndex++;
+    }
+    
+    isDragging = false;
+    startX = 0;
+    currentX = 0;
+    updateCardStack();
+}
+
 function updateInfoBoxPosition() {
-    if (!activeItem) return;
+    if (!activeItem || isMobile) return;
     
     const infoBox = document.getElementById('projectInfoBox');
     if (!infoBox.classList.contains('active')) return;
@@ -193,7 +313,7 @@ function updateInfoBoxPosition() {
 function drawConnectionLine() {
     ctx.clearRect(0, 0, lineCanvas.width, lineCanvas.height);
     
-    if (!activeItem) return;
+    if (!activeItem || isMobile) return;
     
     const infoBox = document.getElementById('projectInfoBox');
     if (!infoBox.classList.contains('active')) return;
@@ -225,6 +345,8 @@ function drawConnectionLine() {
 }
 
 function checkCollisions() {
+    if (isMobile) return;
+    
     for (let i = 0; i < items.length; i++) {
         for (let j = i + 1; j < items.length; j++) {
             const item1 = items[i];
@@ -261,6 +383,12 @@ function checkCollisions() {
 }
 
 function animate() {
+    if (isMobile) {
+        // Mobile doesn't use physics animation
+        requestAnimationFrame(animate);
+        return;
+    }
+    
     if (!physicsActive) {
         updateInfoBoxPosition();
         drawConnectionLine();
@@ -307,6 +435,8 @@ function animate() {
 }
 
 document.addEventListener('mousemove', (e) => {
+    if (isMobile) return;
+    
     if (!physicsActive) {
         physicsActive = true;
     }
@@ -327,5 +457,10 @@ document.addEventListener('mousemove', (e) => {
         }
     });
 });
+
+// Initialize
+if (isMobile) {
+    setupMobile();
+}
 
 animate();

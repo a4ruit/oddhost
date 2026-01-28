@@ -158,8 +158,38 @@ closeBtn.addEventListener('touchstart', closeInfoBox);
 
 function closeInfoBox(e) {
     e.preventDefault();
+    e.stopPropagation();
     document.getElementById('projectInfoBox').classList.remove('active');
     activeItem = null;
+}
+
+// Mobile: Make static info boxes collapsible
+if (isMobile) {
+    const staticBoxes = [
+        document.querySelector('.info-box'),
+        document.querySelector('.exhibitions-box'),
+        document.querySelector('.contact-box')
+    ];
+    
+    staticBoxes.forEach(box => {
+        if (!box) return;
+        
+        let isCollapsed = false;
+        
+        const toggleCollapse = (e) => {
+            e.preventDefault();
+            isCollapsed = !isCollapsed;
+            
+            if (isCollapsed) {
+                box.classList.add('collapsed');
+            } else {
+                box.classList.remove('collapsed');
+            }
+        };
+        
+        box.addEventListener('click', toggleCollapse);
+        box.addEventListener('touchstart', toggleCollapse);
+    });
 }
 
 // Gyroscope permission and handling

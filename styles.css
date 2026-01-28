@@ -102,6 +102,7 @@ body {
     color: #000000;
     font-weight: bold;
 }
+
 .project-info-box {
     position: fixed;
     top: 30px;
@@ -117,9 +118,11 @@ body {
     display: none;
     z-index: 1000;
 }
+
 .project-info-box.active {
     display: block;
 }
+
 .close-btn {
     position: absolute;
     top: 5px;
@@ -132,154 +135,18 @@ body {
     padding: 0;
     line-height: 1;
 }
+
 .close-btn:hover {
     opacity: 0.6;
 }
+
 #projectContent h3 {
     margin: 0 0 10px 0;
     font-size: 13px;
     font-weight: bold;
 }
+
 #projectContent p {
     margin: 0 0 8px 0;
     color: #000000;
 }
-
-/* MOBILE STYLES */
-@media (max-width: 768px) {
-    body {
-        overflow-x: hidden;
-    }
-    
-    .container {
-        padding: 0;
-        height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    /* Stack cards system with corners visible */
-    .work-item {
-        position: absolute !important;
-        top: 50% !important;
-        left: 50% !important;
-        width: 85vw;
-        max-width: 400px;
-        transition: transform 0.3s ease, opacity 0.3s ease;
-    }
-    
-    .work-link {
-        width: 100%;
-        padding: 15px;
-        touch-action: pan-y;
-    }
-    
-    .work-link img {
-        width: 100%;
-        max-width: 100%;
-        max-height: 60vh;
-        height: auto;
-        object-fit: contain;
-    }
-    
-    /* Hide didactic labels on mobile */
-    .didactic {
-        display: none;
-    }
-    
-    /* Collapsible info boxes */
-    .info-box,
-    .exhibitions-box,
-    .contact-box {
-        position: fixed;
-        right: 10px;
-        left: 10px;
-        width: auto;
-        border: 1px solid #000000;
-        background-color: white;
-        font-size: 11px;
-        z-index: 999;
-        max-height: 150px;
-        overflow: hidden;
-        transition: max-height 0.3s ease;
-    }
-    
-    .info-box {
-        bottom: auto;
-        top: 10px;
-    }
-    
-    .exhibitions-box {
-        bottom: auto;
-        top: 60px;
-    }
-    
-    .contact-box {
-        bottom: 10px;
-        top: auto;
-    }
-    
-    /* Collapsed state */
-    .info-box.collapsed,
-    .exhibitions-box.collapsed,
-    .contact-box.collapsed {
-        max-height: 40px;
-    }
-    
-    .info-box.collapsed p:not(:first-child),
-    .exhibitions-box.collapsed p:not(:first-child),
-    .contact-box.collapsed p:not(:first-child) {
-        display: none;
-    }
-    
-    /* Add toggle indicators */
-    .info-box::after,
-    .exhibitions-box::after,
-    .contact-box::after {
-        content: '▼';
-        position: absolute;
-        right: 10px;
-        top: 10px;
-        font-size: 10px;
-        transition: transform 0.3s ease;
-    }
-    
-    .info-box.collapsed::after,
-    .exhibitions-box.collapsed::after,
-    .contact-box.collapsed::after {
-        transform: rotate(-90deg);
-    }
-    
-    /* Make first paragraph act as header */
-    .info-box p:first-child,
-    .exhibitions-box p:first-child,
-    .contact-box p:first-child {
-        cursor: pointer;
-        user-select: none;
-    }
-    
-    /* Project info box mobile */
-    .project-info-box {
-        position: fixed;
-        top: 10px;
-        right: 10px;
-        left: 10px;
-        width: auto;
-        max-height: 70vh;
-        z-index: 1001;
-    }
-    
-    /* Swipe indicator */
-    body::before {
-        content: '← Swipe →';
-        position: fixed;
-        bottom: 50px;
-        left: 50%;
-        transform: translateX(-50%);
-        color: rgba(255, 255, 255, 0.5);
-        font-size: 12px;
-        z-index: 10;
-        pointer-events: none;
-    }
-}   

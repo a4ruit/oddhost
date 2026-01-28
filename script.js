@@ -163,33 +163,61 @@ function closeInfoBox(e) {
     activeItem = null;
 }
 
-// Mobile: Make static info boxes collapsible
+// Mobile: Make static info boxes collapsible (unified - all collapse together)
 if (isMobile) {
     const staticBoxes = [
         document.querySelector('.info-box'),
         document.querySelector('.exhibitions-box'),
         document.querySelector('.contact-box')
-    ];
+    ].filter(box => box !== null);
     
-    staticBoxes.forEach(box => {
-        if (!box) return;
+    // Start collapsed on mobile
+    let allCollapsed = true;
+    staticBoxes.forEach(box => box.classList.add('collapsed'));
+    
+    // Create single unified toggle button
+    const toggleButton = document.createElement('div');
+    toggleButton.id = 'unifiedToggleBtn';
+    toggleButton.style.position = 'fixed';
+    toggleButton.style.bottom = '30px';
+    toggleButton.style.right = '30px';
+    toggleButton.style.width = '50px';
+    toggleButton.style.height = '50px';
+    toggleButton.style.backgroundColor = '#ffffff';
+    toggleButton.style.border = '1px solid #000000';
+    toggleButton.style.cursor = 'pointer';
+    toggleButton.style.zIndex = '1001';
+    toggleButton.style.display = 'flex';
+    toggleButton.style.alignItems = 'center';
+    toggleButton.style.justifyContent = 'center';
+    toggleButton.style.transition = 'all 0.3s ease';
+    
+    // Add white square icon
+    const icon = document.createElement('div');
+    icon.style.width = '20px';
+    icon.style.height = '20px';
+    icon.style.backgroundColor = '#000000';
+    toggleButton.appendChild(icon);
+    
+    document.body.appendChild(toggleButton);
+    
+    const toggleAllBoxes = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         
-        let isCollapsed = false;
+        allCollapsed = !allCollapsed;
         
-        const toggleCollapse = (e) => {
-            e.preventDefault();
-            isCollapsed = !isCollapsed;
-            
-            if (isCollapsed) {
-                box.classList.add('collapsed');
-            } else {
-                box.classList.remove('collapsed');
-            }
-        };
-        
-        box.addEventListener('click', toggleCollapse);
-        box.addEventListener('touchstart', toggleCollapse);
-    });
+        if (allCollapsed) {
+            staticBoxes.forEach(box => box.classList.add('collapsed'));
+            toggleButton.style.display = 'flex';
+        } else {
+            staticBoxes.forEach(box => box.classList.remove('collapsed'));
+            toggleButton.style.display = 'flex';
+        }
+    };
+    
+    toggleButton.addEventListener('click', toggleAllBoxes);
+    toggleButton.addEventListener('touchstart', toggleAllBoxes);
 }
 
 // Gyroscope permission and handling

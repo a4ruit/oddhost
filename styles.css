@@ -153,40 +153,11 @@ body {
 
 /* Mobile collapsed state for STATIC info boxes (education, exhibitions, contact) */
 @media (max-width: 768px) {
+    /* Hide boxes when collapsed - only show the unified button */
     .info-box.collapsed,
     .exhibitions-box.collapsed,
     .contact-box.collapsed {
-        width: 50px !important;
-        height: 50px !important;
-        padding: 0 !important;
-        overflow: hidden;
-        transition: all 0.3s ease;
-        cursor: pointer;
-        position: relative;
-    }
-    
-    .info-box.collapsed p,
-    .info-box.collapsed a,
-    .exhibitions-box.collapsed p,
-    .exhibitions-box.collapsed a,
-    .contact-box.collapsed p,
-    .contact-box.collapsed a {
-        display: none;
-    }
-    
-    /* Uniform white square icon for all collapsed boxes */
-    .info-box.collapsed::after,
-    .exhibitions-box.collapsed::after,
-    .contact-box.collapsed::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 20px;
-        height: 20px;
-        background-color: #000000;
-        border: 1px solid #000000;
+        display: none !important;
     }
     
     /* Expanded state animations */
@@ -194,12 +165,5 @@ body {
     .exhibitions-box:not(.collapsed),
     .contact-box:not(.collapsed) {
         transition: all 0.3s ease;
-    }
-    
-    /* Add pointer cursor to indicate clickability */
-    .info-box,
-    .exhibitions-box,
-    .contact-box {
-        cursor: pointer;
     }
 }

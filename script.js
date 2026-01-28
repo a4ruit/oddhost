@@ -187,17 +187,19 @@ if (isMobile) {
     toggleButton.style.border = '1px solid #000000';
     toggleButton.style.cursor = 'pointer';
     toggleButton.style.zIndex = '1001';
-    toggleButton.style.display = 'flex';
-    toggleButton.style.alignItems = 'center';
-    toggleButton.style.justifyContent = 'center';
     toggleButton.style.transition = 'all 0.3s ease';
     
-    // Add white square icon
-    const icon = document.createElement('div');
-    icon.style.width = '20px';
-    icon.style.height = '20px';
-    icon.style.backgroundColor = '#000000';
-    toggleButton.appendChild(icon);
+    // Add small 90 degree arrow in corner
+    const arrow = document.createElement('div');
+    arrow.style.position = 'absolute';
+    arrow.style.bottom = '8px';
+    arrow.style.right = '8px';
+    arrow.style.width = '0';
+    arrow.style.height = '0';
+    arrow.style.borderLeft = '8px solid transparent';
+    arrow.style.borderBottom = '8px solid #000000';
+    arrow.style.transition = 'transform 0.3s ease';
+    toggleButton.appendChild(arrow);
     
     document.body.appendChild(toggleButton);
     
@@ -209,10 +211,10 @@ if (isMobile) {
         
         if (allCollapsed) {
             staticBoxes.forEach(box => box.classList.add('collapsed'));
-            toggleButton.style.display = 'flex';
+            arrow.style.transform = 'rotate(0deg)'; // Pointing down-right when collapsed
         } else {
             staticBoxes.forEach(box => box.classList.remove('collapsed'));
-            toggleButton.style.display = 'flex';
+            arrow.style.transform = 'rotate(180deg)'; // Pointing up-left when expanded
         }
     };
     

@@ -3,95 +3,696 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@oddh0st</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>@oddh0st — Adrian Frichitthavong</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0e0e0e;
+            background-image: radial-gradient(circle, #646363 1px, transparent 1px);
+            background-size: 80px 80px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        /* ── HEADER ── */
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: stretch;
+            border-bottom: 1px solid #ffffff22;
+        }
+
+        .header-name {
+            background: #ffffff;
+            color: #000;
+            padding: 14px 24px;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+            border-right: 1px solid #000;
+            white-space: nowrap;
+        }
+
+        .header-meta {
+            background: #0e0e0e;
+            padding: 14px 24px;
+            font-size: 11px;
+            color: #aaaaaa;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            flex: 1;
+        }
+
+        .header-meta a { color: #aaaaaa; text-decoration: none; }
+        .header-meta a:hover { color: #ffffff; }
+        .header-meta span { color: #444; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            position: fixed;
+            top: 47px;
+            left: 0;
+            bottom: 0;
+            width: 260px;
+            background: #ffffff;
+            border-right: 1px solid #000;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 90;
+        }
+
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid #000;
+        }
+
+        .sidebar-label {
+            font-size: 9px;
+            letter-spacing: 0.15em;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-section p,
+        .sidebar-section a {
+            font-size: 11px;
+            line-height: 1.7;
+            color: #000;
+            font-weight: bold;
+            display: block;
+            text-decoration: none;
+        }
+
+        .sidebar-section a:hover { text-decoration: underline; }
+
+        /* ── MAIN ── */
+        .main {
+            margin-left: 260px;
+            margin-top: 47px;
+            padding: 0;
+        }
+
+        /* ── PROJECT ROW ── */
+        .project-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            border-bottom: 1px solid #ffffff22;
+            min-height: 320px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .project-row:hover { background: rgba(255,255,255,0.02); }
+        .project-row:hover .project-index { color: #ffffff; }
+
+        .project-text {
+            padding: 36px 40px;
+            border-right: 1px solid #ffffff22;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .project-index {
+            font-size: 10px;
+            color: #444;
+            letter-spacing: 0.12em;
+            margin-bottom: 18px;
+            transition: color 0.15s ease;
+        }
+
+        .project-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+            line-height: 1.2;
+            margin-bottom: 14px;
+            letter-spacing: -0.01em;
+        }
+
+        .project-year {
+            display: inline-block;
+            font-size: 9px;
+            letter-spacing: 0.12em;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 18px;
+        }
+
+        .project-desc {
+            font-size: 11px;
+            line-height: 1.8;
+            color: #aaaaaa;
+            max-width: 380px;
+            flex: 1;
+            margin-bottom: 24px;
+        }
+
+        .project-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #000;
+            background: #ffffff;
+            padding: 3px 8px;
+        }
+
+        .project-link {
+            display: inline-block;
+            margin-top: 20px;
+            font-size: 10px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #ffffff;
+            text-decoration: none;
+            border-bottom: 1px solid #444;
+            padding-bottom: 2px;
+            transition: border-color 0.15s;
+        }
+
+        .project-link:hover { border-color: #ffffff; }
+
+        /* Right col: visual */
+        .project-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .project-visual img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .project-visual iframe { display: block; }
+
+        .project-row:hover .project-visual img {
+            transform: scale(1.02);
+            transition: transform 0.4s ease;
+        }
+
+        /* Inline video (Luminous) */
+        .project-visual video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* ── VIDEO THUMBNAIL (lightbox trigger) ── */
+        .video-thumb {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 320px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+        }
+
+        .video-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: opacity 0.2s ease, transform 0.4s ease;
+        }
+
+        .project-row:hover .video-thumb img {
+            opacity: 0.75;
+            transform: scale(1.02);
+        }
+
+        .play-btn {
+            position: absolute;
+            width: 52px;
+            height: 52px;
+            background: rgba(255,255,255,0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            transition: transform 0.15s ease;
+        }
+
+        .project-row:hover .play-btn { transform: scale(1.1); }
+
+        .play-btn::after {
+            content: '';
+            width: 0;
+            height: 0;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            border-left: 15px solid #000;
+            margin-left: 4px;
+        }
+
+        /* ── LIGHTBOX ── */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox.active { display: flex; }
+
+        .lightbox-inner {
+            position: relative;
+            width: 90vw;
+            max-width: 960px;
+        }
+
+        .lightbox-inner video {
+            width: 100%;
+            display: block;
+            outline: none;
+        }
+
+        .lightbox-yt {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            display: block;
+            border: none;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -36px;
+            right: 0;
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 28px;
+            cursor: pointer;
+            font-family: 'Courier New', Courier, monospace;
+            line-height: 1;
+            opacity: 0.7;
+            transition: opacity 0.15s;
+        }
+
+        .lightbox-close:hover { opacity: 1; }
+
+        /* ── FOOTER ── */
+        .site-footer {
+            margin-left: 260px;
+            padding: 40px;
+            border-top: 1px solid #ffffff22;
+            font-size: 10px;
+            color: #444;
+            letter-spacing: 0.08em;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            .sidebar { display: none; }
+            .main, .site-footer { margin-left: 0; }
+            .project-row { grid-template-columns: 1fr; min-height: auto; }
+            .project-visual { min-height: 240px; order: -1; }
+            .video-thumb { min-height: 240px; }
+            .project-text { border-right: none; border-top: 1px solid #ffffff22; }
+            .header-meta { display: none; }
+            .lightbox-inner { width: 96vw; }
+        }
+    </style>
 </head>
 <body>
-    <main class="container">
-        <div class="work-item">
-            <a href="https://magiexpo2025.com" target="_blank" class="work-link">
-                <img src="images/magiexpo.png" alt="MAGI EXPO 2025">
-            </a>
-            <p class="didactic">RMIT Masters of Animation, Games & Interactivity Exhibition Website, 2025</p>
+
+    <!-- HEADER -->
+    <header class="site-header">
+        <div class="header-name">@oddh0st</div>
+        <div class="header-meta">
+            <span>Adrian Frichitthavong — Interaction Designer</span>
+            <span>·</span>
+            <a href="https://www.instagram.com/oddh0st/" target="_blank">Instagram</a>
+            <span>·</span>
+            <span>Melbourne, AU</span>
         </div>
-        <div class="work-item">
-            <a href="#" target="_blank" class="work-link">
-                <img src="images/heldinstant.png" alt="Held Instantaneously">
-            </a>
-            <p class="didactic">Held, Instantaneously, 2025</p>
+    </header>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-label">Education</div>
+            <p>Master of Animation, Games & Interactivity, 2026</p>
+            <p style="margin-top:6px">Bachelor's of Digital Media — Dean's Award Recipient 2024</p>
+            <p style="margin-top:6px">Advanced Diploma of Building Design, 2016</p>
         </div>
-        <div class="work-item">
-            <a href="#" target="_blank" class="work-link">
-                <img src="images/digitalmedia.png" alt="Digital Media">
-            </a>
-            <p class="didactic">Digital Media Exhibition Website, 2024</p>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Exhibitions</div>
+            <p>Platform Presents, "SOUND CHECK: HYBRID" Dec 2025</p>
+            <p style="margin-top:6px">Platform Presents, "Held, Briefly" Nov 2025</p>
+            <p style="margin-top:6px">N0_R3PLY Collective, 2024 — Present</p>
         </div>
-        <div class="work-item">
-            <a href="#" target="_blank" class="work-link">
-                <img src="images/milkbar.png" alt="Digital Media">
-            </a>
-            <p class="didactic">MAGI, Milk Bar Project, 2025</p>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Workshops</div>
+            <p>"End the Boring Internet" — Three.js + GitHub Pages, RMIT 2025</p>
+            <p style="margin-top:6px">TouchDesigner + Blender, RMIT 2025</p>
+            <p style="margin-top:6px">Friday Blender, RMIT 2021 — 2024</p>
         </div>
-        <div class="work-item">
-            <a href="#" target="_blank" class="work-link">
-                <img src="images/workshop.png" alt="Digital Media">
-            </a>
-            <p class="didactic">TouchDesigner + Blender Workshop, 2025</p>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Contact</div>
+            <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
+            <a href="https://oddhost.github.io" target="_blank" style="margin-top:4px">oddhost.github.io</a>
         </div>
-            <div class="work-item">
-            <a href="#" target="_blank" class="work-link">
-                <img src="images/cadenacam.png" alt="Digital Media">
-            </a>
-            <p class="didactic">N0_R3PLY Collective Works, 2025</p>
-        </div>
-            <div class="work-item">
-            <a href="#" target="_blank" class="work-link">
-                <img src="images/neurometrix.png" alt="Digital Media">
-            </a>
-            <p class="didactic">Digital Media Major Project, 2023</p>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="main">
+
+        <!-- 01 LUMINOUS FESTIVAL -->
+        <div class="project-row">
+            <div class="project-text">
+                <div>
+                    <div class="project-index">01 / 12</div>
+                    <h2 class="project-title">Luminous Festival</h2>
+                    <span class="project-year">2025 — Interactive Installation</span>
+                    <p class="project-desc">Live festival installation built for an outdoor forest environment, featuring dual vertical displays driven by real-time MediaPipe hand tracking via a Python UDP sidecar. Two-hand distance controls a boid flock as a force field — adjusting frequency, speed, count, and scale of ASCII bird silhouettes in real time. Layered with HDRP custom post-process GLSL shaders, an ASCII whale predator that hunts the flock, and world-space data visualisation HUDs that follow hand position.</p>
+                    <div class="project-tags">
+                        <span class="tag">Unity HDRP</span>
+                        <span class="tag">MediaPipe</span>
+                        <span class="tag">Python UDP</span>
+                        <span class="tag">GLSL Shaders</span>
+                        <span class="tag">Boids</span>
+                        <span class="tag">Live Performance</span>
+                    </div>
+                </div>
+            </div>
+            <div class="project-visual" style="background:#000; padding:0;">
+                <video controls poster="images/luminous.png">
+                    <source src="images/luminous.mp4" type="video/mp4">
+                </video>
+            </div>
         </div>
 
+        <!-- 02 CCTV INSTALLATION -->
+        <div class="project-row">
+            <div class="project-text">
+                <div>
+                    <div class="project-index">02 / 12</div>
+                    <h2 class="project-title">CCTV Installation</h2>
+                    <span class="project-year">2025 — Live Installation</span>
+                    <p class="project-desc">Multi-camera live video installation commissioned by Chantelle Lucyl for Melbourne Fashion Week. Multiple NDI cameras were networked over a dedicated TP-Link router and fed into a real-time compositing pipeline, creating a live CCTV surveillance aesthetic across the event space.</p>
+                    <div class="project-tags">
+                        <span class="tag">NDI</span>
+                        <span class="tag">Live Video</span>
+                        <span class="tag">Networking</span>
+                        <span class="tag">Melbourne Fashion Week</span>
+                        <span class="tag">Commission</span>
+                    </div>
+                </div>
+                <a href="https://www.youtube.com/watch?v=OBFQhZ5cqq0" target="_blank" class="project-link">Watch on YouTube →</a>
+            </div>
+            <div class="project-visual" style="background:#000; padding:0;">
+                <div class="video-thumb" onclick="openLightbox('cctv')">
+                    <img src="https://img.youtube.com/vi/OBFQhZ5cqq0/maxresdefault.jpg" alt="CCTV Installation">
+                    <div class="play-btn"></div>
+                </div>
+            </div>
         </div>
-            <div class="work-item">
-            <a href="#" target="_blank" class="work-link">
-               <iframe frameborder="0" src="https://itch.io/embed/4123850?border_color=ffffff" width="208" height="167"><a href="https://lactosefreecat.itch.io/catos">catOS by lactosefreecat, Kora Lee, a4ruit</a></iframe>
-            </a>
-            <p class="didactic">CatOS, 2025</p>
+
+        <!-- 03 MAGI EXPO -->
+        <div class="project-row">
+            <div class="project-text">
+                <div>
+                    <div class="project-index">03 / 12</div>
+                    <h2 class="project-title">MAGI EXPO 2025</h2>
+                    <span class="project-year">2025 — Web Development</span>
+                    <p class="project-desc">Interactive 3D orbital exhibition website featuring student profiles as asteroids orbiting category planets. Built with React Three Fiber with extensive performance optimisation targeting 60fps rendering across devices, CSV-driven dynamic profiles, achievement systems, and full mobile responsiveness.</p>
+                    <div class="project-tags">
+                        <span class="tag">React Three Fiber</span>
+                        <span class="tag">3D Web</span>
+                        <span class="tag">Performance</span>
+                        <span class="tag">RMIT</span>
+                    </div>
+                </div>
+                <a href="https://magiexpo2025.com" target="_blank" class="project-link">Visit Site →</a>
+            </div>
+            <div class="project-visual">
+                <img src="images/magiexpo.png" alt="MAGI EXPO 2025">
+            </div>
         </div>
-           
-            <div class="work-item">
-            <a href="#" target="_blank" class="work-link">
-                <img src="images/sos2.png" alt="Digital Media">
-            </a>
-            <p class="didactic">N0_R3PLY Collective, SOS2, 2023</p>
+
+        <!-- 04 HELD, INSTANTANEOUSLY -->
+        <div class="project-row">
+            <div class="project-text">
+                <div>
+                    <div class="project-index">04 / 12</div>
+                    <h2 class="project-title">Held, Instantaneously</h2>
+                    <span class="project-year">2025 — Interactive Installation</span>
+                    <p class="project-desc">Satirical dating app installation critiquing dehumanising platform design through adversarial UX. User swipes on a Hinge-inspired web interface spawn NPCs into a Unity terrarium via WebSocket — matched characters form bonds, rejected ones fade into a graveyard. Exhibited at CPS and MAGI EXPO.</p>
+                    <div class="project-tags">
+                        <span class="tag">Unity</span>
+                        <span class="tag">WebSocket</span>
+                        <span class="tag">Anti-UX</span>
+                        <span class="tag">Installation</span>
+                        <span class="tag">Surveillance Capitalism</span>
+                    </div>
+                </div>
+            </div>
+            <div class="project-visual" style="background:#000; padding:0;">
+                <div class="video-thumb" onclick="openLightbox('held')">
+                    <img src="images/heldinstant.png" alt="Held, Instantaneously">
+                    <div class="play-btn"></div>
+                </div>
+            </div>
         </div>
+
+        <!-- 05 DIGITAL MEDIA WEBSITE -->
+        <div class="project-row">
+            <div class="project-text">
+                <div>
+                    <div class="project-index">05 / 12</div>
+                    <h2 class="project-title">Digital Media Exhibition Website</h2>
+                    <span class="project-year">2024 — Web Development</span>
+                    <p class="project-desc">Exhibition website for the RMIT Bachelor of Digital Media showcase, combining TikTok-style scroll interfaces with a Unity camera control system via WebSocket — allowing live switching of 3D perspective from the browser. Explored surveillance capitalism and ArchiveGram aesthetics.</p>
+                    <div class="project-tags">
+                        <span class="tag">WebSocket</span>
+                        <span class="tag">Unity</span>
+                        <span class="tag">Web</span>
+                        <span class="tag">RMIT</span>
+                    </div>
+                </div>
+            </div>
+            <div class="project-visual">
+                <img src="images/digitalmedia.png" alt="Digital Media Exhibition Website">
+            </div>
+        </div>
+
+        <!-- 06 MILK BAR -->
+        <div class="project-row">
+            <div class="project-text">
+                <div>
+                    <div class="project-index">06 / 12</div>
+                    <h2 class="project-title">MAGI Milk Bar Project</h2>
+                    <span class="project-year">2025 — Interactive Project</span>
+                    <p class="project-desc">Interactive project developed as part of the Masters of Animation, Games & Interactivity studio program at RMIT.</p>
+                    <div class="project-tags">
+                        <span class="tag">RMIT</span>
+                        <span class="tag">Interactive</span>
+                        <span class="tag">MAGI</span>
+                    </div>
+                </div>
+            </div>
+            <div class="project-visual">
+                <img src="images/milkbar.png" alt="MAGI Milk Bar Project">
+            </div>
+        </div>
+
+        <!-- 07 WORKSHOP -->
+        <div class="project-row">
+            <div class="project-text">
+                <div>
+                    <div class="project-index">07 / 12</div>
+                    <h2 class="project-title">TouchDesigner + Blender Workshop</h2>
+                    <span class="project-year">2025 — Education</span>
+                    <p class="project-desc">Workshop facilitated at RMIT exploring projection mapping and real-time visual effects, combining TouchDesigner's node-based environment with Blender 3D workflows. Part of an ongoing commitment to free, hands-on technical education for creative students.</p>
+                    <div class="project-tags">
+                        <span class="tag">TouchDesigner</span>
+                        <span class="tag">Blender</span>
+                        <span class="tag">Workshop</span>
+                        <span class="tag">Education</span>
+                    </div>
+                </div>
+            </div>
+            <div class="project-visual">
+                <img src="images/workshop.png" alt="Workshop">
+            </div>
+        </div>
+
+        <!-- 08 N0_R3PLY COLLECTIVE -->
+        <div class="project-row">
+            <div class="project-text">
+                <div>
+                    <div class="project-index">08 / 12</div>
+                    <h2 class="project-title">N0_R3PLY Collective Works</h2>
+                    <span class="project-year">2024–Present — Collaborative Practice</span>
+                    <p class="project-desc">Ongoing collaborative projects with the N0_R3PLY Collective, exploring WebSocket-driven performance art, real-time digital communication systems, and experimental interactive environments in live contexts.</p>
+                    <div class="project-tags">
+                        <span class="tag">Collective</span>
+                        <span class="tag">Performance</span>
+                        <span class="tag">Real-time</span>
+                        <span class="tag">Experimental</span>
+                    </div>
+                </div>
+            </div>
+            <div class="project-visual">
+                <img src="images/cadenacam.png" alt="N0_R3PLY Collective">
+            </div>
+        </div>
+
+        <!-- 09 DIGITAL MEDIA MAJOR -->
+        <div class="project-row">
+            <div class="project-text">
+                <div>
+                    <div class="project-index">09 / 12</div>
+                    <h2 class="project-title">Digital Media Major Project</h2>
+                    <span class="project-year">2023 — Interactive Installation</span>
+                    <p class="project-desc">Major project completion for the Bachelor of Digital Media at RMIT, exploring interactive installations and digital media practice. Recipient of the Dean's Award 2024.</p>
+                    <div class="project-tags">
+                        <span class="tag">Installation</span>
+                        <span class="tag">RMIT</span>
+                        <span class="tag">Dean's Award</span>
+                    </div>
+                </div>
+            </div>
+            <div class="project-visual">
+                <img src="images/neurometrix.png" alt="Digital Media Major Project">
+            </div>
+        </div>
+
+        <!-- 10 CATOS -->
+        <div class="project-row">
+            <div class="project-text">
+                <div>
+                    <div class="project-index">10 / 12</div>
+                    <h2 class="project-title">CatOS</h2>
+                    <span class="project-year">2025 — Game</span>
+                    <p class="project-desc">Collaborative game developed with lactosefreecat and Kora Lee. Available on itch.io.</p>
+                    <div class="project-tags">
+                        <span class="tag">Game</span>
+                        <span class="tag">itch.io</span>
+                        <span class="tag">Collaborative</span>
+                    </div>
+                </div>
+                <a href="https://lactosefreecat.itch.io/catos" target="_blank" class="project-link">Play on itch.io →</a>
+            </div>
+            <div class="project-visual" style="background:#111;">
+                <iframe frameborder="0" src="https://itch.io/embed/4123850?border_color=ffffff" width="208" height="167">
+                    <a href="https://lactosefreecat.itch.io/catos">catOS by lactosefreecat, Kora Lee, a4ruit</a>
+                </iframe>
+            </div>
+        </div>
+
+        <!-- 11 SOS2 -->
+        <div class="project-row">
+            <div class="project-text">
+                <div>
+                    <div class="project-index">11 / 12</div>
+                    <h2 class="project-title">SOS2</h2>
+                    <span class="project-year">2023 — Live Performance</span>
+                    <p class="project-desc">N0_R3PLY Collective live performance exploring real-time communication, interactive digital environments, and the collapse of the boundary between performer and audience through networked systems.</p>
+                    <div class="project-tags">
+                        <span class="tag">Performance</span>
+                        <span class="tag">N0_R3PLY</span>
+                        <span class="tag">Real-time</span>
+                        <span class="tag">Live</span>
+                    </div>
+                </div>
+            </div>
+            <div class="project-visual">
+                <img src="images/sos2.png" alt="SOS2">
+            </div>
+        </div>
+
     </main>
 
-    <div class="info-box">
-        <p>Master of Animation, Games & Interactivity, 2026</p>
-        <p>Bachelor's of Digital Media, Deans Award's Recipient 2024</p>
-        <p>Advanced Diploma of Building Design, 2016</p>
+    <footer class="site-footer">
+        <span>© 2025 Adrian Frichitthavong — @oddh0st — Melbourne, AU</span>
+    </footer>
+
+    <!-- LIGHTBOX: Held -->
+    <div class="lightbox" id="lb-held" onclick="closeLightboxOnBackdrop(event, 'held')">
+        <div class="lightbox-inner">
+            <button class="lightbox-close" onclick="closeLightbox('held')">×</button>
+            <video id="vid-held" controls>
+                <source src="images/held.mp4" type="video/mp4">
+            </video>
+        </div>
     </div>
 
-    <div class="exhibitions-box">
-        <p>Platform Presents, "SOUND CHECK: HYBRID" Dec 2025</p>
-        <p>Platform Presents, "Held, Briefly" Nov 2025</p>
-        <p>N0_R3PLY Collective, 2024 - Present</p>
+    <!-- LIGHTBOX: CCTV (YouTube) -->
+    <div class="lightbox" id="lb-cctv" onclick="closeLightboxOnBackdrop(event, 'cctv')">
+        <div class="lightbox-inner">
+            <button class="lightbox-close" onclick="closeLightbox('cctv')">×</button>
+            <iframe id="yt-cctv" class="lightbox-yt" src="" title="CCTV Installation" allowfullscreen></iframe>
+        </div>
     </div>
 
-    <div class="contact-box">
-        <p>Adrian Frichitthavong, Interaction Designer</p>
-        <a href="https://www.instagram.com/oddh0st/" target="_blank" >@oddh0st</a>
+    <script>
+        function openLightbox(id) {
+            document.getElementById('lb-' + id).classList.add('active');
+            if (id === 'held') {
+                document.getElementById('vid-held').play();
+            } else if (id === 'cctv') {
+                document.getElementById('yt-cctv').src = 'https://www.youtube.com/embed/OBFQhZ5cqq0?autoplay=1';
+            }
+        }
 
-    </div>
+        function closeLightbox(id) {
+            document.getElementById('lb-' + id).classList.remove('active');
+            if (id === 'held') {
+                const v = document.getElementById('vid-held');
+                v.pause();
+                v.currentTime = 0;
+            } else if (id === 'cctv') {
+                document.getElementById('yt-cctv').src = '';
+            }
+        }
 
+        function closeLightboxOnBackdrop(e, id) {
+            if (e.target === document.getElementById('lb-' + id)) closeLightbox(id);
+        }
 
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                ['held', 'cctv'].forEach(id => {
+                    if (document.getElementById('lb-' + id).classList.contains('active')) {
+                        closeLightbox(id);
+                    }
+                });
+            }
+        });
+    </script>
 
-    <div class="project-info-box" id="projectInfoBox">
-    <button class="close-btn" id="closeBtn">×</button>
-    <div id="projectContent"></div>
-</div>
-
-    <script src="script.js"></script>
 </body>
 </html>

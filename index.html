@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@oddh0st</title>
+    <link rel="icon" type="image/png" href="images/logo/oddh0stlogo.png">
+    <link rel="apple-touch-icon" href="images/logo/oddh0stlogo.png">
     <link rel="preconnect" href="https://api.fontshare.com">
     <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
     <style>
@@ -65,14 +67,23 @@
 
         .menu-btn:hover .menu-bars { transform: scaleX(0.72); }
 
+        /* Padding is tuned to keep the header exactly 47px —
+           .stage and .index are offset by that number. */
         .header-name {
+            display: block;
             padding: 14px 22px;
             font-size: 13px;
             font-weight: 700;
             letter-spacing: -0.01em;
             border-right: 1px solid #ffffff1a;
             white-space: nowrap;
+            color: #ffffff;
+            text-decoration: none;
+            flex-shrink: 0;
+            transition: opacity 0.2s ease;
         }
+
+        .header-name:hover { opacity: 0.7; }
 
         .header-meta {
             padding: 14px 22px;
@@ -92,7 +103,7 @@
         .scrim {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.5);
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s;
@@ -108,13 +119,24 @@
             bottom: 0;
             width: 300px;
             max-width: 84vw;
-            background: #ffffff;
+            /* frosted glass: translucent enough to read the page through, with
+               saturation lifted so what bleeds through keeps some colour */
+            background: rgba(255, 255, 255, 0.58);
+            backdrop-filter: blur(24px) saturate(170%);
+            -webkit-backdrop-filter: blur(24px) saturate(170%);
+            border-right: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 0 70px rgba(0, 0, 0, 0.55);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
             z-index: 140;
             transform: translateX(-100%);
             transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        /* without backdrop-filter the panel would be an unreadable wash */
+        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+            .sidebar { background: #ffffff; }
         }
 
         .sidebar.open { transform: translateX(0); }
@@ -126,20 +148,25 @@
             font-family: inherit;
             font-size: 26px;
             line-height: 1;
-            color: #000;
+            color: #0a0a0a;
             cursor: pointer;
             padding: 16px 20px 4px;
+            opacity: 0.75;
+            transition: opacity 0.2s ease;
         }
 
         .sidebar-section {
             padding: 20px;
-            border-bottom: 1px solid #000;
+            /* a hairline, not a hard rule — solid black reads as ink on glass */
+            border-bottom: 1px solid rgba(0, 0, 0, 0.14);
         }
+
+        .sidebar-section:last-child { border-bottom: none; }
 
         .sidebar-label {
             font-size: 9px;
             letter-spacing: 0.15em;
-            color: #888;
+            color: #5e5e5e;
             text-transform: uppercase;
             margin-bottom: 10px;
         }
@@ -148,13 +175,15 @@
         .sidebar-section a {
             font-size: 11.5px;
             line-height: 1.6;
-            color: #000;
+            color: #0a0a0a;
             font-weight: 500;
             display: block;
             text-decoration: none;
         }
 
         .sidebar-section a:hover { text-decoration: underline; }
+
+        .sidebar-close:hover { opacity: 1; }
 
         /* ── LAYOUT ── */
         .stage {
@@ -489,13 +518,10 @@
         <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">
             <span class="menu-bars"></span>Menu
         </button>
-        <div class="header-name">@oddh0st</div>
+        <a class="header-name" href="https://www.instagram.com/oddh0st/"
+           target="_blank" rel="noopener noreferrer">@oddh0st</a>
         <div class="header-meta">
             <span>Adrian Frichitthavong</span>
-            <span class="sep">·</span>
-            <a href="https://www.instagram.com/oddh0st/" target="_blank">Instagram</a>
-            <span class="sep">·</span>
-            <span>Melbourne, AU</span>
         </div>
     </header>
 
@@ -1058,19 +1084,58 @@
         }
 
         /* ── THE MAGNET ──
-           Not CSS scroll-snap: that fought the touch the whole way down. This
-           only wakes up once the finger is off and the scrolling has stopped,
-           then eases the nearest title onto the line. Because openOnly() holds
-           the opening entry still while its tray animates, the alignment the
-           magnet just made survives the description opening. */
-        const SETTLE_MS = 120;
-        const MAGNET_MS = 280;
-        const MAGNET_DEADZONE = 1.5;     // px — already close enough
+           Not CSS scroll-snap, and NOT fired on touchend: letting go is only
+           the start of the fling, so magnetting there killed the throw and you
+           could never toss the list and watch where it lands.
 
-        let settleTimer = null;
+           Instead the scroll position itself is watched. While a fling is
+           coasting the position keeps changing, so the watcher keeps resetting.
+           Only once it has genuinely stopped — unchanged across consecutive
+           ticks, finger off — does the magnet ease the nearest title onto the
+           line. openOnly() then holds that entry still while its tray animates,
+           so the alignment survives the description opening. */
+        const MAGNET_MS = 340;
+        const MAGNET_DEADZONE = 1.5;     // px — already close enough
+        const REST_TICK_MS = 80;
+        const REST_TICKS = 2;            // consecutive still ticks == landed
+
         let magnetAnim = null;
         let magnetting = false;
         let touching = false;
+
+        let restTimer = null;
+        let restLastY = 0;
+        let restStill = 0;
+
+        function stopRestWatch() {
+            if (restTimer) clearInterval(restTimer);
+            restTimer = null;
+            restStill = 0;
+        }
+
+        function startRestWatch() {
+            if (restTimer) return;
+            restLastY = window.scrollY;
+            restStill = 0;
+
+            restTimer = setInterval(() => {
+                if (!smallQuery.matches) { stopRestWatch(); return; }
+
+                const y = window.scrollY;
+
+                // finger still down, or the fling is still travelling
+                if (touching || Math.abs(y - restLastY) > 0.5) {
+                    restLastY = y;
+                    restStill = 0;
+                    return;
+                }
+
+                if (++restStill < REST_TICKS) return;
+
+                stopRestWatch();
+                if (window.scrollY > 1) magnetToLine();
+            }, REST_TICK_MS);
+        }
 
         function cancelMagnet() {
             if (magnetAnim) cancelAnimationFrame(magnetAnim);
@@ -1106,17 +1171,6 @@
             })(t0);
         }
 
-        function scheduleSettle() {
-            if (settleTimer) clearTimeout(settleTimer);
-            settleTimer = setTimeout(() => {
-                settleTimer = null;
-                if (!smallQuery.matches) return;
-                if (touching) { scheduleSettle(); return; }   // finger still down
-                if (window.scrollY <= 1) return;              // top handled by checkTop
-                magnetToLine();
-            }, SETTLE_MS);
-        }
-
         function onScroll() {
             if (!primed) {
                 if (performance.now() - armedAt < 350) return;
@@ -1125,11 +1179,14 @@
             }
             highlightOnLine();
             checkTop();
-            if (!magnetting) scheduleSettle();   // ignore our own scrolling
+            // the magnet's own scrolling must not restart the watcher
+            if (!magnetting) startRestWatch();
         }
 
-        function onTouchStart() { touching = true; cancelMagnet(); }
-        function onTouchEnd()   { touching = false; scheduleSettle(); }
+        // Taking the finger off does NOT magnet — it just means the fling is
+        // now free to run. The watcher decides when it has actually landed.
+        function onTouchStart() { touching = true; cancelMagnet(); stopRestWatch(); }
+        function onTouchEnd()   { touching = false; startRestWatch(); }
 
         function startScrollMode() {
             if (midObserver) return;
@@ -1167,7 +1224,7 @@
             window.removeEventListener('touchend', onTouchEnd);
             window.removeEventListener('touchcancel', onTouchEnd);
             cancelMagnet();
-            if (settleTimer) { clearTimeout(settleTimer); settleTimer = null; }
+            stopRestWatch();
             touching = false;
             primed = false;
             atTop = true;

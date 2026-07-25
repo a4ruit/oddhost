@@ -80,7 +80,10 @@ a:hover .menu-bars { transform: scaleX(0.72); }
     text-decoration: none;
     color: var(--ink);
     justify-self: center;
+    transition: opacity 0.2s ease;
 }
+
+.wordmark:hover { opacity: 0.7; }
 
 .header-right {
     justify-self: end;

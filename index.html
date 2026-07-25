@@ -1028,19 +1028,17 @@
             if (!smallQuery.matches) list.classList.remove('is-engaged');
         });
 
-        /* ── MOBILE: whichever entry crosses the middle line opens ──
-           A zero-height band at the middle of the screen. Entries are
-           contiguous, so exactly one is across it at any scroll position. */
-        let midObserver = null;
+        /* ── MOBILE: the title on the middle line opens, once you've landed ──
+           The list scrolls completely untouched: during a drag or a fling the
+           only thing that runs is the highlight. The description opens after
+           the scroll comes to rest. */
+        let scrollBound = false;
 
-        /* The page opens with project 01 named but its description closed.
-           IntersectionObserver fires a callback the moment it starts observing,
-           which would open it immediately — so callbacks are ignored until the
-           first scroll. A reload can also restore scroll and fire an event
-           during load, hence the short arming delay. */
+        /* The page opens with project 01 named but its description closed. A
+           reload can restore scroll and fire an event during load, hence the
+           short arming delay before any of this is live. */
         let primed = false;
         let armedAt = 0;
-        let atTop = true;
 
         const lineRef = document.querySelector('.line-ref');
 
@@ -1062,25 +1060,12 @@
             return best;
         }
 
-        function openOnLine() {
-            const hit = entryOnLine();
-            if (hit) openOnly(hit);
-        }
-
         /* Runs on every scroll event. Only changes a colour, so it costs no
            layout — the title under the arrow lights up as it passes. */
         function highlightOnLine() {
             const hit = entryOnLine();
             if (!hit || hit.classList.contains('is-current')) return;
             entries.forEach(e => e.classList.toggle('is-current', e === hit));
-        }
-
-        function checkTop() {
-            const nowTop = window.scrollY <= 1;
-            if (nowTop === atTop) return;
-            atTop = nowTop;
-            if (nowTop) closeAllTrays();
-            else if (primed) openOnLine();
         }
 
         /* ── THE MAGNET ──
@@ -1133,7 +1118,11 @@
                 if (++restStill < REST_TICKS) return;
 
                 stopRestWatch();
-                if (window.scrollY > 1) magnetToLine();
+
+                // Everything that moves the page or the layout happens HERE,
+                // once the fling is over — never while it is still travelling.
+                if (window.scrollY <= 1) closeAllTrays();
+                else magnetToLine();          // magnet, then opens what it lands on
             }, REST_TICK_MS);
         }
 
@@ -1171,14 +1160,18 @@
             })(t0);
         }
 
+        /* The ONLY thing allowed to happen mid-scroll is the highlight, because
+           it changes a colour and nothing else. Opening a tray here would call
+           window.scrollBy() to anchor it, and a programmatic scroll during iOS
+           momentum cancels the fling outright — which is why letting go used to
+           stop the list dead on a real phone but rolled fine in a desktop
+           inspector, where wheel scrolling has no inertia to cancel. */
         function onScroll() {
             if (!primed) {
                 if (performance.now() - armedAt < 350) return;
                 primed = true;
-                if (window.scrollY > 1) openOnLine();
             }
             highlightOnLine();
-            checkTop();
             // the magnet's own scrolling must not restart the watcher
             if (!magnetting) startRestWatch();
         }
@@ -1189,25 +1182,16 @@
         function onTouchEnd()   { touching = false; startRestWatch(); }
 
         function startScrollMode() {
-            if (midObserver) return;
+            if (scrollBound) return;
+            scrollBound = true;
             armedAt = performance.now();
             list.classList.add('is-engaged');          // dim all but the current one
             entries.forEach(e => e.classList.remove('is-hot'));
 
-            midObserver = new IntersectionObserver(records => {
-                // never open mid-magnet — that would move the ground under it
-                if (!primed || magnetting) return;
-                records.forEach(rec => {
-                    if (rec.isIntersecting) openOnly(rec.target);
-                });
-            }, { rootMargin: '-50% 0px -50% 0px', threshold: 0 });
-
-            entries.forEach(e => midObserver.observe(e));
             window.addEventListener('scroll', onScroll, { passive: true });
             window.addEventListener('touchstart', onTouchStart, { passive: true });
             window.addEventListener('touchend', onTouchEnd, { passive: true });
             window.addEventListener('touchcancel', onTouchEnd, { passive: true });
-            atTop = window.scrollY <= 1;
 
             // name the entry on the line without opening it, so project 01
             // reads as current against its media while its tray stays shut
@@ -1216,9 +1200,8 @@
         }
 
         function stopScrollMode() {
-            if (!midObserver) return;
-            midObserver.disconnect();
-            midObserver = null;
+            if (!scrollBound) return;
+            scrollBound = false;
             window.removeEventListener('scroll', onScroll);
             window.removeEventListener('touchstart', onTouchStart);
             window.removeEventListener('touchend', onTouchEnd);
@@ -1227,7 +1210,6 @@
             stopRestWatch();
             touching = false;
             primed = false;
-            atTop = true;
             list.classList.remove('is-engaged');
             entries.forEach(e => e.classList.remove('is-open', 'is-current'));
         }

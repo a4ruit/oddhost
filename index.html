@@ -1057,6 +1057,66 @@
             else if (primed) openOnLine();
         }
 
+        /* ── THE MAGNET ──
+           Not CSS scroll-snap: that fought the touch the whole way down. This
+           only wakes up once the finger is off and the scrolling has stopped,
+           then eases the nearest title onto the line. Because openOnly() holds
+           the opening entry still while its tray animates, the alignment the
+           magnet just made survives the description opening. */
+        const SETTLE_MS = 120;
+        const MAGNET_MS = 280;
+        const MAGNET_DEADZONE = 1.5;     // px — already close enough
+
+        let settleTimer = null;
+        let magnetAnim = null;
+        let magnetting = false;
+        let touching = false;
+
+        function cancelMagnet() {
+            if (magnetAnim) cancelAnimationFrame(magnetAnim);
+            magnetAnim = null;
+            magnetting = false;
+        }
+
+        function magnetToLine() {
+            const target = entryOnLine();
+            if (!target) return;
+
+            const line  = lineRef.getBoundingClientRect().top;
+            const delta = target.getBoundingClientRect().top - line;
+
+            if (Math.abs(delta) < MAGNET_DEADZONE) { openOnly(target); return; }
+
+            const startY = window.scrollY;
+            const t0 = performance.now();
+            const ease = t => 1 - Math.pow(1 - t, 3);
+            magnetting = true;
+
+            (function step(now) {
+                const t = Math.min(1, (now - t0) / MAGNET_MS);
+                window.scrollTo(0, startY + delta * ease(t));
+
+                if (t < 1) {
+                    magnetAnim = requestAnimationFrame(step);
+                } else {
+                    magnetAnim = null;
+                    magnetting = false;
+                    openOnly(target);          // anchors, so alignment holds
+                }
+            })(t0);
+        }
+
+        function scheduleSettle() {
+            if (settleTimer) clearTimeout(settleTimer);
+            settleTimer = setTimeout(() => {
+                settleTimer = null;
+                if (!smallQuery.matches) return;
+                if (touching) { scheduleSettle(); return; }   // finger still down
+                if (window.scrollY <= 1) return;              // top handled by checkTop
+                magnetToLine();
+            }, SETTLE_MS);
+        }
+
         function onScroll() {
             if (!primed) {
                 if (performance.now() - armedAt < 350) return;
@@ -1065,7 +1125,11 @@
             }
             highlightOnLine();
             checkTop();
+            if (!magnetting) scheduleSettle();   // ignore our own scrolling
         }
+
+        function onTouchStart() { touching = true; cancelMagnet(); }
+        function onTouchEnd()   { touching = false; scheduleSettle(); }
 
         function startScrollMode() {
             if (midObserver) return;
@@ -1074,7 +1138,8 @@
             entries.forEach(e => e.classList.remove('is-hot'));
 
             midObserver = new IntersectionObserver(records => {
-                if (!primed) return;
+                // never open mid-magnet — that would move the ground under it
+                if (!primed || magnetting) return;
                 records.forEach(rec => {
                     if (rec.isIntersecting) openOnly(rec.target);
                 });
@@ -1082,6 +1147,9 @@
 
             entries.forEach(e => midObserver.observe(e));
             window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('touchstart', onTouchStart, { passive: true });
+            window.addEventListener('touchend', onTouchEnd, { passive: true });
+            window.addEventListener('touchcancel', onTouchEnd, { passive: true });
             atTop = window.scrollY <= 1;
 
             // name the entry on the line without opening it, so project 01
@@ -1095,6 +1163,12 @@
             midObserver.disconnect();
             midObserver = null;
             window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('touchstart', onTouchStart);
+            window.removeEventListener('touchend', onTouchEnd);
+            window.removeEventListener('touchcancel', onTouchEnd);
+            cancelMagnet();
+            if (settleTimer) { clearTimeout(settleTimer); settleTimer = null; }
+            touching = false;
             primed = false;
             atTop = true;
             list.classList.remove('is-engaged');

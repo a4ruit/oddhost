@@ -341,6 +341,9 @@
         .project-link:hover { opacity: 0.7; }
 
 
+        /* ── MARKER (mobile only, hidden by default) ── */
+        .line-marker { display: none; }
+
         /* ── LIGHTBOX ── */
         .lightbox {
             display: none;
@@ -433,11 +436,11 @@
                The hinge on .tray-inner still animates — it costs no layout. */
             .tray-clip { transition: none; }
 
-            /* Each title snaps to the trigger line, so a hard flick lands on a
-               project instead of coasting past three of them. `proximity` only
-               pulls when you finish near one — it never hijacks a long scroll. */
+            /* The wheel. Every title is a detent on the middle line, and
+               `mandatory` means the scroll always comes to rest on one of
+               them — you can't stop between projects. */
             html {
-                scroll-snap-type: y proximity;
+                scroll-snap-type: y mandatory;
                 scroll-behavior: auto;
             }
 
@@ -446,15 +449,25 @@
                 scroll-margin-top: 50vh;   /* lands the title on the line */
             }
 
-            /* TEST: the description unfurls upward from below rather than
-               dropping from above, so it travels with an upward drag. */
-            .tray-inner {
-                transform-origin: bottom center;
-                transform: perspective(900px) rotateX(10deg) translateY(22px);
-            }
-
-            .entry.is-open .tray-inner {
-                transform: perspective(900px) rotateX(0) translateY(0);
+            /* Marks the detent. A landed entry puts its top edge on 50vh, so
+               the arrow drops by the head padding plus half a title line to sit
+               against the middle of the text. The em is sized from the title,
+               so it tracks the clamp. */
+            .line-marker {
+                display: block;
+                position: fixed;
+                left: 8px;
+                font-size: clamp(26px, 8vw, 44px);
+                top: calc(50vh + 14px + 0.5em);
+                transform: translateY(-50%);
+                width: 0;
+                height: 0;
+                border-top: 4px solid transparent;
+                border-bottom: 4px solid transparent;
+                border-left: 6px solid #ffffff;
+                opacity: 0.5;
+                z-index: 15;
+                pointer-events: none;
             }
 
             .entry-title { font-size: clamp(26px, 8vw, 44px); }
@@ -556,6 +569,9 @@
             <img src="images/sos2.png" alt="SOS2">
         </div>
     </div>
+
+    <!-- the detent the wheel comes to rest on (mobile only) -->
+    <div class="line-marker" aria-hidden="true"></div>
 
     <!-- INDEX -->
     <main class="index">
@@ -875,18 +891,18 @@
            single eased progress, so the old one closes at exactly the rate the
            new one opens — the list never loses or gains height in a jump.
 
-           This used to re-anchor with window.scrollBy() on every frame, which
-           fought momentum scrolling: a fast flick crossed several entries, each
-           restarting the animation and scrolling the page again, compounding
-           until the list lost its place. Native scroll anchoring plus snapping
-           handles it without fighting the touch. */
+           The closing tray sits above the opening one when moving down, so the
+           list would lose that height and lurch. Holding the landed entry still
+           on every frame cancels it. This only ever runs after the scroll has
+           come to rest — doing it mid-flick is what compounded into chaos. */
         const TRAY_MS = 500;
         let trayAnim = null;
 
         // openEntry may be null — that closes everything.
-        function animateTrays(openEntry, clips, from) {
+        function animateTrays(openEntry, clips, from, anchorEl) {
             const to = entries.map(e =>
                 e === openEntry ? (parseFloat(e.style.getPropertyValue('--tray-h')) || 0) : 0);
+            const held = anchorEl || openEntry;
 
             if (trayAnim) cancelAnimationFrame(trayAnim);
             const start = performance.now();
@@ -894,10 +910,16 @@
 
             (function frame(now) {
                 const k = ease(Math.min(1, (now - start) / TRAY_MS));
+                const anchor = held ? held.getBoundingClientRect().top : 0;
 
                 clips.forEach((c, i) => {
                     c.style.height = (from[i] + (to[i] - from[i]) * k) + 'px';
                 });
+
+                if (held) {
+                    const shift = held.getBoundingClientRect().top - anchor;
+                    if (shift) window.scrollBy(0, shift);
+                }
 
                 if (k < 1) {
                     trayAnim = requestAnimationFrame(frame);
@@ -925,26 +947,7 @@
             setActive(0);
 
             clips.forEach((c, i) => { c.style.height = from[i] + 'px'; });
-            animateTrays(null, clips, from);
-        }
-
-        function openOnLine() {
-            const line = window.innerHeight / 2;
-            const hit = entries.find(e => {
-                const r = e.getBoundingClientRect();
-                return r.top <= line && r.bottom >= line;
-            });
-            if (hit) openOnly(hit);
-        }
-
-        let atTop = true;
-
-        function checkTop() {
-            const nowTop = window.scrollY <= 1;
-            if (nowTop === atTop) return;
-            atTop = nowTop;
-            if (nowTop) closeAllTrays();
-            else if (primed) openOnLine();
+            animateTrays(null, clips, from, entries[0]);
         }
 
         function openOnly(entry) {
@@ -996,67 +999,79 @@
             if (!smallQuery.matches) list.classList.remove('is-engaged');
         });
 
-        /* ── MOBILE: whichever entry crosses the trigger line opens ──
-           A zero-height band at the middle of the screen. Entries are
-           contiguous, so exactly one is across it at any scroll position. */
-        let midObserver = null;
+        /* ── MOBILE: the wheel ──
+           Nothing about the layout changes while a finger is moving. That churn
+           — trays opening and closing as entries flew past the line — was the
+           flicker. Scrolling now only arms a timer. Once the snap has come to
+           rest, whichever title landed on the middle line opens: a single
+           layout change, made while the page is stationary, so there is no
+           momentum left for it to fight. */
+        const SETTLE_MS = 140;
+        let settleTimer = null;
+        let scrollBound = false;
 
-        /* The page opens with project 01 named but its description closed.
-           IntersectionObserver fires a callback the moment it starts observing,
-           which would open it immediately — so callbacks are ignored until the
-           first scroll. That scroll then opens whatever is on the line, which
-           at rest is project 01 itself. */
+        // A reload can restore scroll and fire a scroll event during load; the
+        // page must stay closed until the user genuinely moves it.
         let primed = false;
         let armedAt = 0;
 
-        function primeOnFirstScroll() {
-            if (primed) return;
-            // A reload can restore scroll and fire a scroll event during load,
-            // which would prime it before the user has touched anything.
-            if (performance.now() - armedAt < 350) return;
-            primed = true;
+        function entryOnLine() {
+            const line = window.innerHeight / 2;
+            return entries.find(e => {
+                const r = e.getBoundingClientRect();
+                return r.top <= line && r.bottom >= line;
+            });
+        }
 
-            // The observer won't re-fire for an entry already on the line,
-            // so open the current one by hand.
-            if (window.scrollY > 1) openOnLine();
+        function settle() {
+            settleTimer = null;
+            if (!smallQuery.matches) return;
+
+            if (window.scrollY <= 1) { closeAllTrays(); return; }
+
+            const hit = entryOnLine();
+            if (hit) openOnly(hit);
+        }
+
+        /* Safe to run on every scroll event: this only changes a colour, so it
+           costs no layout. The description still waits for the wheel to stop. */
+        function highlightOnLine() {
+            const hit = entryOnLine();
+            if (!hit || hit.classList.contains('is-current')) return;
+            entries.forEach(e => e.classList.toggle('is-current', e === hit));
+        }
+
+        function onScroll() {
+            if (!primed) {
+                if (performance.now() - armedAt < 350) return;
+                primed = true;
+            }
+            highlightOnLine();
+            if (settleTimer) clearTimeout(settleTimer);
+            settleTimer = setTimeout(settle, SETTLE_MS);
         }
 
         function startScrollMode() {
-            if (midObserver) return;
+            if (scrollBound) return;
+            scrollBound = true;
             armedAt = performance.now();
             list.classList.add('is-engaged');          // dim all but the current one
             entries.forEach(e => e.classList.remove('is-hot'));
 
-            midObserver = new IntersectionObserver(records => {
-                if (!primed) return;
-                records.forEach(rec => {
-                    if (rec.isIntersecting) openOnly(rec.target);
-                });
-            }, { rootMargin: '-50% 0px -50% 0px', threshold: 0 });
-
-            entries.forEach(e => midObserver.observe(e));
-            window.addEventListener('scroll', primeOnFirstScroll, { passive: true });
-            window.addEventListener('scroll', checkTop, { passive: true });
-            atTop = window.scrollY <= 1;
+            window.addEventListener('scroll', onScroll, { passive: true });
 
             // name the entry on the line without opening it, so project 01
             // reads as current against its media while its tray stays shut
-            const line = window.innerHeight / 2;
-            const hit = entries.find(e => {
-                const r = e.getBoundingClientRect();
-                return r.top <= line && r.bottom >= line;
-            }) || entries[0];
+            const hit = entryOnLine() || entries[0];
             entries.forEach(e => e.classList.toggle('is-current', e === hit));
         }
 
         function stopScrollMode() {
-            if (!midObserver) return;
-            midObserver.disconnect();
-            midObserver = null;
-            window.removeEventListener('scroll', primeOnFirstScroll);
-            window.removeEventListener('scroll', checkTop);
+            if (!scrollBound) return;
+            scrollBound = false;
+            window.removeEventListener('scroll', onScroll);
+            if (settleTimer) { clearTimeout(settleTimer); settleTimer = null; }
             primed = false;
-            atTop = true;
             list.classList.remove('is-engaged');
             entries.forEach(e => e.classList.remove('is-open', 'is-current'));
         }

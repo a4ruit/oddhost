@@ -321,6 +321,19 @@ a:hover .menu-bars { transform: scaleX(0.72); }
 .ph-wide { --ar: 16 / 9; }
 .ph-square { --ar: 1 / 1; }
 
+/* Real media dropped straight in as <img class="ph-wide"> (etc), replacing a
+   .ph div rather than sitting inside one. Without this, aspect-ratio alone
+   just sets the box shape — an <img>'s default object-fit is `fill`, which
+   stretches the source to that shape instead of cropping it. */
+img.ph-tall, img.ph-wide, img.ph-square,
+video.ph-tall, video.ph-wide, video.ph-square {
+    width: 100%;
+    aspect-ratio: var(--ar);
+    object-fit: cover;
+    display: block;
+    border: 1px solid var(--rule-soft);
+}
+
 .media-pair {
     display: grid;
     grid-template-columns: 1fr 1fr;

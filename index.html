@@ -252,6 +252,7 @@
 
         .entry.is-hot .entry-title,
         .entry:focus-within .entry-title,
+        .entry.is-current .entry-title,
         .entry.is-open .entry-title { color: #ffffff; }
 
         .entry-year {
@@ -405,23 +406,33 @@
                 right: 0;
                 bottom: auto;
                 width: 100%;
-                /* fills the top half of the screen, header included */
-                height: calc(50vh - 47px);
-                border-bottom: 1px solid #ffffff1a;
+                /* fills the top 65% of the screen, header included */
+                height: calc(65vh - 47px);
+                border-bottom: none;
             }
 
+            /* no hard edge — the media dissolves into the page instead */
             .stage::after {
-                background: linear-gradient(to top, rgba(14,14,14,0.8), rgba(14,14,14,0) 40%);
+                background: linear-gradient(to bottom,
+                    rgba(14,14,14,0) 55%,
+                    rgba(14,14,14,0.55) 80%,
+                    rgba(14,14,14,0.92) 94%,
+                    #0e0e0e 100%);
             }
 
             .index {
                 width: 100%;
+                /* starts the first title exactly on the trigger line at the
+                   middle of the screen, so project 01 is anchored there on
+                   load; the tall tail lets the last entry reach it too */
                 margin-top: 50vh;
-                /* the head offset starts the list just below the trigger line,
-                   and the tall tail lets the last entry scroll up to it —
-                   so every project can open */
-                padding: 6vh 22px 60vh;
+                padding: 0 22px 60vh;
             }
+
+            /* Height snaps instead of animating, so the scroll compensation in
+               openOnly() can measure the exact shift. The hinge on .tray-inner
+               still animates — it costs no layout. */
+            .tray-clip { transition: none; }
 
             .entry-title { font-size: clamp(26px, 8vw, 44px); }
             .project-desc { max-width: none; }
@@ -756,7 +767,7 @@
 
             <article class="entry" data-stage="10">
                 <div class="entry-head">
-                    <h2 class="entry-title">SOS2</h2>
+                    <h2 class="entry-title">S0S2</h2>
                     <span class="entry-year">2023</span>
                 </div>
                 <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
@@ -794,6 +805,10 @@
     </div>
 
     <script>
+        // The layout assumes the page opens at the top, with project 01 sitting
+        // on the trigger line. A restored scroll position breaks that.
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
         /* ── MENU ── */
         const sidebar = document.getElementById('sidebar');
         const scrim = document.getElementById('scrim');
@@ -811,12 +826,10 @@
         /* ── STAGE + TRAYS ── */
         const entries = [...document.querySelectorAll('.entry')];
         const stageItems = [...document.querySelectorAll('.stage-item')];
-        const stageEl = document.getElementById('stage');
         const list = document.getElementById('indexList');
 
         // Small screens / no hover get the scroll-driven mode; everything else hovers.
         const smallQuery = window.matchMedia('(hover: none), (max-width: 900px)');
-        let fadeTicking = false;
 
         // Measure each tray so it can animate to an exact height.
         // offsetHeight is the layout box, so the tray's rotateX doesn't skew it.
@@ -825,8 +838,6 @@
                 const inner = entry.querySelector('.tray-inner');
                 entry.style.setProperty('--tray-h', inner.offsetHeight + 'px');
             });
-            // geometry just changed, so the fade ramp needs recomputing too
-            if (typeof updateFade === 'function') updateFade();
         }
         measureTrays();
         window.addEventListener('resize', measureTrays);
@@ -849,11 +860,110 @@
             });
         }
 
+        /* ── MOBILE: open and close as one movement ──
+           The outgoing tray must not just vanish. Both trays are driven from a
+           single eased progress, so the old one closes at exactly the rate the
+           new one opens — the list never loses or gains height in a jump.
+
+           Scrolling DOWN the closing entry sits above the opening one, so the
+           page loses that height *above* the viewport and everything lurches
+           up. Re-anchoring the opening entry on every frame cancels that, and
+           both directions end up feeling like the upward one. */
+        const TRAY_MS = 500;
+        let trayAnim = null;
+
+        // openEntry may be null — that closes everything.
+        function animateTrays(openEntry, clips, from, anchorEl) {
+            const to = entries.map(e =>
+                e === openEntry ? (parseFloat(e.style.getPropertyValue('--tray-h')) || 0) : 0);
+            const held = anchorEl || openEntry;
+
+            if (trayAnim) cancelAnimationFrame(trayAnim);
+            const start = performance.now();
+            const ease  = t => 1 - Math.pow(1 - t, 3);
+
+            (function frame(now) {
+                const k = ease(Math.min(1, (now - start) / TRAY_MS));
+                const anchor = held.getBoundingClientRect().top;
+
+                clips.forEach((c, i) => {
+                    c.style.height = (from[i] + (to[i] - from[i]) * k) + 'px';
+                });
+
+                const shift = held.getBoundingClientRect().top - anchor;
+                if (shift) window.scrollBy(0, shift);
+
+                if (k < 1) {
+                    trayAnim = requestAnimationFrame(frame);
+                } else {
+                    trayAnim = null;
+                    clips.forEach(c => { c.style.height = ''; });   // hand back to CSS
+                }
+            })(start);
+        }
+
+        /* Back at the very top, return to the resting state: project 01 named
+           but shut, exactly as the page loads. The observer won't reopen it on
+           the way down (it never stopped intersecting), so leaving the top
+           reopens whatever is on the line by hand. */
+        function closeAllTrays() {
+            if (!entries.some(e => e.classList.contains('is-open'))) return;
+
+            const clips = entries.map(e => e.querySelector('.tray-clip'));
+            const from  = clips.map(c => c.getBoundingClientRect().height);
+
+            entries.forEach(el => {
+                el.classList.remove('is-open');
+                el.classList.toggle('is-current', el === entries[0]);
+            });
+            setActive(0);
+
+            clips.forEach((c, i) => { c.style.height = from[i] + 'px'; });
+            animateTrays(null, clips, from, entries[0]);
+        }
+
+        function openOnLine() {
+            const line = window.innerHeight / 2;
+            const hit = entries.find(e => {
+                const r = e.getBoundingClientRect();
+                return r.top <= line && r.bottom >= line;
+            });
+            if (hit) openOnly(hit);
+        }
+
+        let atTop = true;
+
+        function checkTop() {
+            const nowTop = window.scrollY <= 1;
+            if (nowTop === atTop) return;
+            atTop = nowTop;
+            if (nowTop) closeAllTrays();
+            else if (primed) openOnLine();
+        }
+
         function openOnly(entry) {
             if (entry.classList.contains('is-open')) return;
-            entries.forEach(el => el.classList.toggle('is-open', el === entry));
+            const small = smallQuery.matches;
+
+            // Measure BEFORE the class swap: height snaps instantly on mobile,
+            // so reading after would give the new values and nothing would move.
+            let clips, from;
+            if (small) {
+                clips = entries.map(e => e.querySelector('.tray-clip'));
+                from  = clips.map(c => c.getBoundingClientRect().height);
+            }
+
+            entries.forEach(el => {
+                el.classList.toggle('is-open', el === entry);
+                el.classList.toggle('is-current', el === entry);
+            });
             setActive(entries.indexOf(entry));
-            requestFade();   // opening a tray moves everything below it
+
+            if (small) {
+                // pin the old heights in the same task, so no frame paints the snap
+                clips.forEach((c, i) => { c.style.height = from[i] + 'px'; });
+                animateTrays(entry, clips, from);
+            }
         }
 
         /* ── DESKTOP: hover the title ── */
@@ -881,71 +991,73 @@
         });
 
         /* ── MOBILE: whichever entry crosses the trigger line opens ──
-           A zero-height band at the middle of the screen, which is also where
-           the media ends. Entries are contiguous, so exactly one is across
-           that line at any scroll position. */
+           A zero-height band at the middle of the screen. Entries are
+           contiguous, so exactly one is across it at any scroll position. */
         let midObserver = null;
+
+        /* The page opens with project 01 named but its description closed.
+           IntersectionObserver fires a callback the moment it starts observing,
+           which would open it immediately — so callbacks are ignored until the
+           first scroll. That scroll then opens whatever is on the line, which
+           at rest is project 01 itself. */
+        let primed = false;
+        let armedAt = 0;
+
+        function primeOnFirstScroll() {
+            if (primed) return;
+            // A reload can restore scroll and fire a scroll event during load,
+            // which would prime it before the user has touched anything.
+            if (performance.now() - armedAt < 350) return;
+            primed = true;
+
+            // The observer won't re-fire for an entry already on the line,
+            // so open the current one by hand.
+            if (window.scrollY > 1) openOnLine();
+        }
 
         function startScrollMode() {
             if (midObserver) return;
-            list.classList.add('is-engaged');          // dim all but the open one
+            armedAt = performance.now();
+            list.classList.add('is-engaged');          // dim all but the current one
             entries.forEach(e => e.classList.remove('is-hot'));
 
             midObserver = new IntersectionObserver(records => {
+                if (!primed) return;
                 records.forEach(rec => {
                     if (rec.isIntersecting) openOnly(rec.target);
                 });
             }, { rootMargin: '-50% 0px -50% 0px', threshold: 0 });
 
             entries.forEach(e => midObserver.observe(e));
+            window.addEventListener('scroll', primeOnFirstScroll, { passive: true });
+            window.addEventListener('scroll', checkTop, { passive: true });
+            atTop = window.scrollY <= 1;
+
+            // name the entry on the line without opening it, so project 01
+            // reads as current against its media while its tray stays shut
+            const line = window.innerHeight / 2;
+            const hit = entries.find(e => {
+                const r = e.getBoundingClientRect();
+                return r.top <= line && r.bottom >= line;
+            }) || entries[0];
+            entries.forEach(e => e.classList.toggle('is-current', e === hit));
         }
 
         function stopScrollMode() {
             if (!midObserver) return;
             midObserver.disconnect();
             midObserver = null;
+            window.removeEventListener('scroll', primeOnFirstScroll);
+            window.removeEventListener('scroll', checkTop);
+            primed = false;
+            atTop = true;
             list.classList.remove('is-engaged');
-            entries.forEach(e => e.classList.remove('is-open'));
+            entries.forEach(e => e.classList.remove('is-open', 'is-current'));
         }
-
-        /* ── MOBILE: fade entries out as they travel up into the media ──
-           The list still sits above the media, so text isn't clipped — it
-           dissolves on approach instead. Scroll-linked, so no transition. */
-        function updateFade() {
-            if (!smallQuery.matches) return;
-
-            const bandBottom = stageEl.getBoundingClientRect().bottom;
-            // Nothing dims while it is still below the media — the ramp lives
-            // entirely inside the media, so text only fades once it overlaps.
-            const solid = bandBottom;        // at or below the media edge, fully opaque
-            const gone  = bandBottom - 130;  // this far up into the media, invisible
-
-            entries.forEach(entry => {
-                const top = entry.querySelector('.entry-head').getBoundingClientRect().top;
-                const o = Math.max(0, Math.min(1, (top - gone) / (solid - gone)));
-                entry.style.opacity = o.toFixed(3);
-                // an invisible title sitting over the media must not eat taps
-                entry.style.pointerEvents = o < 0.05 ? 'none' : '';
-            });
-        }
-
-        function requestFade() {
-            if (fadeTicking) return;
-            fadeTicking = true;
-            requestAnimationFrame(() => { fadeTicking = false; updateFade(); });
-        }
-
-        window.addEventListener('scroll', requestFade, { passive: true });
-        window.addEventListener('resize', requestFade);
 
         function syncMode() {
-            if (smallQuery.matches) {
-                startScrollMode();
-                updateFade();
-            } else {
-                stopScrollMode();
-                entries.forEach(e => { e.style.opacity = ''; e.style.pointerEvents = ''; });
-            }
+            if (smallQuery.matches) startScrollMode();
+            else stopScrollMode();
         }
 
         smallQuery.addEventListener
@@ -954,7 +1066,6 @@
 
         syncMode();
         setActive(0);
-        if (smallQuery.matches) entries[0].classList.add('is-open');
 
         /* ── LIGHTBOX ── */
         function openLightbox(id) {

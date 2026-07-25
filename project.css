@@ -264,6 +264,17 @@ a:hover .menu-bars { transform: scaleX(0.72); }
     border: 1px solid var(--ink);
 }
 
+/* ── HERO MEDIA ──
+   The same asset the index shows for this project.         */
+.hero-shot {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    display: block;
+    background: var(--ph);
+    border: 1px solid var(--rule-soft);
+}
+
 /* ── MEDIA PLACEHOLDERS ──
    Swap .ph for <img>/<video> as real assets arrive.        */
 .media-stack { display: grid; gap: 20px; }

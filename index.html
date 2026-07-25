@@ -429,10 +429,33 @@
                 padding: 0 22px 60vh;
             }
 
-            /* Height snaps instead of animating, so the scroll compensation in
-               openOnly() can measure the exact shift. The hinge on .tray-inner
-               still animates — it costs no layout. */
+            /* Height is driven frame by frame in JS, so CSS must not fight it.
+               The hinge on .tray-inner still animates — it costs no layout. */
             .tray-clip { transition: none; }
+
+            /* Each title snaps to the trigger line, so a hard flick lands on a
+               project instead of coasting past three of them. `proximity` only
+               pulls when you finish near one — it never hijacks a long scroll. */
+            html {
+                scroll-snap-type: y proximity;
+                scroll-behavior: auto;
+            }
+
+            .entry {
+                scroll-snap-align: start;
+                scroll-margin-top: 50vh;   /* lands the title on the line */
+            }
+
+            /* TEST: the description unfurls upward from below rather than
+               dropping from above, so it travels with an upward drag. */
+            .tray-inner {
+                transform-origin: bottom center;
+                transform: perspective(900px) rotateX(10deg) translateY(22px);
+            }
+
+            .entry.is-open .tray-inner {
+                transform: perspective(900px) rotateX(0) translateY(0);
+            }
 
             .entry-title { font-size: clamp(26px, 8vw, 44px); }
             .project-desc { max-width: none; }
@@ -509,9 +532,7 @@
             <img src="images/magiexpo.png" alt="MAGI EXPO 2025">
         </div>
         <div class="stage-item" data-stage="3">
-            <video muted loop playsinline poster="images/heldinstant.png">
-                <source src="images/held.mp4" type="video/mp4">
-            </video>
+            <img src="images/heldinstant.png" alt="Held, Instantaneously">
         </div>
         <div class="stage-item" data-stage="4">
             <img src="images/digitalmedia.png" alt="Digital Media Exhibition Website">
@@ -620,7 +641,6 @@
                     <div class="field">
                         <div class="field-label">Description</div>
                         <p class="project-desc">A satirical dating app built on adversarial UX. Swipes spawn NPCs into a Unity terrarium — matches bond, rejects fade into a graveyard.</p>
-                        <a href="#" class="project-link" data-lightbox="held">Play film →</a>
                     </div>
                     <div class="field">
                         <div class="field-label">Built with</div>
@@ -794,16 +814,6 @@
         <span>© 2025 Adrian Frichitthavong — @oddh0st — Melbourne, AU</span>
     </footer>
 
-    <!-- LIGHTBOX: Held -->
-    <div class="lightbox" id="lb-held">
-        <div class="lightbox-inner">
-            <button class="lightbox-close" data-close="held">×</button>
-            <video id="vid-held" controls>
-                <source src="images/held.mp4" type="video/mp4">
-            </video>
-        </div>
-    </div>
-
     <script>
         // The layout assumes the page opens at the top, with project 01 sitting
         // on the trigger line. A restored scroll position breaks that.
@@ -865,18 +875,18 @@
            single eased progress, so the old one closes at exactly the rate the
            new one opens — the list never loses or gains height in a jump.
 
-           Scrolling DOWN the closing entry sits above the opening one, so the
-           page loses that height *above* the viewport and everything lurches
-           up. Re-anchoring the opening entry on every frame cancels that, and
-           both directions end up feeling like the upward one. */
+           This used to re-anchor with window.scrollBy() on every frame, which
+           fought momentum scrolling: a fast flick crossed several entries, each
+           restarting the animation and scrolling the page again, compounding
+           until the list lost its place. Native scroll anchoring plus snapping
+           handles it without fighting the touch. */
         const TRAY_MS = 500;
         let trayAnim = null;
 
         // openEntry may be null — that closes everything.
-        function animateTrays(openEntry, clips, from, anchorEl) {
+        function animateTrays(openEntry, clips, from) {
             const to = entries.map(e =>
                 e === openEntry ? (parseFloat(e.style.getPropertyValue('--tray-h')) || 0) : 0);
-            const held = anchorEl || openEntry;
 
             if (trayAnim) cancelAnimationFrame(trayAnim);
             const start = performance.now();
@@ -884,14 +894,10 @@
 
             (function frame(now) {
                 const k = ease(Math.min(1, (now - start) / TRAY_MS));
-                const anchor = held.getBoundingClientRect().top;
 
                 clips.forEach((c, i) => {
                     c.style.height = (from[i] + (to[i] - from[i]) * k) + 'px';
                 });
-
-                const shift = held.getBoundingClientRect().top - anchor;
-                if (shift) window.scrollBy(0, shift);
 
                 if (k < 1) {
                     trayAnim = requestAnimationFrame(frame);
@@ -919,7 +925,7 @@
             setActive(0);
 
             clips.forEach((c, i) => { c.style.height = from[i] + 'px'; });
-            animateTrays(null, clips, from, entries[0]);
+            animateTrays(null, clips, from);
         }
 
         function openOnLine() {

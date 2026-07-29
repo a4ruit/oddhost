@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@oddh0st | folio</title>
+    <title>@oddh0st | adrian frichitthavong</title>
     <link rel="icon" type="image/png" href="images/logo/oddh0stlogo.png">
     <link rel="apple-touch-icon" href="images/logo/oddh0stlogo.png">
     <link rel="preconnect" href="https://api.fontshare.com">
@@ -103,7 +103,7 @@
         .scrim {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0,0,0,0.6);
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s;
@@ -113,19 +113,22 @@
         .scrim.open { opacity: 1; visibility: visible; }
 
         .sidebar {
+            /* The element is wider than the panel reads: the slack is the room
+               the surface has to bulge into when you pull it. A clip-path,
+               rewritten every frame by the honey simulation, decides where the
+               real edge is. --slack must match SLACK in the script. */
+            --panel-w: min(300px, 84vw);
+            --slack: 80px;
+
             position: fixed;
             top: 0;
             left: 0;
             bottom: 0;
-            width: 300px;
-            max-width: 84vw;
-            /* frosted glass: translucent enough to read the page through, with
-               saturation lifted so what bleeds through keeps some colour */
-            background: rgba(255, 255, 255, 0.58);
-            backdrop-filter: blur(24px) saturate(170%);
-            -webkit-backdrop-filter: blur(24px) saturate(170%);
-            border-right: 1px solid rgba(255, 255, 255, 0.4);
-            box-shadow: 0 0 70px rgba(0, 0, 0, 0.55);
+            width: calc(var(--panel-w) + var(--slack));
+            background: #ffffff;
+            /* drop-shadow, not box-shadow — it follows the deformed silhouette
+               instead of the rectangular box, which clip-path would cut away */
+            filter: drop-shadow(0 0 40px rgba(0, 0, 0, 0.5));
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -134,21 +137,32 @@
             transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        /* without backdrop-filter the panel would be an unreadable wash */
-        @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-            .sidebar { background: #ffffff; }
+        /* content stays in the readable column; only the surface uses the slack */
+        .sidebar > * {
+            width: var(--panel-w);
+            flex-shrink: 0;
+        }
+
+        /* no text selection while you are kneading it */
+        .sidebar.is-squishing,
+        .sidebar.is-squishing * {
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .sidebar.open { transform: translateX(0); }
 
         .sidebar-close {
-            align-self: flex-end;
+            /* flex-start + text-align keeps the × at the right of the readable
+               column, not out in the slack the surface bulges into */
+            align-self: flex-start;
+            text-align: right;
             background: none;
             border: none;
             font-family: inherit;
             font-size: 26px;
             line-height: 1;
-            color: #0a0a0a;
+            color: #000;
             cursor: pointer;
             padding: 16px 20px 4px;
             opacity: 0.75;
@@ -157,8 +171,7 @@
 
         .sidebar-section {
             padding: 20px;
-            /* a hairline, not a hard rule — solid black reads as ink on glass */
-            border-bottom: 1px solid rgba(0, 0, 0, 0.14);
+            border-bottom: 1px solid #000;
         }
 
         .sidebar-section:last-child { border-bottom: none; }
@@ -166,7 +179,7 @@
         .sidebar-label {
             font-size: 9px;
             letter-spacing: 0.15em;
-            color: #5e5e5e;
+            color: #888;
             text-transform: uppercase;
             margin-bottom: 10px;
         }
@@ -175,7 +188,7 @@
         .sidebar-section a {
             font-size: 11.5px;
             line-height: 1.6;
-            color: #0a0a0a;
+            color: #000;
             font-weight: 500;
             display: block;
             text-decoration: none;
@@ -186,7 +199,7 @@
         p.sidebar-bio {
             font-size: 12.5px;
             line-height: 1.6;
-            color: #0a0a0a;
+            color: #000;
             font-weight: 400;
         }
 
@@ -889,6 +902,108 @@
         menuBtn.addEventListener('click', () => setMenu(!sidebar.classList.contains('open')));
         scrim.addEventListener('click', () => setMenu(false));
         document.getElementById('sidebarClose').addEventListener('click', () => setMenu(false));
+
+        /* ── HONEY ──
+           The panel's right edge is a row of control points. Dragging pushes
+           the ones near the cursor, weighted by a bell curve so the dent has
+           soft shoulders rather than a corner.
+
+           Two forces run every frame and give it the viscosity:
+             · the surface crawls toward where it was pushed (EASE), so it
+               lags behind the cursor instead of tracking it
+             · neighbours pull on each other (SMOOTH), so sharp dents round
+               themselves out — surface tension
+
+           Nothing pulls it back to flat, so the shape is permanent. It settles
+           at a smoothed version of whatever you kneaded it into, and only a
+           refresh restores it, since the state lives in these two arrays. */
+        (function honey() {
+            const panel = document.getElementById('sidebar');
+            if (!panel || !CSS.supports('clip-path', 'polygon(0px 0px)')) return;
+
+            const N        = 28;    // control points down the edge
+            const SLACK    = 80;    // must match --slack in the CSS
+            const MAX_PULL = 74;    // px the surface can be pushed either way
+            const SIGMA    = 95;    // px — how far a pinch spreads
+            const EASE     = 0.14;  // viscosity
+            const SMOOTH   = 0.22;  // surface tension
+            const MOVE_MIN = 3;     // px before a click counts as a drag
+
+            const target = new Float32Array(N);
+            const cur    = new Float32Array(N);
+            const next   = new Float32Array(N);
+
+            let raf = null, dragging = false, moved = 0, lastX = 0;
+
+            function paint() {
+                const r = panel.getBoundingClientRect();
+                const h = r.height || window.innerHeight;
+                const w = r.width - SLACK;          // the resting edge
+                let d = 'polygon(0px 0px';
+                for (let i = 0; i < N; i++) {
+                    const y = (i / (N - 1)) * h;
+                    d += `, ${(w + cur[i]).toFixed(2)}px ${y.toFixed(2)}px`;
+                }
+                panel.style.clipPath = d + `, 0px ${h.toFixed(2)}px)`;
+            }
+
+            function tick() {
+                let motion = 0;
+
+                for (let i = 0; i < N; i++) next[i] = cur[i] + (target[i] - cur[i]) * EASE;
+                for (let i = 0; i < N; i++) {
+                    const a = next[Math.max(0, i - 1)];
+                    const b = next[Math.min(N - 1, i + 1)];
+                    const v = next[i] + ((a + b) / 2 - next[i]) * SMOOTH;
+                    motion = Math.max(motion, Math.abs(v - cur[i]));
+                    cur[i] = v;
+                }
+
+                paint();
+                raf = (motion > 0.02 || dragging) ? requestAnimationFrame(tick) : null;
+            }
+
+            function wake() { if (!raf) raf = requestAnimationFrame(tick); }
+
+            panel.addEventListener('pointerdown', e => {
+                if (e.button > 0) return;            // left / touch / pen only
+                dragging = true;
+                moved = 0;
+                lastX = e.clientX;
+                wake();
+            });
+
+            window.addEventListener('pointermove', e => {
+                if (!dragging) return;
+                const dx = e.clientX - lastX;
+                lastX = e.clientX;
+
+                moved += Math.abs(dx);
+                if (moved < MOVE_MIN) return;        // a click is not a knead
+                panel.classList.add('is-squishing');
+
+                const r = panel.getBoundingClientRect();
+                const py = e.clientY - r.top;
+                const h = r.height || 1;
+
+                for (let i = 0; i < N; i++) {
+                    const gap = (i / (N - 1)) * h - py;
+                    const w = Math.exp(-(gap * gap) / (2 * SIGMA * SIGMA));
+                    target[i] = Math.max(-MAX_PULL, Math.min(MAX_PULL, target[i] + dx * w));
+                }
+                wake();
+            }, { passive: true });
+
+            function release() {
+                dragging = false;
+                panel.classList.remove('is-squishing');
+            }
+            window.addEventListener('pointerup', release);
+            window.addEventListener('pointercancel', release);
+
+            window.addEventListener('resize', () => { paint(); wake(); });
+            paint();                                 // start flat
+        })();
 
         /* ── STAGE + TRAYS ── */
         const entries = [...document.querySelectorAll('.entry')];

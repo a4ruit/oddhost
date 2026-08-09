@@ -113,22 +113,14 @@
         .scrim.open { opacity: 1; visibility: visible; }
 
         .sidebar {
-            /* The element is wider than the panel reads: the slack is the room
-               the surface has to bulge into when you pull it. A clip-path,
-               rewritten every frame by the honey simulation, decides where the
-               real edge is. --slack must match SLACK in the script. */
-            --panel-w: min(300px, 84vw);
-            --slack: 80px;
-
             position: fixed;
             top: 0;
             left: 0;
             bottom: 0;
-            width: calc(var(--panel-w) + var(--slack));
+            width: 300px;
+            max-width: 84vw;
             background: #ffffff;
-            /* drop-shadow, not box-shadow — it follows the deformed silhouette
-               instead of the rectangular box, which clip-path would cut away */
-            filter: drop-shadow(0 0 40px rgba(0, 0, 0, 0.5));
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
@@ -137,26 +129,10 @@
             transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        /* content stays in the readable column; only the surface uses the slack */
-        .sidebar > * {
-            width: var(--panel-w);
-            flex-shrink: 0;
-        }
-
-        /* no text selection while you are kneading it */
-        .sidebar.is-squishing,
-        .sidebar.is-squishing * {
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
         .sidebar.open { transform: translateX(0); }
 
         .sidebar-close {
-            /* flex-start + text-align keeps the × at the right of the readable
-               column, not out in the slack the surface bulges into */
-            align-self: flex-start;
-            text-align: right;
+            align-self: flex-end;
             background: none;
             border: none;
             font-family: inherit;
@@ -531,6 +507,64 @@
             .sidebar { transition-duration: 0.01ms; }
             .tray-inner { transform: none; }
         }
+
+        /* ── CURSOR DOT ── */
+        .cursor-dot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 10px;
+            height: 10px;
+            margin: -5px 0 0 -5px;
+            border-radius: 50%;
+            background: #ffffff;
+            mix-blend-mode: difference;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+            /* position is already eased in JS (that's the lag) — a CSS
+               transition on transform too would double-smooth it, and would
+               throw it out of sync with where the glitch trail spawns, since
+               that reads the same x/y the JS is animating */
+            transition: opacity 0.2s ease;
+            will-change: transform;
+        }
+
+        .cursor-dot.is-visible { opacity: 1; }
+
+        /* ── CURSOR GLITCHES ──
+           Trails the dot only while it's actually moving; sits just behind it
+           in stacking order so a settling glitch reads as sinking into the dot
+           rather than sitting on top of it. */
+        .cursor-glitches {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 998;
+        }
+
+        .glitch-char {
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 700;
+            font-size: 13px;
+            color: #ffffff;
+            mix-blend-mode: difference;
+            opacity: 0;
+            will-change: transform, opacity;
+            user-select: none;
+        }
+
+        /* fine pointer + hover only — no fake cursor on touch */
+        @media (hover: none), (pointer: coarse) {
+            .cursor-dot, .cursor-glitches { display: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .cursor-dot, .cursor-glitches { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -902,108 +936,6 @@
         menuBtn.addEventListener('click', () => setMenu(!sidebar.classList.contains('open')));
         scrim.addEventListener('click', () => setMenu(false));
         document.getElementById('sidebarClose').addEventListener('click', () => setMenu(false));
-
-        /* ── HONEY ──
-           The panel's right edge is a row of control points. Dragging pushes
-           the ones near the cursor, weighted by a bell curve so the dent has
-           soft shoulders rather than a corner.
-
-           Two forces run every frame and give it the viscosity:
-             · the surface crawls toward where it was pushed (EASE), so it
-               lags behind the cursor instead of tracking it
-             · neighbours pull on each other (SMOOTH), so sharp dents round
-               themselves out — surface tension
-
-           Nothing pulls it back to flat, so the shape is permanent. It settles
-           at a smoothed version of whatever you kneaded it into, and only a
-           refresh restores it, since the state lives in these two arrays. */
-        (function honey() {
-            const panel = document.getElementById('sidebar');
-            if (!panel || !CSS.supports('clip-path', 'polygon(0px 0px)')) return;
-
-            const N        = 28;    // control points down the edge
-            const SLACK    = 80;    // must match --slack in the CSS
-            const MAX_PULL = 74;    // px the surface can be pushed either way
-            const SIGMA    = 95;    // px — how far a pinch spreads
-            const EASE     = 0.14;  // viscosity
-            const SMOOTH   = 0.22;  // surface tension
-            const MOVE_MIN = 3;     // px before a click counts as a drag
-
-            const target = new Float32Array(N);
-            const cur    = new Float32Array(N);
-            const next   = new Float32Array(N);
-
-            let raf = null, dragging = false, moved = 0, lastX = 0;
-
-            function paint() {
-                const r = panel.getBoundingClientRect();
-                const h = r.height || window.innerHeight;
-                const w = r.width - SLACK;          // the resting edge
-                let d = 'polygon(0px 0px';
-                for (let i = 0; i < N; i++) {
-                    const y = (i / (N - 1)) * h;
-                    d += `, ${(w + cur[i]).toFixed(2)}px ${y.toFixed(2)}px`;
-                }
-                panel.style.clipPath = d + `, 0px ${h.toFixed(2)}px)`;
-            }
-
-            function tick() {
-                let motion = 0;
-
-                for (let i = 0; i < N; i++) next[i] = cur[i] + (target[i] - cur[i]) * EASE;
-                for (let i = 0; i < N; i++) {
-                    const a = next[Math.max(0, i - 1)];
-                    const b = next[Math.min(N - 1, i + 1)];
-                    const v = next[i] + ((a + b) / 2 - next[i]) * SMOOTH;
-                    motion = Math.max(motion, Math.abs(v - cur[i]));
-                    cur[i] = v;
-                }
-
-                paint();
-                raf = (motion > 0.02 || dragging) ? requestAnimationFrame(tick) : null;
-            }
-
-            function wake() { if (!raf) raf = requestAnimationFrame(tick); }
-
-            panel.addEventListener('pointerdown', e => {
-                if (e.button > 0) return;            // left / touch / pen only
-                dragging = true;
-                moved = 0;
-                lastX = e.clientX;
-                wake();
-            });
-
-            window.addEventListener('pointermove', e => {
-                if (!dragging) return;
-                const dx = e.clientX - lastX;
-                lastX = e.clientX;
-
-                moved += Math.abs(dx);
-                if (moved < MOVE_MIN) return;        // a click is not a knead
-                panel.classList.add('is-squishing');
-
-                const r = panel.getBoundingClientRect();
-                const py = e.clientY - r.top;
-                const h = r.height || 1;
-
-                for (let i = 0; i < N; i++) {
-                    const gap = (i / (N - 1)) * h - py;
-                    const w = Math.exp(-(gap * gap) / (2 * SIGMA * SIGMA));
-                    target[i] = Math.max(-MAX_PULL, Math.min(MAX_PULL, target[i] + dx * w));
-                }
-                wake();
-            }, { passive: true });
-
-            function release() {
-                dragging = false;
-                panel.classList.remove('is-squishing');
-            }
-            window.addEventListener('pointerup', release);
-            window.addEventListener('pointercancel', release);
-
-            window.addEventListener('resize', () => { paint(); wake(); });
-            paint();                                 // start flat
-        })();
 
         /* ── STAGE + TRAYS ── */
         const entries = [...document.querySelectorAll('.entry')];
@@ -1385,6 +1317,192 @@
             document.querySelectorAll('.lightbox.active').forEach(lb => closeLightbox(lb.id.replace('lb-', '')));
             setMenu(false);
         });
+    </script>
+
+    <!-- CURSOR DOT + GLITCH TRAIL -->
+    <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+    <div class="cursor-glitches" id="cursorGlitches" aria-hidden="true"></div>
+    <script>
+        (function cursorFX() {
+            const dot = document.getElementById('cursorDot');
+            const field = document.getElementById('cursorGlitches');
+            if (!dot || !field) return;
+            if (window.matchMedia('(hover: none), (pointer: coarse)').matches) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            const LAG = 0.16;    // 0–1, lower = more lag behind the real cursor
+
+            let targetX = window.innerWidth / 2;
+            let targetY = window.innerHeight / 2;
+            let x = targetX;
+            let y = targetY;
+            let shown = false;
+            let raf = null;
+
+            /* ── GLITCH TRAIL ──
+               A fixed pool of <span> characters, reused rather than created
+               and destroyed, spawned along the dot's own path as it moves.
+               Each one ages through three phases:
+                 spawn → drift, fading and drifting outward on its own, OR
+                 spawn → absorb, the instant motion stops: it gets pulled back
+                         onto the dot's position and shrinks into it instead.
+               "Motion stops" is judged by the real mousemove events going
+               quiet, not by the dot's own easing settling — so the trail
+               collapses the moment your hand stops, even while the dot is
+               still gliding the last bit of the way to meet it. */
+            const GLYPHS = '01#%&@$*+=<>/\\|~^'.split('');
+            const POOL = 18;
+            const SPAWN_PX = 9;        // dot-travel distance between spawns
+            const MAX_SPAWN_PER_TICK = 2;
+            const JITTER = 4;          // px of random scatter at spawn
+            const DRIFT_MS = 480;      // natural fade while still moving
+            const ABSORB_MS = 220;     // pulled-into-the-dot fade when stopped
+            const STILL_MS = 90;       // quiet time before "stopped" fires
+
+            const particles = Array.from({ length: POOL }, () => {
+                const el = document.createElement('span');
+                el.className = 'glitch-char';
+                field.appendChild(el);
+                return { el, active: false, state: 'drift', x: 0, y: 0,
+                         vx: 0, vy: 0, born: 0, fromX: 0, fromY: 0 };
+            });
+
+            let prevX = x, prevY = y;
+            let spawnCarry = 0;
+            let moving = false;
+            let lastMoveAt = 0;
+            let nextSlot = 0;   // round-robin fallback once the pool saturates,
+                                 // so a fast flick refreshes the oldest particle
+                                 // instead of thrashing a single one repeatedly
+
+            function spawn(px, py, dx, dy) {
+                const p = particles.find(q => !q.active) || particles[nextSlot++ % POOL];
+                const ang = Math.atan2(dy, dx) + Math.PI;   // trail behind travel
+                const spread = (Math.random() - 0.5) * 1.4;
+
+                p.active = true;
+                p.state = 'drift';
+                p.born = performance.now();
+                p.x = px + (Math.random() - 0.5) * JITTER * 2;
+                p.y = py + (Math.random() - 0.5) * JITTER * 2;
+                p.vx = Math.cos(ang + spread) * 0.55;
+                p.vy = Math.sin(ang + spread) * 0.55;
+                p.el.textContent = GLYPHS[(Math.random() * GLYPHS.length) | 0];
+                p.el.style.fontSize = (11 + Math.random() * 4).toFixed(1) + 'px';
+            }
+
+            function beginAbsorb(p, now) {
+                p.state = 'absorb';
+                p.born = now;
+                p.fromX = p.x;
+                p.fromY = p.y;
+            }
+
+            function stepParticles(now) {
+                let anyActive = false;
+
+                particles.forEach(p => {
+                    if (!p.active) return;
+                    anyActive = true;
+
+                    // The transition into 'absorb' on a stopped mouse happens
+                    // once, up in tick(), the instant `moving` flips to false —
+                    // so by the time a particle is seen here it has already
+                    // switched state. This branch only ever runs the natural
+                    // fade-while-still-moving case.
+                    if (p.state === 'drift') {
+                        const t = (now - p.born) / DRIFT_MS;
+                        if (t >= 1) {
+                            p.active = false;
+                            p.el.style.opacity = '0';
+                            return;
+                        }
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        const fade = 1 - t;
+                        p.el.style.opacity = (fade * 0.85).toFixed(2);
+                        p.el.style.transform =
+                            `translate3d(${p.x}px, ${p.y}px, 0) translate(-50%, -50%) scale(${(0.7 + fade * 0.5).toFixed(2)})`;
+                    }
+
+                    if (p.state === 'absorb') {
+                        const t = Math.min(1, (now - p.born) / ABSORB_MS);
+                        const ease = 1 - Math.pow(1 - t, 2);
+                        p.x = p.fromX + (x - p.fromX) * ease;
+                        p.y = p.fromY + (y - p.fromY) * ease;
+                        p.el.style.opacity = (0.85 * (1 - ease)).toFixed(2);
+                        p.el.style.transform =
+                            `translate3d(${p.x}px, ${p.y}px, 0) translate(-50%, -50%) scale(${(1 - ease * 0.9).toFixed(2)})`;
+
+                        if (t >= 1) { p.active = false; p.el.style.opacity = '0'; }
+                    }
+                });
+
+                return anyActive;
+            }
+
+            function tick() {
+                const now = performance.now();
+
+                if (moving && now - lastMoveAt > STILL_MS) {
+                    moving = false;
+                    particles.forEach(p => { if (p.active && p.state === 'drift') beginAbsorb(p, now); });
+                }
+
+                x += (targetX - x) * LAG;
+                y += (targetY - y) * LAG;
+                dot.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+
+                if (moving) {
+                    const dx = x - prevX, dy = y - prevY;
+                    const dist = Math.hypot(dx, dy);
+                    spawnCarry += dist;
+                    let spawned = 0;
+                    while (spawnCarry >= SPAWN_PX && spawned < MAX_SPAWN_PER_TICK) {
+                        spawn(x, y, dx || 0.01, dy || 0.01);
+                        spawnCarry -= SPAWN_PX;
+                        spawned++;
+                    }
+                }
+                prevX = x; prevY = y;
+
+                const particlesActive = stepParticles(now);
+                const dotSettled = Math.abs(targetX - x) <= 0.05 && Math.abs(targetY - y) <= 0.05;
+
+                if (!dotSettled || particlesActive) {
+                    raf = requestAnimationFrame(tick);
+                } else {
+                    x = targetX; y = targetY;
+                    dot.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                    raf = null;
+                }
+            }
+
+            function wake() { if (!raf) raf = requestAnimationFrame(tick); }
+
+            window.addEventListener('mousemove', e => {
+                targetX = e.clientX;
+                targetY = e.clientY;
+                moving = true;
+                lastMoveAt = performance.now();
+
+                if (!shown) {
+                    shown = true;
+                    x = targetX; y = targetY;
+                    prevX = x; prevY = y;
+                    dot.classList.add('is-visible');
+                }
+                wake();
+            }, { passive: true });
+
+            // fades out over an iframe (itch.io embed, YouTube lightbox) where
+            // no mousemove reaches this document to keep it positioned
+            document.addEventListener('mouseleave', () => dot.classList.remove('is-visible'));
+            document.addEventListener('mouseenter', () => { if (shown) dot.classList.add('is-visible'); });
+
+            window.addEventListener('mousedown', () => dot.style.opacity = '0.5');
+            window.addEventListener('mouseup', () => dot.style.opacity = '');
+        })();
     </script>
 
 </body>

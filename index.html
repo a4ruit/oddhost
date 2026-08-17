@@ -18,29 +18,193 @@
             -webkit-font-smoothing: antialiased;
             color: #ffffff;
             min-height: 100vh;
+            /* .gallery's margin-top would otherwise collapse straight through
+               body and add its own height to the page, turning this single-
+               screen composition into a page with 47px of phantom scroll.
+               flow-root contains it without touching any visual layout. */
+            display: flow-root;
         }
 
-        /* ── ARCHIVE SWITCH ── */
-        .corner-btn {
+        /* ── HEADER ──
+           Duplicated from archive.html so both pages share one identity.
+           Fixed at exactly 47px — .gallery's top offset below depends on
+           that number, same as .stage/.index do on the archive page. */
+        .site-header {
             position: fixed;
-            top: 16px;
-            right: 16px;
-            z-index: 150;
-            font-size: 9px;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 120;
+            display: flex;
+            align-items: stretch;
+            border-bottom: 1px solid #ffffff1a;
+            background: rgba(14,14,14,0.72);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .menu-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: none;
+            border: none;
+            border-right: 1px solid #ffffff1a;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 10px;
             font-weight: 500;
-            letter-spacing: 0.14em;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            padding: 0 22px;
+            cursor: pointer;
+        }
+
+        .menu-bars {
+            display: block;
+            width: 22px;
+            height: 7px;
+            border-top: 1px solid currentColor;
+            border-bottom: 1px solid currentColor;
+            transition: transform 0.25s ease;
+        }
+
+        .menu-btn:hover .menu-bars { transform: scaleX(0.72); }
+
+        .header-name {
+            display: block;
+            padding: 14px 22px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            border-right: 1px solid #ffffff1a;
+            white-space: nowrap;
+            color: #ffffff;
+            text-decoration: none;
+            flex-shrink: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .header-name:hover { opacity: 0.7; }
+
+        .header-meta {
+            padding: 14px 22px;
+            font-size: 11px;
+            color: #999;
+            display: flex;
+            align-items: center;
+            gap: 26px;
+            flex: 1;
+        }
+
+        .header-meta a { color: #999; text-decoration: none; }
+        .header-meta a:hover { color: #ffffff; }
+        .header-meta .sep { color: #3a3a3a; }
+
+        /* header-meta is hidden under 900px, taking its flex:1 spacer with
+           it — this keeps the button pinned right at every width */
+        .corner-btn {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            margin-left: auto;
+            padding: 0 22px;
+            border-left: 1px solid #ffffff1a;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.16em;
             text-transform: uppercase;
             color: #ffffff;
             text-decoration: none;
-            border: 1px solid #ffffff3d;
-            padding: 9px 14px;
-            background: rgba(14, 14, 14, 0.6);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            white-space: nowrap;
             transition: background 0.2s ease, color 0.2s ease;
         }
 
         .corner-btn:hover { background: #ffffff; color: #0e0e0e; }
+
+        /* ── OFF-CANVAS SIDEBAR ── */
+        .scrim {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s;
+            z-index: 130;
+        }
+
+        .scrim.open { opacity: 1; visibility: visible; }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 300px;
+            max-width: 84vw;
+            background: #ffffff;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 140;
+            transform: translateX(-100%);
+            transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .sidebar.open { transform: translateX(0); }
+
+        .sidebar-close {
+            align-self: flex-end;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 26px;
+            line-height: 1;
+            color: #000;
+            cursor: pointer;
+            padding: 16px 20px 4px;
+            opacity: 0.75;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid #000;
+        }
+
+        .sidebar-section:last-child { border-bottom: none; }
+
+        .sidebar-label {
+            font-size: 9px;
+            letter-spacing: 0.15em;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-section p,
+        .sidebar-section a {
+            font-size: 11.5px;
+            line-height: 1.6;
+            color: #000;
+            font-weight: 500;
+            display: block;
+            text-decoration: none;
+        }
+
+        .sidebar-section a:hover { text-decoration: underline; }
+
+        p.sidebar-bio {
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #000;
+            font-weight: 400;
+        }
+
+        .sidebar-bio strong { font-weight: 700; }
+
+        .sidebar-close:hover { opacity: 1; }
 
         /* ── GALLERY ──
            A cluster, not a ring. Every piece sits along its own fixed angle
@@ -64,7 +228,10 @@
         .gallery {
             position: relative;
             width: 100%;
-            min-height: 100vh;
+            /* offset by the header so the cluster centres in the space
+               actually visible below it, not the full viewport height */
+            margin-top: 47px;
+            min-height: calc(100vh - 47px);
         }
 
         .piece {
@@ -163,7 +330,7 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .piece img, .piece video, .hover-caption { transition-duration: 0.01ms; }
+            .piece img, .piece video, .hover-caption, .sidebar { transition-duration: 0.01ms; }
         }
 
         /* ── CURSOR DOT ── */
@@ -218,7 +385,50 @@
 </head>
 <body>
 
-    <a class="corner-btn" href="archive.html">Archive</a>
+    <!-- HEADER -->
+    <header class="site-header">
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">
+            <span class="menu-bars"></span>Menu
+        </button>
+        <a class="header-name" href="https://www.instagram.com/oddh0st/"
+           target="_blank" rel="noopener noreferrer">@oddh0st</a>
+        <div class="header-meta">
+            <span>Adrian Frichitthavong</span>
+        </div>
+        <a class="corner-btn" href="archive.html">Archive</a>
+    </header>
+
+    <!-- OFF-CANVAS INFO -->
+    <div class="scrim" id="scrim"></div>
+    <aside class="sidebar" id="sidebar">
+        <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">×</button>
+        <div class="sidebar-section">
+            <p class="sidebar-bio"><strong>oddh0st</strong> is the online handle of Adrian Frichitthavong, a Melbourne-based new media artist, creative technologist, and projection designer. His work blends interactive web interfaces, real-time motion capture, TouchDesigner, and Unity to build immersive digital environments and live audiovisual installations.</p>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Education</div>
+            <p>Master of Animation, Games &amp; Interactivity, 2026</p>
+            <p style="margin-top:6px">Bachelor's of Digital Media — Dean's Award Recipient 2024</p>
+            <p style="margin-top:6px">Advanced Diploma of Building Design, 2016</p>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Exhibitions</div>
+            <p>Platform Presents, "SOUND CHECK: HYBRID" Dec 2025</p>
+            <p style="margin-top:6px">Platform Presents, "Held, Briefly" Nov 2025</p>
+            <p style="margin-top:6px">N0_R3PLY Collective, 2024 — Present</p>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Workshops</div>
+            <p>"End the Boring Internet" — Three.js + GitHub Pages, RMIT 2025</p>
+            <p style="margin-top:6px">TouchDesigner + Blender, RMIT 2025</p>
+            <p style="margin-top:6px">Friday Blender, RMIT 2021 — 2024</p>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Contact</div>
+            <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
+            <a href="https://itch.io/my-collections" target="_blank" style="margin-top:4px">itch.io</a>
+        </div>
+    </aside>
 
     <main class="gallery">
 
@@ -286,6 +496,20 @@
     <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
     <div class="cursor-glitches" id="cursorGlitches" aria-hidden="true"></div>
     <script>
+        /* ── MENU ── */
+        const sidebar = document.getElementById('sidebar');
+        const scrim = document.getElementById('scrim');
+        const menuBtn = document.getElementById('menuBtn');
+
+        function setMenu(open) {
+            sidebar.classList.toggle('open', open);
+            scrim.classList.toggle('open', open);
+            menuBtn.setAttribute('aria-expanded', String(open));
+        }
+        menuBtn.addEventListener('click', () => setMenu(!sidebar.classList.contains('open')));
+        scrim.addEventListener('click', () => setMenu(false));
+        document.getElementById('sidebarClose').addEventListener('click', () => setMenu(false));
+
         // All videos play continuously. The autoplay attribute covers most
         // browsers on its own; this is the fallback for the ones that need
         // an explicit nudge even when muted.

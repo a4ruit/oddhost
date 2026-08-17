@@ -567,25 +567,26 @@
         }
 
         /* ── BACK TO GALLERY ──
-           Sits just under the header strip rather than inside it, so it never
-           overlaps the "Adrian Frichitthavong" text the header-meta area
-           already fills on desktop. */
+           A header item, not an overlay. header-meta takes the free space
+           (flex: 1), so this sits flush against the right edge, and the
+           stretch alignment on .site-header sizes it to the strip without
+           changing the header's 47px height that .stage and .index rely on. */
         .corner-btn {
-            position: fixed;
-            top: 57px;
-            right: 16px;
-            z-index: 150;
-            font-size: 9px;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            /* header-meta is hidden under 900px, taking its flex:1 spacer with
+               it — this keeps the button pinned right at every width */
+            margin-left: auto;
+            padding: 0 22px;
+            border-left: 1px solid #ffffff1a;
+            font-size: 10px;
             font-weight: 500;
-            letter-spacing: 0.14em;
+            letter-spacing: 0.16em;
             text-transform: uppercase;
             color: #ffffff;
             text-decoration: none;
-            border: 1px solid #ffffff3d;
-            padding: 8px 13px;
-            background: rgba(14, 14, 14, 0.6);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            white-space: nowrap;
             transition: background 0.2s ease, color 0.2s ease;
         }
 
@@ -593,8 +594,6 @@
     </style>
 </head>
 <body>
-
-    <a class="corner-btn" href="index.html">New ↗</a>
 
     <!-- HEADER -->
     <header class="site-header">
@@ -606,6 +605,7 @@
         <div class="header-meta">
             <span>Adrian Frichitthavong</span>
         </div>
+        <a class="corner-btn" href="index.html">Home</a>
     </header>
 
     <!-- OFF-CANVAS INFO -->

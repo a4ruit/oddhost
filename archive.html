@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@oddh0st | adrian frichitthavong</title>
+    <link rel="icon" type="image/png" href="images/logo/oddh0stlogo.png">
+    <link rel="apple-touch-icon" href="images/logo/oddh0stlogo.png">
+    <link rel="preconnect" href="https://api.fontshare.com">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0e0e0e;
+            font-family: 'Satoshi', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            font-weight: 400;
+            -webkit-font-smoothing: antialiased;
+            color: #ffffff;
+            min-height: 100vh;
+        }
+
+        /* ── HEADER ── */
+        .site-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 120;
+            display: flex;
+            align-items: stretch;
+            border-bottom: 1px solid #ffffff1a;
+            background: rgba(14,14,14,0.72);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+
+        .menu-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: none;
+            border: none;
+            border-right: 1px solid #ffffff1a;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            padding: 0 22px;
+            cursor: pointer;
+        }
+
+        .menu-bars {
+            display: block;
+            width: 22px;
+            height: 7px;
+            border-top: 1px solid currentColor;
+            border-bottom: 1px solid currentColor;
+            transition: transform 0.25s ease;
+        }
+
+        .menu-btn:hover .menu-bars { transform: scaleX(0.72); }
+
+        /* Padding is tuned to keep the header exactly 47px —
+           .stage and .index are offset by that number. */
+        .header-name {
+            display: block;
+            padding: 14px 22px;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            border-right: 1px solid #ffffff1a;
+            white-space: nowrap;
+            color: #ffffff;
+            text-decoration: none;
+            flex-shrink: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .header-name:hover { opacity: 0.7; }
+
+        .header-meta {
+            padding: 14px 22px;
+            font-size: 11px;
+            color: #999;
+            display: flex;
+            align-items: center;
+            gap: 26px;
+            flex: 1;
+        }
+
+        .header-meta a { color: #999; text-decoration: none; }
+        .header-meta a:hover { color: #ffffff; }
+        .header-meta .sep { color: #3a3a3a; }
+
+        /* ── OFF-CANVAS SIDEBAR ── */
+        .scrim {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.6);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s;
+            z-index: 130;
+        }
+
+        .scrim.open { opacity: 1; visibility: visible; }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 300px;
+            max-width: 84vw;
+            background: #ffffff;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 140;
+            transform: translateX(-100%);
+            transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .sidebar.open { transform: translateX(0); }
+
+        .sidebar-close {
+            align-self: flex-end;
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 26px;
+            line-height: 1;
+            color: #000;
+            cursor: pointer;
+            padding: 16px 20px 4px;
+            opacity: 0.75;
+            transition: opacity 0.2s ease;
+        }
+
+        .sidebar-section {
+            padding: 20px;
+            border-bottom: 1px solid #000;
+        }
+
+        .sidebar-section:last-child { border-bottom: none; }
+
+        .sidebar-label {
+            font-size: 9px;
+            letter-spacing: 0.15em;
+            color: #888;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-section p,
+        .sidebar-section a {
+            font-size: 11.5px;
+            line-height: 1.6;
+            color: #000;
+            font-weight: 500;
+            display: block;
+            text-decoration: none;
+        }
+
+        .sidebar-section a:hover { text-decoration: underline; }
+
+        p.sidebar-bio {
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #000;
+            font-weight: 400;
+        }
+
+        .sidebar-bio strong { font-weight: 700; }
+
+        .sidebar-close:hover { opacity: 1; }
+
+        /* ── LAYOUT ── */
+        .stage {
+            position: fixed;
+            top: 47px;
+            right: 0;
+            bottom: 0;
+            width: 50vw;
+            background: #0a0a0a;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .stage::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(to right, rgba(14,14,14,0.85), rgba(14,14,14,0) 22%);
+        }
+
+        .stage-item {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            transform: scale(1.04);
+            transition: opacity 0.55s ease, transform 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #0a0a0a;
+        }
+
+        .stage-item.is-active { opacity: 1; transform: scale(1); }
+
+        .stage-item img,
+        .stage-item video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .stage-item iframe { border: 0; }
+
+        /* ── INDEX LIST ── */
+        .index {
+            position: relative;
+            z-index: 10;
+            width: 50vw;
+            margin-top: 47px;
+            padding: 8vh 0 14vh 5vw;
+        }
+
+        .entry {
+            border-bottom: 1px solid #ffffff14;
+        }
+
+        /* inline-flex so the head hugs its text instead of spanning the column */
+        .entry-head {
+            display: inline-flex;
+            align-items: flex-start;
+            gap: 14px;
+            width: auto;
+            max-width: 100%;
+            background: none;
+            border: none;
+            color: inherit;
+            font-family: inherit;
+            text-align: left;
+            padding: 14px 0;
+            cursor: default;
+        }
+
+        .entry-title {
+            font-size: clamp(30px, 4.6vw, 68px);
+            font-weight: 700;
+            letter-spacing: -0.035em;
+            line-height: 1;
+            color: #ffffff;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        /* titles that link to a project page */
+        .entry-title a {
+            color: inherit;
+            text-decoration: none;
+            display: block;
+        }
+
+        /* dim the others once a title is engaged */
+        .index-list.is-engaged .entry-title,
+        .index-list:focus-within .entry-title { color: #5c5c5c; }
+
+        .entry.is-hot .entry-title,
+        .entry:focus-within .entry-title,
+        .entry.is-current .entry-title,
+        .entry.is-open .entry-title { color: #ffffff; }
+
+        .entry-year {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            color: #8a8a8a;
+            margin-top: 0.35em;
+            flex-shrink: 0;
+        }
+
+        /* ── TRAY ── */
+        .tray-clip {
+            height: 0;
+            overflow: hidden;
+            transition: height 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .entry.is-hot .tray-clip,
+        .entry:focus-within .tray-clip,
+        .entry.is-open .tray-clip { height: var(--tray-h, auto); }
+
+        /* the hinge: panel swings down from its top edge */
+        .tray-inner {
+            transform-origin: top center;
+            transform: perspective(900px) rotateX(-14deg) translateY(-8px);
+            opacity: 0;
+            padding-bottom: 34px;
+            transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                        opacity 0.35s ease 0.06s;
+        }
+
+        .entry.is-hot .tray-inner,
+        .entry:focus-within .tray-inner,
+        .entry.is-open .tray-inner {
+            transform: perspective(900px) rotateX(0) translateY(0);
+            opacity: 1;
+        }
+
+        .field {
+            border-top: 1px solid #ffffff33;
+            padding-top: 7px;
+            margin-top: 22px;
+        }
+
+        .field-label {
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #777;
+            margin-bottom: 18px;
+        }
+
+        .project-desc {
+            font-size: 15px;
+            line-height: 1.45;
+            color: #ededed;
+            max-width: 34ch;
+        }
+
+        .project-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            font-size: 9px;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            color: #bbbbbb;
+            border: 1px solid #ffffff33;
+            font-weight: 500;
+            padding: 4px 9px;
+        }
+
+        .project-link {
+            display: inline-block;
+            margin-top: 20px;
+            font-size: 15px;
+            line-height: 1.45;
+            color: #6c8cff;
+            text-decoration: none;
+        }
+
+        .project-link:hover { opacity: 0.7; }
+
+
+        /* ── MARKER (mobile only, hidden by default) ── */
+        .line-marker { display: none; }
+
+        /* Invisible probe pinned to the snap line at both breakpoints. */
+        .line-ref {
+            position: fixed;
+            top: 50vh;
+            left: 0;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+        }
+
+        /* ── LIGHTBOX ── */
+        .lightbox {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox.active { display: flex; }
+
+        .lightbox-inner {
+            position: relative;
+            width: 90vw;
+            max-width: 960px;
+        }
+
+        .lightbox-inner video { width: 100%; display: block; outline: none; }
+
+        .lightbox-yt {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            display: block;
+            border: none;
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: -36px;
+            right: 0;
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 28px;
+            cursor: pointer;
+            font-family: inherit;
+            line-height: 1;
+            opacity: 0.7;
+        }
+
+        .lightbox-close:hover { opacity: 1; }
+
+        /* ── FOOTER ── */
+        .site-footer {
+            position: relative;
+            z-index: 10;
+            width: 50vw;
+            padding: 30px 0 40px 5vw;
+            font-size: 10px;
+            color: #444;
+            letter-spacing: 0.08em;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            .header-meta { display: none; }
+
+            .stage {
+                top: 47px;
+                left: 0;
+                right: 0;
+                bottom: auto;
+                width: 100%;
+                /* fills the top 65% of the screen, header included */
+                height: calc(65vh - 47px);
+                border-bottom: none;
+            }
+
+            /* no hard edge — the media dissolves into the page instead */
+            .stage::after {
+                background: linear-gradient(to bottom,
+                    rgba(14,14,14,0) 55%,
+                    rgba(14,14,14,0.55) 80%,
+                    rgba(14,14,14,0.92) 94%,
+                    #0e0e0e 100%);
+            }
+
+            .index {
+                width: 100%;
+                /* starts the first title exactly on the trigger line at the
+                   middle of the screen, so project 01 is anchored there on
+                   load; the tall tail lets the last entry reach it too */
+                margin-top: 50vh;
+                padding: 0 22px 60vh;
+            }
+
+            /* Height is driven frame by frame in JS, so CSS must not fight it.
+               The hinge on .tray-inner still animates — it costs no layout. */
+            .tray-clip { transition: none; }
+
+            /* Marks the middle line. A landed entry puts its top edge on 50vh, so
+               the arrow drops by the head padding plus half a title line to sit
+               against the middle of the text. The em is sized from the title,
+               so it tracks the clamp. */
+            .line-marker {
+                display: block;
+                position: fixed;
+                left: 8px;
+                font-size: clamp(26px, 8vw, 44px);
+                top: calc(50vh + 14px + 0.5em);
+                transform: translateY(-50%);
+                width: 0;
+                height: 0;
+                border-top: 4px solid transparent;
+                border-bottom: 4px solid transparent;
+                border-left: 6px solid #ffffff;
+                opacity: 0.5;
+                z-index: 15;
+                pointer-events: none;
+            }
+
+            .entry-title { font-size: clamp(26px, 8vw, 44px); }
+            .project-desc { max-width: none; }
+            .site-footer { width: 100%; padding: 20px 22px 40px; }
+            .lightbox-inner { width: 96vw; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .tray-inner,
+            .entry-tray,
+            .stage-item,
+            .sidebar { transition-duration: 0.01ms; }
+            .tray-inner { transform: none; }
+        }
+
+        /* ── CURSOR DOT ── */
+        .cursor-dot {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 10px;
+            height: 10px;
+            margin: -5px 0 0 -5px;
+            border-radius: 50%;
+            background: #ffffff;
+            mix-blend-mode: difference;
+            pointer-events: none;
+            z-index: 999;
+            opacity: 0;
+            /* position is already eased in JS (that's the lag) — a CSS
+               transition on transform too would double-smooth it, and would
+               throw it out of sync with where the glitch trail spawns, since
+               that reads the same x/y the JS is animating */
+            transition: opacity 0.2s ease;
+            will-change: transform;
+        }
+
+        .cursor-dot.is-visible { opacity: 1; }
+
+        /* ── CURSOR GLITCHES ──
+           Trails the dot only while it's actually moving; sits just behind it
+           in stacking order so a settling glitch reads as sinking into the dot
+           rather than sitting on top of it. */
+        .cursor-glitches {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 998;
+        }
+
+        .glitch-char {
+            position: absolute;
+            top: 0;
+            left: 0;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: 700;
+            font-size: 13px;
+            color: #ffffff;
+            mix-blend-mode: difference;
+            opacity: 0;
+            will-change: transform, opacity;
+            user-select: none;
+        }
+
+        /* fine pointer + hover only — no fake cursor on touch */
+        @media (hover: none), (pointer: coarse) {
+            .cursor-dot, .cursor-glitches { display: none; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .cursor-dot, .cursor-glitches { display: none; }
+        }
+
+        /* ── BACK TO GALLERY ──
+           Sits just under the header strip rather than inside it, so it never
+           overlaps the "Adrian Frichitthavong" text the header-meta area
+           already fills on desktop. */
+        .corner-btn {
+            position: fixed;
+            top: 57px;
+            right: 16px;
+            z-index: 150;
+            font-size: 9px;
+            font-weight: 500;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #ffffff;
+            text-decoration: none;
+            border: 1px solid #ffffff3d;
+            padding: 8px 13px;
+            background: rgba(14, 14, 14, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        .corner-btn:hover { background: #ffffff; color: #0e0e0e; }
+    </style>
+</head>
+<body>
+
+    <a class="corner-btn" href="index.html">New ↗</a>
+
+    <!-- HEADER -->
+    <header class="site-header">
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">
+            <span class="menu-bars"></span>Menu
+        </button>
+        <a class="header-name" href="https://www.instagram.com/oddh0st/"
+           target="_blank" rel="noopener noreferrer">@oddh0st</a>
+        <div class="header-meta">
+            <span>Adrian Frichitthavong</span>
+        </div>
+    </header>
+
+    <!-- OFF-CANVAS INFO -->
+    <div class="scrim" id="scrim"></div>
+    <aside class="sidebar" id="sidebar">
+        <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">×</button>
+        <div class="sidebar-section">
+            <p class="sidebar-bio"><strong>oddh0st</strong> is the online handle of Adrian Frichitthavong, a Melbourne-based new media artist, creative technologist, and projection designer. His work blends interactive web interfaces, real-time motion capture, TouchDesigner, and Unity to build immersive digital environments and live audiovisual installations.</p>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Education</div>
+            <p>Master of Animation, Games &amp; Interactivity, 2026</p>
+            <p style="margin-top:6px">Bachelor's of Digital Media — Dean's Award Recipient 2024</p>
+            <p style="margin-top:6px">Advanced Diploma of Building Design, 2016</p>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Exhibitions</div>
+            <p>Platform Presents, "SOUND CHECK: HYBRID" Dec 2025</p>
+            <p style="margin-top:6px">Platform Presents, "Held, Briefly" Nov 2025</p>
+            <p style="margin-top:6px">N0_R3PLY Collective, 2024 — Present</p>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Workshops</div>
+            <p>"End the Boring Internet" — Three.js + GitHub Pages, RMIT 2025</p>
+            <p style="margin-top:6px">TouchDesigner + Blender, RMIT 2025</p>
+            <p style="margin-top:6px">Friday Blender, RMIT 2021 — 2024</p>
+        </div>
+        <div class="sidebar-section">
+            <div class="sidebar-label">Contact</div>
+            <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
+            <a href="https://itch.io/my-collections" target="_blank" style="margin-top:4px">itch.io</a>
+        </div>
+    </aside>
+
+    <!-- MEDIA STAGE -->
+    <div class="stage" id="stage">
+        <div class="stage-item" data-stage="0">
+            <video muted loop playsinline poster="images/luminous.png">
+                <source src="images/luminous.mp4" type="video/mp4">
+            </video>
+        </div>
+        <div class="stage-item" data-stage="1">
+            <img src="https://img.youtube.com/vi/OBFQhZ5cqq0/maxresdefault.jpg" alt="CCTV Installation">
+        </div>
+        <div class="stage-item" data-stage="2">
+            <img src="images/magiexpo.png" alt="MAGI EXPO 2025">
+        </div>
+        <div class="stage-item" data-stage="3">
+            <img src="images/heldinstant.png" alt="Held, Instantaneously">
+        </div>
+        <div class="stage-item" data-stage="4">
+            <img src="images/digitalmedia.png" alt="Digital Media Exhibition Website">
+        </div>
+        <div class="stage-item" data-stage="5">
+            <img src="images/milkbar.png" alt="MAGI Milk Bar Project">
+        </div>
+        <div class="stage-item" data-stage="6">
+            <img src="images/workshop.png" alt="TouchDesigner + Blender Workshop">
+        </div>
+        <div class="stage-item" data-stage="7">
+            <img src="images/cadenacam.png" alt="N0_R3PLY Collective">
+        </div>
+        <div class="stage-item" data-stage="8">
+            <img src="images/neurometrix.png" alt="Digital Media Major Project">
+        </div>
+        <div class="stage-item" data-stage="9" style="background:#111">
+            <iframe src="https://itch.io/embed/4123850?border_color=ffffff" width="208" height="167" title="CatOS on itch.io"></iframe>
+        </div>
+        <div class="stage-item" data-stage="10">
+            <img src="images/sos2.png" alt="SOS2">
+        </div>
+    </div>
+
+    <!-- Sits on the snap line using the same 50vh the CSS snaps to, so the
+         script and the browser always agree on where "the middle" is. On iOS
+         100vh is the large viewport, which is NOT window.innerHeight while the
+         toolbar is showing — measuring this element sidesteps that entirely. -->
+    <div class="line-ref" aria-hidden="true"></div>
+
+    <!-- the detent the wheel comes to rest on (mobile only) -->
+    <div class="line-marker" aria-hidden="true"></div>
+
+    <!-- INDEX -->
+    <main class="index">
+        <div class="index-list" id="indexList">
+
+            <article class="entry" data-stage="0">
+                <div class="entry-head">
+                    <h2 class="entry-title"><a href="luminous-festival.html">Luminous Festival</a></h2>
+                    <span class="entry-year">2025</span>
+                </div>
+                <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
+                    <div class="field">
+                        <div class="field-label">Description</div>
+                        <p class="project-desc">Outdoor forest installation on dual vertical displays. Hand tracking drives an ASCII boid flock as a live force field — hunted by a whale.</p>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Built with</div>
+                        <div class="project-tags">
+                            <span class="tag">Unity HDRP</span>
+                            <span class="tag">MediaPipe</span>
+                            <span class="tag">Python UDP</span>
+                            <span class="tag">GLSL Shaders</span>
+                            <span class="tag">Boids</span>
+                            <span class="tag">Live Performance</span>
+                        </div>
+                    </div>
+                </div></div></div>
+            </article>
+
+            <article class="entry" data-stage="1">
+                <div class="entry-head">
+                    <h2 class="entry-title"><a href="cctv-installation.html">CCTV Installation</a></h2>
+                    <span class="entry-year">2025</span>
+                </div>
+                <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
+                    <div class="field">
+                        <div class="field-label">Description</div>
+                        <p class="project-desc">Networked NDI cameras composited live across the event space. Commissioned by Chantelle Lucyl for Melbourne Fashion Week.</p>
+                        <a href="https://www.youtube.com/watch?v=OBFQhZ5cqq0" target="_blank" class="project-link">Watch on YouTube →</a>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Built with</div>
+                        <div class="project-tags">
+                            <span class="tag">NDI</span>
+                            <span class="tag">Live Video</span>
+                            <span class="tag">Networking</span>
+                            <span class="tag">Melbourne Fashion Week</span>
+                            <span class="tag">Commission</span>
+                        </div>
+                    </div>
+                </div></div></div>
+            </article>
+
+            <article class="entry" data-stage="2">
+                <div class="entry-head">
+                    <h2 class="entry-title"><a href="magi-expo-2025.html">MAGI EXPO 2025</a></h2>
+                    <span class="entry-year">2025</span>
+                </div>
+                <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
+                    <div class="field">
+                        <div class="field-label">Description</div>
+                        <p class="project-desc">Student profiles as asteroids orbiting category planets. React Three Fiber, held at 60fps across devices.</p>
+                        <a href="https://magiexpo2025.com" target="_blank" class="project-link">Visit Site →</a>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Built with</div>
+                        <div class="project-tags">
+                            <span class="tag">React Three Fiber</span>
+                            <span class="tag">3D Web</span>
+                            <span class="tag">Performance</span>
+                            <span class="tag">RMIT</span>
+                        </div>
+                    </div>
+                </div></div></div>
+            </article>
+
+            <article class="entry" data-stage="3">
+                <div class="entry-head">
+                    <h2 class="entry-title">Held, Instantaneously</h2>
+                    <span class="entry-year">2025</span>
+                </div>
+                <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
+                    <div class="field">
+                        <div class="field-label">Description</div>
+                        <p class="project-desc">A satirical dating app built on adversarial UX. Swipes spawn NPCs into a Unity terrarium — matches bond, rejects fade into a graveyard.</p>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Built with</div>
+                        <div class="project-tags">
+                            <span class="tag">Unity</span>
+                            <span class="tag">WebSocket</span>
+                            <span class="tag">Anti-UX</span>
+                            <span class="tag">Installation</span>
+                            <span class="tag">Surveillance Capitalism</span>
+                        </div>
+                    </div>
+                </div></div></div>
+            </article>
+
+            <article class="entry" data-stage="4">
+                <div class="entry-head">
+                    <h2 class="entry-title">Digital Media Exhibition</h2>
+                    <span class="entry-year">2024</span>
+                </div>
+                <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
+                    <div class="field">
+                        <div class="field-label">Description</div>
+                        <p class="project-desc">TikTok-style scroll wired to a Unity camera rig — switch the 3D perspective straight from the browser.</p>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Built with</div>
+                        <div class="project-tags">
+                            <span class="tag">WebSocket</span>
+                            <span class="tag">Unity</span>
+                            <span class="tag">Web</span>
+                            <span class="tag">RMIT</span>
+                        </div>
+                    </div>
+                </div></div></div>
+            </article>
+
+            <article class="entry" data-stage="5">
+                <div class="entry-head">
+                    <h2 class="entry-title">MAGI Milk Bar</h2>
+                    <span class="entry-year">2025</span>
+                </div>
+                <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
+                    <div class="field">
+                        <div class="field-label">Description</div>
+                        <p class="project-desc">Interactive studio project — MAGI, RMIT.</p>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Built with</div>
+                        <div class="project-tags">
+                            <span class="tag">RMIT</span>
+                            <span class="tag">Interactive</span>
+                            <span class="tag">MAGI</span>
+                        </div>
+                    </div>
+                </div></div></div>
+            </article>
+
+            <article class="entry" data-stage="6">
+                <div class="entry-head">
+                    <h2 class="entry-title">TouchDesigner + Blender</h2>
+                    <span class="entry-year">2025</span>
+                </div>
+                <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
+                    <div class="field">
+                        <div class="field-label">Description</div>
+                        <p class="project-desc">Projection mapping and real-time VFX, from TouchDesigner nodes into Blender. Free, hands-on, for anyone who turned up.</p>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Built with</div>
+                        <div class="project-tags">
+                            <span class="tag">TouchDesigner</span>
+                            <span class="tag">Blender</span>
+                            <span class="tag">Workshop</span>
+                            <span class="tag">Education</span>
+                        </div>
+                    </div>
+                </div></div></div>
+            </article>
+
+            <article class="entry" data-stage="7">
+                <div class="entry-head">
+                    <h2 class="entry-title">N0_R3PLY Collective</h2>
+                    <span class="entry-year">2024—</span>
+                </div>
+                <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
+                    <div class="field">
+                        <div class="field-label">Description</div>
+                        <p class="project-desc">Ongoing collective work — WebSocket-driven performance art and experimental live environments.</p>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Built with</div>
+                        <div class="project-tags">
+                            <span class="tag">Collective</span>
+                            <span class="tag">Performance</span>
+                            <span class="tag">Real-time</span>
+                            <span class="tag">Experimental</span>
+                        </div>
+                    </div>
+                </div></div></div>
+            </article>
+
+            <article class="entry" data-stage="8">
+                <div class="entry-head">
+                    <h2 class="entry-title">NeuroMetrix™</h2>
+                    <span class="entry-year">2023</span>
+                </div>
+                <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
+                    <div class="field">
+                        <div class="field-label">Description</div>
+                        <p class="project-desc">Capstone installation for the Bachelor of Digital Media. Dean's Award, 2024.</p>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Built with</div>
+                        <div class="project-tags">
+                            <span class="tag">Installation</span>
+                            <span class="tag">RMIT</span>
+                            <span class="tag">Dean's Award</span>
+                        </div>
+                    </div>
+                </div></div></div>
+            </article>
+
+            <article class="entry" data-stage="9">
+                <div class="entry-head">
+                    <h2 class="entry-title">CatOS</h2>
+                    <span class="entry-year">2025</span>
+                </div>
+                <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
+                    <div class="field">
+                        <div class="field-label">Description</div>
+                        <p class="project-desc">A game made with lactosefreecat and Kora Lee.</p>
+                        <a href="https://lactosefreecat.itch.io/catos" target="_blank" class="project-link">Play on itch.io →</a>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Built with</div>
+                        <div class="project-tags">
+                            <span class="tag">Game</span>
+                            <span class="tag">itch.io</span>
+                            <span class="tag">Collaborative</span>
+                        </div>
+                    </div>
+                </div></div></div>
+            </article>
+
+            <article class="entry" data-stage="10">
+                <div class="entry-head">
+                    <h2 class="entry-title">S0S2</h2>
+                    <span class="entry-year">2023</span>
+                </div>
+                <div class="entry-tray"><div class="tray-clip"><div class="tray-inner">
+                    <div class="field">
+                        <div class="field-label">Description</div>
+                        <p class="project-desc">Live performance where networked systems collapse the line between performer and audience.</p>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">Built with</div>
+                        <div class="project-tags">
+                            <span class="tag">Performance</span>
+                            <span class="tag">N0_R3PLY</span>
+                            <span class="tag">Real-time</span>
+                            <span class="tag">Live</span>
+                        </div>
+                    </div>
+                </div></div></div>
+            </article>
+
+        </div>
+    </main>
+
+    <footer class="site-footer">
+        <span>© 2025 Adrian Frichitthavong — @oddh0st — Melbourne, AU</span>
+    </footer>
+
+    <script>
+        // The layout assumes the page opens at the top, with project 01 sitting
+        // on the trigger line. A restored scroll position breaks that.
+        if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+        /* ── MENU ── */
+        const sidebar = document.getElementById('sidebar');
+        const scrim = document.getElementById('scrim');
+        const menuBtn = document.getElementById('menuBtn');
+
+        function setMenu(open) {
+            sidebar.classList.toggle('open', open);
+            scrim.classList.toggle('open', open);
+            menuBtn.setAttribute('aria-expanded', String(open));
+        }
+        menuBtn.addEventListener('click', () => setMenu(!sidebar.classList.contains('open')));
+        scrim.addEventListener('click', () => setMenu(false));
+        document.getElementById('sidebarClose').addEventListener('click', () => setMenu(false));
+
+        /* ── STAGE + TRAYS ── */
+        const entries = [...document.querySelectorAll('.entry')];
+        const stageItems = [...document.querySelectorAll('.stage-item')];
+        const list = document.getElementById('indexList');
+
+        // Small screens / no hover get the scroll-driven mode; everything else hovers.
+        const smallQuery = window.matchMedia('(hover: none), (max-width: 900px)');
+
+        // Measure each tray so it can animate to an exact height.
+        // offsetHeight is the layout box, so the tray's rotateX doesn't skew it.
+        function measureTrays() {
+            entries.forEach(entry => {
+                const inner = entry.querySelector('.tray-inner');
+                entry.style.setProperty('--tray-h', inner.offsetHeight + 'px');
+            });
+        }
+        measureTrays();
+        window.addEventListener('resize', measureTrays);
+        window.addEventListener('load', measureTrays);
+        if (document.fonts && document.fonts.ready) document.fonts.ready.then(measureTrays);
+        if ('ResizeObserver' in window) {
+            const ro = new ResizeObserver(measureTrays);
+            entries.forEach(e => ro.observe(e.querySelector('.tray-inner')));
+        }
+
+        function setActive(i) {
+            stageItems.forEach((el, n) => {
+                const on = n === i;
+                el.classList.toggle('is-active', on);
+                const v = el.querySelector('video');
+                if (v) {
+                    if (on) { v.play().catch(() => {}); }
+                    else { v.pause(); v.currentTime = 0; }
+                }
+            });
+        }
+
+        /* ── MOBILE: open and close as one movement ──
+           The outgoing tray must not just vanish. Both trays are driven from a
+           single eased progress, so the old one closes at exactly the rate the
+           new one opens — the list never loses or gains height in a jump.
+
+           The closing tray sits above the opening one when moving down, so the
+           list would lose that height and lurch, taking the newly active title
+           with it. Holding that entry still on every frame cancels the shift,
+           and both directions end up feeling like the upward one. */
+        const TRAY_MS = 500;
+        let trayAnim = null;
+
+        // openEntry may be null — that closes everything.
+        function animateTrays(openEntry, clips, from, anchorEl) {
+            const to = entries.map(e =>
+                e === openEntry ? (parseFloat(e.style.getPropertyValue('--tray-h')) || 0) : 0);
+            const held = anchorEl || openEntry;
+
+            if (trayAnim) cancelAnimationFrame(trayAnim);
+            const start = performance.now();
+            const ease  = t => 1 - Math.pow(1 - t, 3);
+
+            (function frame(now) {
+                const k = ease(Math.min(1, (now - start) / TRAY_MS));
+                const anchor = held ? held.getBoundingClientRect().top : 0;
+
+                clips.forEach((c, i) => {
+                    c.style.height = (from[i] + (to[i] - from[i]) * k) + 'px';
+                });
+
+                if (held) {
+                    const shift = held.getBoundingClientRect().top - anchor;
+                    if (shift) window.scrollBy(0, shift);
+                }
+
+                if (k < 1) {
+                    trayAnim = requestAnimationFrame(frame);
+                } else {
+                    trayAnim = null;
+                    clips.forEach(c => { c.style.height = ''; });   // hand back to CSS
+                }
+            })(start);
+        }
+
+        /* Back at the very top, return to the resting state: project 01 named
+           but shut, exactly as the page loads. The observer won't reopen it on
+           the way down (it never stopped intersecting), so leaving the top
+           reopens whatever is on the line by hand. */
+        function closeAllTrays() {
+            if (!entries.some(e => e.classList.contains('is-open'))) return;
+
+            const clips = entries.map(e => e.querySelector('.tray-clip'));
+            const from  = clips.map(c => c.getBoundingClientRect().height);
+
+            entries.forEach(el => {
+                el.classList.remove('is-open');
+                el.classList.toggle('is-current', el === entries[0]);
+            });
+            setActive(0);
+
+            clips.forEach((c, i) => { c.style.height = from[i] + 'px'; });
+            animateTrays(null, clips, from, entries[0]);
+        }
+
+        function openOnly(entry) {
+            if (entry.classList.contains('is-open')) return;
+            const small = smallQuery.matches;
+
+            // Measure BEFORE the class swap: height snaps instantly on mobile,
+            // so reading after would give the new values and nothing would move.
+            let clips, from;
+            if (small) {
+                clips = entries.map(e => e.querySelector('.tray-clip'));
+                from  = clips.map(c => c.getBoundingClientRect().height);
+            }
+
+            entries.forEach(el => {
+                el.classList.toggle('is-open', el === entry);
+                el.classList.toggle('is-current', el === entry);
+            });
+            setActive(entries.indexOf(entry));
+
+            if (small) {
+                // pin the old heights in the same task, so no frame paints the snap
+                clips.forEach((c, i) => { c.style.height = from[i] + 'px'; });
+                animateTrays(entry, clips, from);
+            }
+        }
+
+        /* ── DESKTOP: hover the title ── */
+        entries.forEach((entry, i) => {
+            const title = entry.querySelector('.entry-title');
+
+            // only the title text opens it...
+            title.addEventListener('mouseenter', () => {
+                if (smallQuery.matches) return;
+                entries.forEach(el => el.classList.remove('is-hot'));
+                entry.classList.add('is-hot');
+                list.classList.add('is-engaged');
+                setActive(i);
+            });
+            // ...but it stays open while the cursor is anywhere in the entry,
+            // so you can move down into the tray to read it
+            entry.addEventListener('mouseleave', () => entry.classList.remove('is-hot'));
+            entry.addEventListener('focusin', () => {
+                if (!smallQuery.matches) setActive(i);
+            });
+        });
+
+        list.addEventListener('mouseleave', () => {
+            if (!smallQuery.matches) list.classList.remove('is-engaged');
+        });
+
+        /* ── MOBILE: the title on the middle line opens, once you've landed ──
+           The list scrolls completely untouched: during a drag or a fling the
+           only thing that runs is the highlight. The description opens after
+           the scroll comes to rest. */
+        let scrollBound = false;
+
+        /* The page opens with project 01 named but its description closed. A
+           reload can restore scroll and fire an event during load, hence the
+           short arming delay before any of this is live. */
+        let primed = false;
+        let armedAt = 0;
+
+        const lineRef = document.querySelector('.line-ref');
+
+        /* Nearest top edge, not "whose box spans the line". Entries are
+           contiguous, so a title sitting exactly on the line shares that
+           coordinate with the bottom edge of the entry above, and the entry
+           above would win — opening the description of the wrong project.
+           The line is measured off .line-ref rather than window.innerHeight,
+           because on iOS 100vh is the large viewport and the two disagree
+           while the toolbar is showing. */
+        function entryOnLine() {
+            const line = lineRef.getBoundingClientRect().top;
+            let best = entries[0];
+            let bestGap = Infinity;
+            entries.forEach(e => {
+                const gap = Math.abs(e.getBoundingClientRect().top - line);
+                if (gap < bestGap) { bestGap = gap; best = e; }
+            });
+            return best;
+        }
+
+        /* Runs on every scroll event. Only changes a colour, so it costs no
+           layout — the title under the arrow lights up as it passes. */
+        function highlightOnLine() {
+            const hit = entryOnLine();
+            if (!hit || hit.classList.contains('is-current')) return;
+            entries.forEach(e => e.classList.toggle('is-current', e === hit));
+        }
+
+        /* ── THE MAGNET ──
+           Not CSS scroll-snap, and NOT fired on touchend: letting go is only
+           the start of the fling, so magnetting there killed the throw and you
+           could never toss the list and watch where it lands.
+
+           Instead the scroll position itself is watched. While a fling is
+           coasting the position keeps changing, so the watcher keeps resetting.
+           Only once it has genuinely stopped — unchanged across consecutive
+           ticks, finger off — does the magnet ease the nearest title onto the
+           line. openOnly() then holds that entry still while its tray animates,
+           so the alignment survives the description opening. */
+        const MAGNET_MS = 340;
+        const MAGNET_DEADZONE = 1.5;     // px — already close enough
+        const REST_TICK_MS = 80;
+        const REST_TICKS = 2;            // consecutive still ticks == landed
+
+        let magnetAnim = null;
+        let magnetting = false;
+        let touching = false;
+
+        let restTimer = null;
+        let restLastY = 0;
+        let restStill = 0;
+
+        function stopRestWatch() {
+            if (restTimer) clearInterval(restTimer);
+            restTimer = null;
+            restStill = 0;
+        }
+
+        function startRestWatch() {
+            if (restTimer) return;
+            restLastY = window.scrollY;
+            restStill = 0;
+
+            restTimer = setInterval(() => {
+                if (!smallQuery.matches) { stopRestWatch(); return; }
+
+                const y = window.scrollY;
+
+                // finger still down, or the fling is still travelling
+                if (touching || Math.abs(y - restLastY) > 0.5) {
+                    restLastY = y;
+                    restStill = 0;
+                    return;
+                }
+
+                if (++restStill < REST_TICKS) return;
+
+                stopRestWatch();
+
+                // Everything that moves the page or the layout happens HERE,
+                // once the fling is over — never while it is still travelling.
+                if (window.scrollY <= 1) closeAllTrays();
+                else magnetToLine();          // magnet, then opens what it lands on
+            }, REST_TICK_MS);
+        }
+
+        function cancelMagnet() {
+            if (magnetAnim) cancelAnimationFrame(magnetAnim);
+            magnetAnim = null;
+            magnetting = false;
+        }
+
+        function magnetToLine() {
+            const target = entryOnLine();
+            if (!target) return;
+
+            const line  = lineRef.getBoundingClientRect().top;
+            const delta = target.getBoundingClientRect().top - line;
+
+            if (Math.abs(delta) < MAGNET_DEADZONE) { openOnly(target); return; }
+
+            const startY = window.scrollY;
+            const t0 = performance.now();
+            const ease = t => 1 - Math.pow(1 - t, 3);
+            magnetting = true;
+
+            (function step(now) {
+                const t = Math.min(1, (now - t0) / MAGNET_MS);
+                window.scrollTo(0, startY + delta * ease(t));
+
+                if (t < 1) {
+                    magnetAnim = requestAnimationFrame(step);
+                } else {
+                    magnetAnim = null;
+                    magnetting = false;
+                    openOnly(target);          // anchors, so alignment holds
+                }
+            })(t0);
+        }
+
+        /* The ONLY thing allowed to happen mid-scroll is the highlight, because
+           it changes a colour and nothing else. Opening a tray here would call
+           window.scrollBy() to anchor it, and a programmatic scroll during iOS
+           momentum cancels the fling outright — which is why letting go used to
+           stop the list dead on a real phone but rolled fine in a desktop
+           inspector, where wheel scrolling has no inertia to cancel. */
+        function onScroll() {
+            if (!primed) {
+                if (performance.now() - armedAt < 350) return;
+                primed = true;
+            }
+            highlightOnLine();
+            // the magnet's own scrolling must not restart the watcher
+            if (!magnetting) startRestWatch();
+        }
+
+        // Taking the finger off does NOT magnet — it just means the fling is
+        // now free to run. The watcher decides when it has actually landed.
+        function onTouchStart() { touching = true; cancelMagnet(); stopRestWatch(); }
+        function onTouchEnd()   { touching = false; startRestWatch(); }
+
+        function startScrollMode() {
+            if (scrollBound) return;
+            scrollBound = true;
+            armedAt = performance.now();
+            list.classList.add('is-engaged');          // dim all but the current one
+            entries.forEach(e => e.classList.remove('is-hot'));
+
+            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('touchstart', onTouchStart, { passive: true });
+            window.addEventListener('touchend', onTouchEnd, { passive: true });
+            window.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+            // name the entry on the line without opening it, so project 01
+            // reads as current against its media while its tray stays shut
+            const hit = entryOnLine() || entries[0];
+            entries.forEach(e => e.classList.toggle('is-current', e === hit));
+        }
+
+        function stopScrollMode() {
+            if (!scrollBound) return;
+            scrollBound = false;
+            window.removeEventListener('scroll', onScroll);
+            window.removeEventListener('touchstart', onTouchStart);
+            window.removeEventListener('touchend', onTouchEnd);
+            window.removeEventListener('touchcancel', onTouchEnd);
+            cancelMagnet();
+            stopRestWatch();
+            touching = false;
+            primed = false;
+            list.classList.remove('is-engaged');
+            entries.forEach(e => e.classList.remove('is-open', 'is-current'));
+        }
+
+        function syncMode() {
+            if (smallQuery.matches) startScrollMode();
+            else stopScrollMode();
+        }
+
+        smallQuery.addEventListener
+            ? smallQuery.addEventListener('change', syncMode)
+            : smallQuery.addListener(syncMode);
+
+        syncMode();
+        setActive(0);
+
+        /* ── LIGHTBOX ── */
+        function openLightbox(id) {
+            document.getElementById('lb-' + id).classList.add('active');
+            const v = document.getElementById('vid-' + id);
+            if (v) v.play().catch(() => {});
+        }
+        function closeLightbox(id) {
+            document.getElementById('lb-' + id).classList.remove('active');
+            const v = document.getElementById('vid-' + id);
+            if (v) { v.pause(); v.currentTime = 0; }
+        }
+
+        document.querySelectorAll('[data-lightbox]').forEach(a => {
+            a.addEventListener('click', e => {
+                e.preventDefault();
+                openLightbox(a.dataset.lightbox);
+            });
+        });
+        document.querySelectorAll('[data-close]').forEach(b => {
+            b.addEventListener('click', () => closeLightbox(b.dataset.close));
+        });
+        document.querySelectorAll('.lightbox').forEach(lb => {
+            lb.addEventListener('click', e => {
+                if (e.target === lb) closeLightbox(lb.id.replace('lb-', ''));
+            });
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.key !== 'Escape') return;
+            document.querySelectorAll('.lightbox.active').forEach(lb => closeLightbox(lb.id.replace('lb-', '')));
+            setMenu(false);
+        });
+    </script>
+
+    <!-- CURSOR DOT + GLITCH TRAIL -->
+    <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+    <div class="cursor-glitches" id="cursorGlitches" aria-hidden="true"></div>
+    <script>
+        (function cursorFX() {
+            const dot = document.getElementById('cursorDot');
+            const field = document.getElementById('cursorGlitches');
+            if (!dot || !field) return;
+            if (window.matchMedia('(hover: none), (pointer: coarse)').matches) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            const LAG = 0.16;    // 0–1, lower = more lag behind the real cursor
+
+            let targetX = window.innerWidth / 2;
+            let targetY = window.innerHeight / 2;
+            let x = targetX;
+            let y = targetY;
+            let shown = false;
+            let raf = null;
+
+            /* ── GLITCH TRAIL ──
+               A fixed pool of <span> characters, reused rather than created
+               and destroyed, spawned along the dot's own path as it moves.
+               Each one ages through three phases:
+                 spawn → drift, fading and drifting outward on its own, OR
+                 spawn → absorb, the instant motion stops: it gets pulled back
+                         onto the dot's position and shrinks into it instead.
+               "Motion stops" is judged by the real mousemove events going
+               quiet, not by the dot's own easing settling — so the trail
+               collapses the moment your hand stops, even while the dot is
+               still gliding the last bit of the way to meet it. */
+            const GLYPHS = '01#%&@$*+=<>/\\|~^'.split('');
+            const POOL = 18;
+            const SPAWN_PX = 9;        // dot-travel distance between spawns
+            const MAX_SPAWN_PER_TICK = 2;
+            const JITTER = 4;          // px of random scatter at spawn
+            const DRIFT_MS = 480;      // natural fade while still moving
+            const ABSORB_MS = 220;     // pulled-into-the-dot fade when stopped
+            const STILL_MS = 90;       // quiet time before "stopped" fires
+
+            const particles = Array.from({ length: POOL }, () => {
+                const el = document.createElement('span');
+                el.className = 'glitch-char';
+                field.appendChild(el);
+                return { el, active: false, state: 'drift', x: 0, y: 0,
+                         vx: 0, vy: 0, born: 0, fromX: 0, fromY: 0 };
+            });
+
+            let prevX = x, prevY = y;
+            let spawnCarry = 0;
+            let moving = false;
+            let lastMoveAt = 0;
+            let nextSlot = 0;   // round-robin fallback once the pool saturates,
+                                 // so a fast flick refreshes the oldest particle
+                                 // instead of thrashing a single one repeatedly
+
+            function spawn(px, py, dx, dy) {
+                const p = particles.find(q => !q.active) || particles[nextSlot++ % POOL];
+                const ang = Math.atan2(dy, dx) + Math.PI;   // trail behind travel
+                const spread = (Math.random() - 0.5) * 1.4;
+
+                p.active = true;
+                p.state = 'drift';
+                p.born = performance.now();
+                p.x = px + (Math.random() - 0.5) * JITTER * 2;
+                p.y = py + (Math.random() - 0.5) * JITTER * 2;
+                p.vx = Math.cos(ang + spread) * 0.55;
+                p.vy = Math.sin(ang + spread) * 0.55;
+                p.el.textContent = GLYPHS[(Math.random() * GLYPHS.length) | 0];
+                p.el.style.fontSize = (11 + Math.random() * 4).toFixed(1) + 'px';
+            }
+
+            function beginAbsorb(p, now) {
+                p.state = 'absorb';
+                p.born = now;
+                p.fromX = p.x;
+                p.fromY = p.y;
+            }
+
+            function stepParticles(now) {
+                let anyActive = false;
+
+                particles.forEach(p => {
+                    if (!p.active) return;
+                    anyActive = true;
+
+                    // The transition into 'absorb' on a stopped mouse happens
+                    // once, up in tick(), the instant `moving` flips to false —
+                    // so by the time a particle is seen here it has already
+                    // switched state. This branch only ever runs the natural
+                    // fade-while-still-moving case.
+                    if (p.state === 'drift') {
+                        const t = (now - p.born) / DRIFT_MS;
+                        if (t >= 1) {
+                            p.active = false;
+                            p.el.style.opacity = '0';
+                            return;
+                        }
+                        p.x += p.vx;
+                        p.y += p.vy;
+                        const fade = 1 - t;
+                        p.el.style.opacity = (fade * 0.85).toFixed(2);
+                        p.el.style.transform =
+                            `translate3d(${p.x}px, ${p.y}px, 0) translate(-50%, -50%) scale(${(0.7 + fade * 0.5).toFixed(2)})`;
+                    }
+
+                    if (p.state === 'absorb') {
+                        const t = Math.min(1, (now - p.born) / ABSORB_MS);
+                        const ease = 1 - Math.pow(1 - t, 2);
+                        p.x = p.fromX + (x - p.fromX) * ease;
+                        p.y = p.fromY + (y - p.fromY) * ease;
+                        p.el.style.opacity = (0.85 * (1 - ease)).toFixed(2);
+                        p.el.style.transform =
+                            `translate3d(${p.x}px, ${p.y}px, 0) translate(-50%, -50%) scale(${(1 - ease * 0.9).toFixed(2)})`;
+
+                        if (t >= 1) { p.active = false; p.el.style.opacity = '0'; }
+                    }
+                });
+
+                return anyActive;
+            }
+
+            function tick() {
+                const now = performance.now();
+
+                if (moving && now - lastMoveAt > STILL_MS) {
+                    moving = false;
+                    particles.forEach(p => { if (p.active && p.state === 'drift') beginAbsorb(p, now); });
+                }
+
+                x += (targetX - x) * LAG;
+                y += (targetY - y) * LAG;
+                dot.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+
+                if (moving) {
+                    const dx = x - prevX, dy = y - prevY;
+                    const dist = Math.hypot(dx, dy);
+                    spawnCarry += dist;
+                    let spawned = 0;
+                    while (spawnCarry >= SPAWN_PX && spawned < MAX_SPAWN_PER_TICK) {
+                        spawn(x, y, dx || 0.01, dy || 0.01);
+                        spawnCarry -= SPAWN_PX;
+                        spawned++;
+                    }
+                }
+                prevX = x; prevY = y;
+
+                const particlesActive = stepParticles(now);
+                const dotSettled = Math.abs(targetX - x) <= 0.05 && Math.abs(targetY - y) <= 0.05;
+
+                if (!dotSettled || particlesActive) {
+                    raf = requestAnimationFrame(tick);
+                } else {
+                    x = targetX; y = targetY;
+                    dot.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                    raf = null;
+                }
+            }
+
+            function wake() { if (!raf) raf = requestAnimationFrame(tick); }
+
+            window.addEventListener('mousemove', e => {
+                targetX = e.clientX;
+                targetY = e.clientY;
+                moving = true;
+                lastMoveAt = performance.now();
+
+                if (!shown) {
+                    shown = true;
+                    x = targetX; y = targetY;
+                    prevX = x; prevY = y;
+                    dot.classList.add('is-visible');
+                }
+                wake();
+            }, { passive: true });
+
+            // fades out over an iframe (itch.io embed, YouTube lightbox) where
+            // no mousemove reaches this document to keep it positioned
+            document.addEventListener('mouseleave', () => dot.classList.remove('is-visible'));
+            document.addEventListener('mouseenter', () => { if (shown) dot.classList.add('is-visible'); });
+
+            window.addEventListener('mousedown', () => dot.style.opacity = '0.5');
+            window.addEventListener('mouseup', () => dot.style.opacity = '');
+        })();
+    </script>
+
+</body>
+</html>

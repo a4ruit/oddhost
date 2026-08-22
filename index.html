@@ -456,7 +456,11 @@
             /* --scale resizes every thumbnail at once, mobile only. 1 leaves
                the tiers below exactly as they are; 0.85 shrinks the whole set,
                1.15 grows it. The ratios between tiers stay put. */
-            .gallery { --spread: 1.34; --scale: 2.5; --sweep: 2.2; --magnet: .2; }
+            /* --grip must be listed here even to keep the desktop number: drop
+               it and the phone silently inherits the base rule, which is what
+               put a 333ms drag lag back on touch. Higher = tracks the thumb
+               more closely; 1 is exact, 0.05 is nearly frozen. */
+            .gallery { --spread: 1.34; --scale: 2.5; --sweep: 2.2; --magnet: .2; --grip: .05; }
 
             .xl { --w: 26vmin; }
             .lg { --w: 22vmin; }

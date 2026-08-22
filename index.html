@@ -206,46 +206,71 @@
 
         .sidebar-close:hover { opacity: 1; }
 
-        /* ── GALLERY ──
-           A cluster, not a ring. Every piece sits along its own fixed angle
-           out from dead centre, at the shortest radius that still clears
-           every other piece by a set margin — --dx/--dy per item, solved
-           once offline against each image's real aspect ratio, pushing a
-           piece out along its ray step by step until its box stops touching
-           its neighbours. Placed largest piece first, so the flagship claims
-           the centre and everything else finds the nearest legal gap around
-           it — the tightest packing available, gaps as thin as the margin
-           allows, favouring minimal empty space over a strict size-ordered
-           ring. A smaller piece can end up nearer the centre than a bigger
-           one if that's simply where the nearest free gap was.
+        /* ── ORBIT ──
+           The pieces sit on an invisible sphere around a centre point, and
+           dragging spins that sphere. Every piece stays flat to the screen —
+           they are never rotated in 3D, only moved and scaled — so the sense
+           of orbit comes entirely from depth: a piece swinging toward the
+           camera grows and brightens, one swinging away shrinks and fades.
 
-           Sizes and positions are both in vmin, the smaller of viewport
-           width/height, so the whole cluster — and the gaps between every
-           piece — scales as one rigid composition on any screen. Because
-           the packing math and the sizing use the same unit, a shape proven
-           gap-free at one viewport stays gap-free at every other one; there
-           is no separate mobile recalculation. */
+           The focal point is dead centre at the front of the sphere, so the
+           sphere's centre of gravity sits BEHIND it and pieces swing forward
+           into focus rather than sliding across. Releasing the drag lets
+           momentum run out, then magnets the nearest piece exactly onto that
+           focal point.
+
+           Positions are written by the script every frame; nothing here
+           places them. Only the base size per tier is CSS. */
         .gallery {
+            /* sphere radius as a fraction of vmin. Lives in CSS, not the
+               script, so the media query below can retune it: in landscape
+               there is spare width either side, but in portrait the stage is
+               only as wide as vmin, so the same spread throws pieces off the
+               edge. The script reads this value. */
+            --spread: 0.40;
+
             position: relative;
             width: 100%;
-            /* offset by the header so the cluster centres in the space
-               actually visible below it, not the full viewport height */
             margin-top: 47px;
-            min-height: calc(100vh - 47px);
+            height: calc(100vh - 47px);
+            overflow: hidden;
+            cursor: grab;
+            /* the drag is ours, so the browser must not also pan/zoom on it */
+            touch-action: none;
+            /* nor select across it, nor flash a tap highlight on touch */
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
+
+        .gallery.is-dragging { cursor: grabbing; }
 
         .piece {
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));
-            width: var(--w);
-            z-index: var(--z, 1);
+            /* --boost nudges a single piece without touching its tier. It has
+               to be a multiplier rather than an absolute width, because the
+               tier values shrink at the mobile breakpoint and a hard-coded
+               vmin would ignore that and blow up on a phone.
+
+               It exists because the tiers set WIDTH, which quietly penalises
+               wide images: at the same tier a 0.56 landscape carries barely a
+               third of the visual bulk of a 1.78 portrait, so a piece could
+               outrank another and still look like the smallest thing on
+               screen. */
+            width: calc(var(--w) * var(--boost, 1));
+            transform-origin: 50% 50%;
+            will-change: transform, opacity;
             text-decoration: none;
-            cursor: default;
+            cursor: inherit;
         }
 
-        a.piece { cursor: pointer; }
+        /* Every piece is clickable now, not just the linked ones — clicking a
+           background piece turns the sphere to bring it forward. Still reverts
+           to the grab cursor mid-drag, so it never looks like a link
+           mid-throw. */
+        .gallery:not(.is-dragging) .piece { cursor: pointer; }
 
         /* natural aspect ratio: width is set, height is auto, no cropping */
         .piece img,
@@ -254,83 +279,161 @@
             width: 100%;
             height: auto;
             transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            /* a drag sweeps the cursor across images and links, which the
+               browser reads as "select this" and "pick this up" — hence the
+               blue wash and the ghost thumbnail trailing the pointer */
+            -webkit-user-drag: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
-        .piece:hover img,
-        .piece:hover video,
+        /* Hover only counts when the sphere is still. Mid-drag the pieces are
+           sweeping past under a stationary cursor, so each one lights up in
+           turn as it crosses — a flicker of highlights that reads as the drag
+           snagging on things. */
+        .gallery:not(.is-dragging) .piece:hover img,
+        .gallery:not(.is-dragging) .piece:hover video,
         .piece:focus-visible img,
         .piece:focus-visible video { transform: scale(1.06); }
 
         /* size tiers, largest to smallest — recency still drives the size */
-        .xl { --w: 22vmin; --z: 10; }
-        .lg { --w: 18vmin; --z: 8; }
-        .md { --w: 15vmin; --z: 6; }
-        .sm { --w: 12vmin; --z: 4; }
-        .xs { --w: 10vmin; --z: 2; }
+        /* Size tiers: recency drives the size, as before. These are the sizes
+           at the FOCAL POINT — a piece only reaches its full tier width when
+           the magnet parks it at the front of the sphere, and everything
+           further back is scaled down from here by depth. So these are tuned
+           for "readable once dragged into focus", not for the resting cluster. */
+        .xl { --w: 30vmin; }
+        .lg { --w: 25vmin; }
+        .md { --w: 21vmin; }
+        .sm { --w: 17vmin; }
+        .xs { --w: 14vmin; }
 
-        /* ── HOVER CAPTION ──
-           One shared label, not ten overlays — it lives on the plain black
-           background in the bottom-left corner, so nothing ever sits on top
-           of an image. Every piece just points it at their own title, year
-           and description on hover; the label doesn't know or care where the
-           piece is. Left-anchored rather than centred, so the ragged right
-           edge of a description never shifts the title's position as the
-           text changes length between pieces. */
-        .hover-caption {
-            position: fixed;
-            left: 40px;
-            bottom: 40px;
-            z-index: 50;
-            max-width: min(340px, 32vw);
-            text-align: left;
-            transform: translateY(6px);
-            opacity: 0;
+        /* ── METRO INFO ──
+           Information sprawls out of the hovered piece the way a transit line
+           leaves an interchange: a start node just clear of the thumbnail, a
+           45-degree leg out of it, then a straight run with a labelled stop
+           for each field. Stops are ordered outward — title, year, then the
+           description — so more can be appended later without moving any of
+           the existing ones.
+
+           The whole thing is drawn away from the sphere's centre, which is the
+           one direction guaranteed to be empty, so it never lies over the
+           media it belongs to. Geometry is computed per hover in the script;
+           this only styles it. */
+        .metro {
+            position: absolute;
+            inset: 0;
             pointer-events: none;
-            transition: opacity 0.22s ease, transform 0.22s ease;
+            /* pieces carry inline z-index up to 1000 */
+            z-index: 1200;
+            opacity: 0;
+            transition: opacity 0.22s ease;
         }
 
-        .hover-caption.is-visible {
-            opacity: 1;
-            transform: translateY(0);
+        .metro.is-on { opacity: 1; }
+
+        .metro svg {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow: visible;
         }
 
-        .hover-caption .t {
-            display: block;
-            font-size: 15px;
+        .metro-line {
+            fill: none;
+            stroke: #ffffff;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* the origin reads as an interchange, the stops as ordinary stations */
+        .metro-origin { fill: #0e0e0e; stroke: #ffffff; stroke-width: 1.5; }
+        .metro-stop   { fill: #ffffff; }
+
+        .metro-label {
+            position: absolute;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.26s ease;
+        }
+
+        .metro.is-on .metro-label { opacity: 1; }
+
+        /* The focal piece sits at the front of the sphere, so its info sprawls
+           out across whatever media is behind it — that is the only case that
+           needs a plate. Hovering a background piece puts the text over empty
+           stage, where a black bar would just be noise, so the plate is scoped
+           to .is-focal. The padding stays on either way, so the measured label
+           width (and therefore the layout) does not shift between the two.
+
+           The plate is on an inline span rather than the label box:
+           box-decoration-break makes it repeat per line fragment, so a wrapped
+           paragraph reads as stacked bars that follow the ragged right edge
+           instead of one rectangle over the empty space beside it. */
+        .metro-label > span {
+            display: inline;
+            background: transparent;
+            box-decoration-break: clone;
+            -webkit-box-decoration-break: clone;
+            padding: 0.22em 0.5em;
+        }
+
+        .metro.is-focal .metro-label > span { background: #000000; }
+
+        .metro-label.t {
+            font-size: 14px;
             font-weight: 700;
             letter-spacing: -0.01em;
-            line-height: 1.2;
+            transition-delay: 0.30s;
         }
 
-        .hover-caption .y {
-            display: block;
-            margin-top: 5px;
+        .metro-label.y {
             font-size: 10px;
             font-weight: 500;
             letter-spacing: 0.14em;
             text-transform: uppercase;
             color: #8f8f8f;
+            transition-delay: 0.42s;
         }
 
-        .hover-caption .d {
-            display: block;
-            margin-top: 10px;
-            font-size: 12px;
+        .metro-label.d {
+            white-space: normal;
+            width: 210px;
+            font-size: 11.5px;
             font-weight: 400;
-            line-height: 1.5;
+            /* loose enough that the per-line plates stack without overlapping */
+            line-height: 1.95;
             color: #c4c4c4;
+            transition-delay: 0.54s;
         }
 
         @media (max-width: 900px) {
-            .hover-caption {
-                left: 18px;
-                bottom: 22px;
-                max-width: min(300px, 70vw);
-            }
+            /* without this, header-meta's flex:1 squeezes down to nothing,
+               the "Adrian Frichitthavong" text wraps to two lines, and that
+               wrap stretches the whole header taller — breaking the 47px
+               the gallery/menu math depends on */
+            .header-meta { display: none; }
+
+            /* less room to sprawl into on a phone */
+            .metro-label.d { width: 150px; font-size: 11px; }
+            .metro-label.t { font-size: 12.5px; }
+
+            /* Portrait has no spare width: the stage is only vmin wide, so the
+               orbit has to pull in and the pieces come down with it, or the
+               outer ones hang off the edge and get clipped. */
+            .gallery { --spread: 0.34; }
+
+            .xl { --w: 26vmin; }
+            .lg { --w: 22vmin; }
+            .md { --w: 19vmin; }
+            .sm { --w: 15vmin; }
+            .xs { --w: 13vmin; }
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .piece img, .piece video, .hover-caption, .sidebar { transition-duration: 0.01ms; }
+            .piece img, .piece video, .metro, .metro-label, .sidebar { transition-duration: 0.01ms; }
         }
 
         /* ── CURSOR DOT ── */
@@ -432,65 +535,73 @@
 
     <main class="gallery">
 
-        <a class="piece xl" href="luminous-festival.html" data-title="Luminous Festival" data-desc="Outdoor forest installation on dual vertical displays. Hand tracking drives an ASCII boid flock as a live force field, hunted by a whale." data-year="2025"
-           style="--dx: 0vmin; --dy: 0vmin;">
-            <video autoplay muted loop playsinline poster="images/luminous.png">
+        <!-- No boost. Matching Held on AREA was the wrong call: a 16:9 has to be
+             about 1.8x wider than a 1.77 portrait to cover the same area, which
+             made this 335px wide when nothing else on screen passed 236px, and
+             width is what reads as "big". Left at the plain tier, it is no wider
+             than the flagship. -->
+        <div class="piece xl" data-title="PACK MENTALITY" style="--boost: 0.75" data-desc="A phone-controlled multiplayer game installation." data-year="2026">
+            <video autoplay muted loop playsinline width="1920" height="1080"
+                   poster="images/projectmedia/packmentality26/heroshot-poster.jpg">
+                <source src="images/projectmedia/packmentality26/heroshot.mp4" type="video/mp4">
+            </video>
+        </div>
+
+        <a class="piece xl" href="luminous-festival.html" data-title="Luminous Festival" data-desc="Outdoor forest installation on dual vertical displays. Hand tracking drives an ASCII boid flock as a live force field, hunted by a whale." data-year="2025">
+            <video autoplay muted loop playsinline width="1080" height="1920" poster="images/luminous.png">
                 <source src="images/luminous.mp4" type="video/mp4">
             </video>
         </a>
 
-        <a class="piece lg" href="cctv-installation.html" data-title="CCTV Installation" data-desc="Networked NDI cameras composited live across the event space. Commissioned by Chantelle Lucyl for Melbourne Fashion Week." data-year="2025"
-           style="--dx: 18.2vmin; --dy: -25vmin;">
-            <img src="https://img.youtube.com/vi/OBFQhZ5cqq0/maxresdefault.jpg" alt="" loading="lazy">
+        <a class="piece lg" href="cctv-installation.html" data-title="CCTV Installation" style="--boost: 1.35" data-desc="Networked NDI cameras composited live across the event space. Commissioned by Chantelle Lucyl for Melbourne Fashion Week." data-year="2025">
+            <img src="https://img.youtube.com/vi/OBFQhZ5cqq0/maxresdefault.jpg" alt="" width="1280" height="720">
         </a>
 
-        <a class="piece lg" href="magi-expo-2025.html" data-title="MAGI EXPO 2025" data-desc="Student profiles as asteroids orbiting category planets. React Three Fiber, held at 60fps across devices." data-year="2025"
-           style="--dx: 20.4vmin; --dy: -6.6vmin;">
-            <img src="images/magiexpo.png" alt="" loading="lazy">
+        <a class="piece lg" href="magi-expo-2025.html" data-title="MAGI EXPO 2025" style="--boost: 1.35" data-desc="Student profiles as asteroids orbiting category planets. React Three Fiber, held at 60fps across devices." data-year="2025">
+            <img src="images/magiexpo.png" alt="" width="1915" height="1065">
         </a>
 
-        <div class="piece md" data-title="Held, Instantaneously" data-desc="A satirical dating app built on adversarial UX. Swipes spawn NPCs into a Unity terrarium, where matches bond and rejects fade into a graveyard." data-year="2025"
-             style="--dx: -18.9vmin; --dy: -3.3vmin;">
-            <img src="images/heldinstant.png" alt="" loading="lazy">
+        <div class="piece md" data-title="Held, Instantaneously" data-desc="A satirical dating app built on adversarial UX. Swipes spawn NPCs into a Unity terrarium, where matches bond and rejects fade into a graveyard." data-year="2025">
+            <img src="images/heldinstant.png" alt="" width="582" height="1029">
         </div>
 
-        <div class="piece md" data-title="MAGI Milk Bar" data-desc="Interactive studio project for MAGI at RMIT." data-year="2025"
-             style="--dx: 18.9vmin; --dy: 26.1vmin;">
-            <img src="images/milkbar.png" alt="" loading="lazy">
+        <div class="piece md" data-title="MAGI Milk Bar" data-desc="Interactive studio project for MAGI at RMIT." data-year="2025">
+            <img src="images/milkbar.png" alt="" width="555" height="723">
         </div>
 
-        <div class="piece md" data-title="TouchDesigner + Blender" data-desc="Projection mapping and real-time VFX, from TouchDesigner nodes into Blender. Free, hands-on, for anyone who turned up." data-year="2025"
-             style="--dx: 0vmin; --dy: 30vmin;">
-            <img src="images/workshop.png" alt="" loading="lazy">
+        <div class="piece md" data-title="TouchDesigner + Blender" data-desc="Projection mapping and real-time VFX, from TouchDesigner nodes into Blender. Free, hands-on, for anyone who turned up." data-year="2025">
+            <img src="images/workshop.png" alt="" width="763" height="1012">
         </div>
 
-        <div class="piece sm" data-title="Digital Media Exhibition" data-desc="TikTok-style scroll wired to a Unity camera rig, switching the 3D perspective straight from the browser." data-year="2024"
-             style="--dx: -16.9vmin; --dy: 23.3vmin;">
-            <img src="images/digitalmedia.png" alt="" loading="lazy">
+        <div class="piece sm" data-title="Digital Media Exhibition" style="--boost: 1.70" data-desc="TikTok-style scroll wired to a Unity camera rig, switching the 3D perspective straight from the browser." data-year="2024">
+            <img src="images/digitalmedia.png" alt="" width="1919" height="1062">
         </div>
 
-        <div class="piece sm" data-title="N0_R3PLY Collective" data-desc="Ongoing collective work in WebSocket-driven performance art and experimental live environments." data-year="2024"
-             style="--dx: -32.8vmin; --dy: 10.7vmin;">
-            <img src="images/cadenacam.png" alt="" loading="lazy">
+        <div class="piece sm" data-title="N0_R3PLY Collective" data-desc="Ongoing collective work in WebSocket-driven performance art and experimental live environments." data-year="2024">
+            <img src="images/cadenacam.png" alt="" width="459" height="982">
         </div>
 
-        <div class="piece xs" data-title="Major Project" data-desc="Capstone installation for the Bachelor of Digital Media. Dean's Award, 2024." data-year="2023"
-             style="--dx: -31.8vmin; --dy: -10.3vmin;">
-            <img src="images/neurometrix.png" alt="" loading="lazy">
+        <div class="piece xs" data-title="Major Project" style="--boost: 1.45" data-desc="Capstone installation for the Bachelor of Digital Media. Dean's Award, 2024." data-year="2023">
+            <img src="images/neurometrix.png" alt="" width="826" height="978">
         </div>
 
-        <div class="piece xs" data-title="SOS2" data-desc="Live performance where networked systems collapse the line between performer and audience." data-year="2023"
-             style="--dx: -17vmin; --dy: -23.4vmin;">
-            <img src="images/sos2.png" alt="" loading="lazy">
+        <div class="piece xs" data-title="SOS2" data-desc="Live performance where networked systems collapse the line between performer and audience." data-year="2023">
+            <img src="images/sos2.png" alt="" width="765" height="976">
+        </div>
+
+        <!-- metro info overlay: line + stops in SVG, labels as real text -->
+        <div class="metro" id="metro" aria-hidden="true">
+            <svg id="metroSvg">
+                <path class="metro-line" id="metroLine"></path>
+                <g id="metroStops"></g>
+            </svg>
+            <div class="metro-label t" id="metroT"><span></span></div>
+            <div class="metro-label y" id="metroY"><span></span></div>
+            <div class="metro-label d" id="metroD"><span></span></div>
         </div>
 
     </main>
 
-    <div class="hover-caption" id="hoverCaption" aria-hidden="true">
-        <span class="t" id="hoverCaptionTitle"></span>
-        <span class="y" id="hoverCaptionYear"></span>
-        <span class="d" id="hoverCaptionDesc"></span>
-    </div>
 
     <!-- CURSOR DOT + GLITCH TRAIL -->
     <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
@@ -515,30 +626,553 @@
         // an explicit nudge even when muted.
         document.querySelectorAll('.piece video').forEach(v => { v.play().catch(() => {}); });
 
-        // One shared caption instead of per-image overlays, so hovering
-        // never covers the piece itself — it just points a label that lives
-        // on the black background at whichever piece is under the cursor.
-        (function hoverCaption() {
-            const caption = document.getElementById('hoverCaption');
-            const titleEl = document.getElementById('hoverCaptionTitle');
-            const yearEl = document.getElementById('hoverCaptionYear');
-            const descEl = document.getElementById('hoverCaptionDesc');
-            if (!caption) return;
+        /* ── ORBIT ──
+           Pieces live on a sphere; dragging spins it. They are never rotated
+           in 3D — only translated and scaled — so each one stays flat to the
+           screen while depth alone sells the revolve.
 
-            document.querySelectorAll('.piece').forEach(p => {
-                const show = () => {
-                    titleEl.textContent = p.dataset.title || '';
-                    yearEl.textContent = p.dataset.year || '';
-                    descEl.textContent = p.dataset.desc || '';
-                    caption.classList.add('is-visible');
-                };
-                const hide = () => caption.classList.remove('is-visible');
+           Camera sits on +Z looking at the sphere's centre, so the point of
+           the sphere nearest the camera projects to dead centre of the stage
+           at the largest scale. That point is the focal point, and because it
+           is the FRONT of the sphere, the centre of gravity is behind it. */
+        (function orbit() {
+            const stage = document.querySelector('.gallery');
+            const pieces = [...document.querySelectorAll('.piece')];
+            const metro     = document.getElementById('metro');
+            const metroSvg  = document.getElementById('metroSvg');
+            const metroLine = document.getElementById('metroLine');
+            const metroStops= document.getElementById('metroStops');
+            const capT = document.getElementById('metroT');
+            const capY = document.getElementById('metroY');
+            const capD = document.getElementById('metroD');
+            if (!stage || !pieces.length) return;
 
-                p.addEventListener('mouseenter', show);
-                p.addEventListener('mouseleave', hide);
-                p.addEventListener('focus', show);
-                p.addEventListener('blur', hide);
+            const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+            // sphere radius, in vmin — owned by CSS so the breakpoint can
+            // retune it; re-read on resize since the value changes with it
+            let spread = 0.40;
+            function syncSpread() {
+                const v = parseFloat(getComputedStyle(stage).getPropertyValue('--spread'));
+                if (!Number.isNaN(v) && v > 0) spread = v;
+            }
+            const CAM       = 2.5;                  // camera distance, in radii
+            const DRAG_K    = 0.0055;               // radians of spin per px dragged
+
+            /* ── WEIGHT ──
+               The pointer does not move the sphere, it moves a target the
+               sphere then chases. Lower = heavier: the sphere takes longer to
+               reach the speed you are dragging at, lags behind the cursor
+               while you move, and keeps drifting toward where you dragged
+               after you stop. Tracking the cursor exactly, which is what
+               moving `yaw` straight from the pointer delta does, is precisely
+               what makes something feel weightless. */
+            const FOLLOW    = reduce ? 1 : 0.10;
+            const FRICTION  = reduce ? 0.60 : 0.95; // momentum decay per frame — higher slides longer
+            /* Where the slide is declared over. This has to be small enough
+               that the leftover travel — v/(1-friction), plus the sliver of
+               correction still owed — is under a pixel on screen, because the
+               final assignment onto the exact target closes that gap in one
+               step. At 0.0007 that gap was ~4px, which showed up as a visible
+               hop right as everything else had gone still. */
+            const COAST_END = 0.0002;               // rad/frame below which the throw is spent
+            const THROW_MIN = 0.004;                // rad/frame under which a release is a place, not a throw
+            const SNAP_MIN  = reduce ? 1 : 260;     // ms, a tiny correction
+            const SNAP_MAX  = reduce ? 1 : 900;     // ms — a click can ask for a half turn
+            const CLICK_SLOP = 5;                   // px of drift that still counts as a click
+
+            /* Fibonacci sphere — spreads N points evenly without the bunching
+               at the poles a naive lat/long grid gives. The (2i+1)/N offset
+               matters: the textbook i/(N-1) form puts the first and last item
+               on the exact poles, where the sphere has no radius, which both
+               wastes two slots and squeezes their neighbours together. With
+               ten pieces that drops the closest pair from 58.5deg apart to
+               38.9deg — visible crowding. */
+            const N = pieces.length;
+            const GOLD = Math.PI * (3 - Math.sqrt(5));
+            const nodes = pieces.map((el, i) => {
+                const y = N === 1 ? 0 : 1 - (2 * i + 1) / N;
+                const r = Math.sqrt(Math.max(0, 1 - y * y));
+                const th = GOLD * i;
+                return { el, bx: Math.cos(th) * r, by: y, bz: Math.sin(th) * r };
             });
+
+            let yaw = 0, pitch = 0, vYaw = 0, vPitch = 0;
+            let dragging = false, dragDist = 0, lastX = 0, lastY = 0;
+            let aimYaw = 0, aimPitch = 0;   // where the pointer has asked the sphere to go
+            let raf = null, hovered = null, focal = null, settled = false;
+
+            // the magnet, as an eased tween rather than a per-frame pull, so
+            // it has a definite duration and a real ease-out instead of the
+            // exponential rush-then-crawl a fixed per-frame fraction gives
+            let snapping = false, snapT0 = 0, snapMs = 0;
+            let y0 = 0, p0 = 0, y1 = 0, p1 = 0;
+
+            /* ── PREDICTIVE COAST ──
+               Once you let go, nothing else can influence the spin, so where it
+               will stop is already decided: an exponential decay travels
+               v/(1-friction) further, exactly. That means the piece that will
+               end up on the focal point can be worked out at the moment of
+               release, and the small correction needed to land it dead centre
+               can be spread across the whole slide instead of being applied as
+               a separate move once the slide has already stopped.
+
+               That is the difference between a magnet you can see and one you
+               cannot: the correction rides the deceleration curve, biggest
+               while the sphere is still travelling fast and tapering to nothing
+               as it comes to rest, so there is never a moment where the motion
+               changes character. */
+            let coasting = false, spd0 = 0, prog = 0;
+            let corrY = 0, corrP = 0, tgtY = 0, tgtP = 0;
+
+            function beginCoast() {
+                const reach = 1 / (1 - FRICTION);
+                const predY = yaw + vYaw * reach;      // exactly where the slide would stop
+                const predP = pitch + vPitch * reach;
+
+                // choose against the PREDICTED pose, not the present one
+                const t = targetFor(pickFocal(predY, predP));
+                tgtY = predY + shortest(predY, t.yaw);
+                tgtP = predP + shortest(predP, t.pitch);
+                corrY = tgtY - predY;
+                corrP = tgtP - predP;
+
+                spd0 = Math.hypot(vYaw, vPitch);
+                prog = 0;
+                coasting = true;
+            }
+
+            // node defaults to whatever currently holds the focal point, but a
+            // click can name any piece and have the sphere turn to fetch it
+            function beginSnap(node) {
+                const n = node || nodes.find(q => q.el === focal) || nodes[0];
+                const t = targetFor(n);
+                settled = false;   // hold the caption until it has actually arrived
+                y0 = yaw; p0 = pitch;
+                // walk the SHORTEST way round, and hold the absolute endpoint
+                // so the tween never has to deal with a wrap mid-flight
+                y1 = yaw + shortest(yaw, t.yaw);
+                p1 = pitch + shortest(pitch, t.pitch);
+
+                // a nudge should be quick, a longer reach should take longer —
+                // a fixed duration makes big corrections feel like a lurch
+                const reach = Math.hypot(y1 - y0, p1 - p0);
+                snapMs = Math.min(SNAP_MAX, Math.max(SNAP_MIN, reach * 620));
+                snapT0 = performance.now();
+                snapping = true;
+            }
+
+            /* The rotation that lands a node exactly on the focal point: pitch
+               first to cancel its Y, then yaw to cancel its X, leaving it at
+               (0,0,1) — front and centre, nearest the camera. */
+            function targetFor(n) {
+                return {
+                    pitch: Math.atan2(n.by, n.bz),
+                    yaw: Math.atan2(-n.bx, Math.hypot(n.by, n.bz))
+                };
+            }
+
+            function shortest(from, to) {
+                let d = (to - from) % (Math.PI * 2);
+                if (d > Math.PI) d -= Math.PI * 2;
+                if (d < -Math.PI) d += Math.PI * 2;
+                return d;
+            }
+
+            function radius() {
+                return Math.min(window.innerWidth, window.innerHeight) * spread;
+            }
+
+            /* Layout size of each piece, cached. offsetWidth/Height are the
+               untransformed box, so the running scale never pollutes them, and
+               the intrinsic width/height attributes mean they are already
+               correct before the media itself has loaded. */
+            function measure() {
+                for (const n of nodes) { n.w = n.el.offsetWidth; n.h = n.el.offsetHeight; }
+            }
+
+            // where a node sits, for any pose, without touching the DOM
+            function poseOf(n, cp, sp, ca, sa) {
+                const y1 =  n.by * cp - n.bz * sp;
+                const z1 =  n.by * sp + n.bz * cp;
+                return {
+                    x:  n.bx * ca + z1 * sa,
+                    y:  y1,
+                    z: -n.bx * sa + z1 * ca
+                };
+            }
+
+            /* Which piece owns the focal point, judged by its EDGES rather than
+               its centre. These pieces differ a lot in size and proportion, so
+               centre-distance alone picks badly: a big piece can be visibly
+               sitting on the focal point while its centre is further off than
+               some small one's. Distance is measured from the focal point to
+               the piece's projected rect, so it reads zero the moment a piece
+               actually covers the focal point, and depth breaks the ties.
+
+               Back-hemisphere pieces are excluded outright — they project
+               toward the centre of the screen too, so on screen distance alone
+               the furthest piece of all would look like a perfect candidate. */
+            function pickFocal(yw, pt) {
+                const R = radius(), D = CAM * R, F = D - R;
+                const cp = Math.cos(pt), sp = Math.sin(pt);
+                const ca = Math.cos(yw), sa = Math.sin(yw);
+
+                let best = null, bestD = Infinity, bestZ = -Infinity;
+                for (const n of nodes) {
+                    const q = poseOf(n, cp, sp, ca, sa);
+                    if (q.z <= 0) continue;
+                    const s = F / (D - q.z * R);
+                    const dx = Math.max(0, Math.abs(q.x * R * s) - (n.w * s) / 2);
+                    const dy = Math.max(0, Math.abs(q.y * R * s) - (n.h * s) / 2);
+                    const d = Math.hypot(dx, dy);
+                    if (d < bestD - 0.5 || (Math.abs(d - bestD) <= 0.5 && q.z > bestZ)) {
+                        best = n; bestD = d; bestZ = q.z;
+                    }
+                }
+                return best || nodes[0];
+            }
+
+            /* ── METRO INFO ──
+               Builds the line for one piece. Everything is laid out in the
+               stage's own coordinate space, which is why the overlay lives
+               inside .gallery: no page-offset arithmetic to get wrong.
+
+               Shape is a transit line leaving an interchange — origin node
+               clear of the thumbnail, a 45deg leg, then a straight run with a
+               stop per field. STOPS is the whole schema, so adding a fourth
+               field later is one more entry here and nothing else. */
+            const M_GAP   = 16;   // clearance between thumbnail edge and origin
+            const M_LEG   = 30;   // the 45deg elbow
+            const M_STEP  = 30;   // spacing between stops along the run
+            const M_TEXT  = 14;   // gap from the line to the label
+            const M_EDGE  = 12;   // keep the whole thing off the stage edges
+            /* The focal piece is the biggest thing on screen and sits at the
+               front of the orbit, so dropping straight into the elbow puts its
+               stops right against its own edge. It gets a horizontal lead first
+               — out, then angle, then down — which carries the whole run clear
+               of the orbit before any text starts. */
+            const M_LEAD  = 124;
+
+            const STOPS = [
+                { el: capT, key: 'title', extra: 0 },
+                { el: capY, key: 'year',  extra: 0 },
+                // the description is a wrapped block, so it needs more room
+                // before it than the single-line stops above it
+                { el: capD, key: 'desc',  extra: 22 }
+            ];
+            STOPS.forEach(s => { s.txt = s.el.firstElementChild; });
+
+            function hideMetro() { metro.classList.remove('is-on'); }
+
+            function buildMetro(p, isFocal) {
+                metro.classList.toggle('is-focal', !!isFocal);
+                const sr = stage.getBoundingClientRect();
+                const r  = p.getBoundingClientRect();
+
+                // piece centre and half-extent, in stage space
+                const px = r.left - sr.left + r.width / 2;
+                const py = r.top  - sr.top  + r.height / 2;
+                const hw = r.width / 2, hh = r.height / 2;
+
+                // Run outward from the sphere's centre: that is the one
+                // direction with nothing else in it, so the line never lies
+                // across the media it describes.
+                let sx = px < sr.width / 2 ? -1 : 1;
+                let sy = py < sr.height / 2 ? -1 : 1;
+
+                // Text goes on the inner span, which carries the black plate.
+                // Pin to left:0 before measuring, or the width comes back as
+                // whatever the previous hover's offset squeezed it to.
+                STOPS.forEach(s => {
+                    s.txt.textContent = p.dataset[s.key] || '';
+                    s.el.style.left = '0px';
+                    s.el.style.right = 'auto';
+                });
+                STOPS.forEach(s => { s.w = s.el.offsetWidth; });
+                const need = Math.max(...STOPS.map(s => s.w)) + M_TEXT + M_EDGE;
+
+                // Outward stays the default. A back piece projects near the
+                // middle of the stage, so both sides have room — picking purely
+                // on slack sent those inward, across the sphere. Only overrule
+                // the outward choice when it genuinely will not fit, and even
+                // then only if the other side is actually better; on a phone
+                // neither may fit, and the clamp below is the real guarantee.
+                const lead = isFocal ? M_LEAD : 0;
+                const slack = s => {
+                    const o = px + s * (hw + M_GAP) + s * (lead + M_LEG + need);
+                    return s > 0 ? sr.width - o : o;
+                };
+                if (slack(sx) < 0 && slack(-sx) > slack(sx)) sx = -sx;
+
+                // How far the whole thing reaches vertically. The last label is
+                // centred on its stop, so it hangs half its own height past the
+                // end of the line — and the description's height depends on how
+                // many lines the text wrapped to, so it has to be measured, not
+                // assumed. Estimating it here is what put it off the bottom.
+                let runLen = M_LEG;
+                STOPS.forEach(s => { runLen += M_STEP + s.extra; });
+                const tail = runLen + STOPS[STOPS.length - 1].el.offsetHeight / 2 + M_EDGE;
+                if (py + sy * tail > sr.height || py + sy * tail < 0) sy = -sy;
+
+                const ox = px + sx * (hw + M_GAP);      // origin, clear of the piece
+                const oy = py;
+                const bx = ox + sx * lead;              // end of the horizontal lead
+                const ex = bx + sx * M_LEG;             // elbow, 45deg out
+                const ey = oy + sy * M_LEG;
+
+                // out (focal only), angle, then down: stops march along the
+                // vertical run that starts at the elbow
+                let y = ey, d = `M ${ox} ${oy}` + (lead ? ` L ${bx} ${oy}` : '') + ` L ${ex} ${ey}`;
+                const marks = [];
+                STOPS.forEach(s => {
+                    y += sy * (M_STEP + s.extra);
+                    marks.push({ x: ex, y, el: s.el });
+                });
+                d += ` L ${ex} ${y}`;
+                metroLine.setAttribute('d', d);
+
+                metroStops.innerHTML =
+                    `<circle class="metro-origin" cx="${ox}" cy="${oy}" r="3.5"></circle>` +
+                    marks.map(m => `<circle class="metro-stop" cx="${m.x}" cy="${m.y}" r="2.5"></circle>`).join('');
+
+                marks.forEach((m, i) => {
+                    const el = m.el, w = STOPS[i].w;
+                    el.style.top = m.y + 'px';
+                    // labels sit on the outward side, so text runs away from
+                    // the sphere rather than back across it
+                    let left = sx > 0 ? m.x + M_TEXT : m.x - M_TEXT - w;
+                    // then pulled back onto the stage if the side ran short
+                    left = Math.max(M_EDGE, Math.min(left, sr.width - w - M_EDGE));
+                    el.style.left = left + 'px';
+                    el.style.right = 'auto';
+                    el.style.transform = 'translateY(-50%)';
+                    el.style.textAlign = sx > 0 ? 'left' : 'right';
+                });
+
+                // draw the line on, rather than having it simply appear
+                const len = metroLine.getTotalLength();
+                metroLine.style.transition = 'none';
+                metroLine.style.strokeDasharray = len;
+                metroLine.style.strokeDashoffset = len;
+                void metroLine.getBoundingClientRect();
+                metroLine.style.transition = 'stroke-dashoffset 0.62s cubic-bezier(0.22, 1, 0.36, 1)';
+                metroLine.style.strokeDashoffset = 0;
+
+                metro.classList.add('is-on');
+            }
+
+            function paintCaption() {
+                // nothing mid-throw; the hovered piece wins once still, and
+                // failing that the piece the magnet parked on the focal point
+                const p = dragging ? null : (hovered || (settled ? focal : null));
+                if (!p) { hideMetro(); return; }
+                buildMetro(p, p === focal);
+            }
+
+            function render() {
+                const R = radius();
+                const D = CAM * R;
+                const F = D - R;   // focal length chosen so the sphere's front lands at scale 1
+
+                const cp = Math.cos(pitch), sp = Math.sin(pitch);
+                const ca = Math.cos(yaw),   sa = Math.sin(yaw);
+
+                for (const n of nodes) {
+                    const q = poseOf(n, cp, sp, ca, sa);
+                    const s = F / (D - q.z * R);   // nearer = bigger
+                    const t = (q.z + 1) / 2;       // 0 at the back, 1 at the front
+
+                    n.el.style.transform =
+                        'translate(calc(-50% + ' + (q.x * R * s).toFixed(1) + 'px), ' +
+                        'calc(-50% + ' + (q.y * R * s).toFixed(1) + 'px)) scale(' + s.toFixed(4) + ')';
+                    // floor lifted from 0.25 so the back of the sphere still
+                    // reads as media rather than dissolving into the black
+                    n.el.style.opacity = (0.40 + 0.60 * Math.pow(t, 1.3)).toFixed(3);
+                    n.el.style.zIndex = String(Math.round(t * 1000));
+                }
+
+                // same edge rule the magnet aims with, so the caption and the
+                // thing it lands on can never disagree
+                focal = pickFocal(yaw, pitch).el;
+            }
+
+            function frame() {
+                if (dragging) {
+                    /* Chase the pointer's target instead of matching it. The
+                       throw velocity then falls out for free: it is simply how
+                       far the sphere actually turned this frame, which is
+                       per-frame by construction — so it no longer matters
+                       whether the device delivered 4 pointer events or 40. */
+                    const wasY = yaw, wasP = pitch;
+                    yaw   += (aimYaw   - yaw)   * FOLLOW;
+                    pitch += (aimPitch - pitch) * FOLLOW;
+                    vYaw   = yaw - wasY;
+                    vPitch = pitch - wasP;
+                } else {
+                    if (snapping) {
+                        const k = Math.min(1, (performance.now() - snapT0) / snapMs);
+                        const e = 1 - Math.pow(1 - k, 3);   // ease out, no jolt at the start
+                        yaw   = y0 + (y1 - y0) * e;
+                        pitch = p0 + (p1 - p0) * e;
+                        if (k >= 1) {
+                            snapping = false;
+                            settled = true;
+                            paintCaption();
+                        }
+                    } else if (coasting) {
+                        yaw += vYaw; pitch += vPitch;
+                        vYaw *= FRICTION; vPitch *= FRICTION;
+
+                        /* Speed decays by the same factor on both axes, so the
+                           fraction of the slide already spent is just how much
+                           speed has been lost. Feeding the correction in on
+                           that curve keeps it in step with the deceleration. */
+                        const spd = Math.hypot(vYaw, vPitch);
+                        const now = spd0 > 0 ? 1 - spd / spd0 : 1;
+                        yaw   += corrY * (now - prog);
+                        pitch += corrP * (now - prog);
+                        prog = now;
+
+                        if (spd < COAST_END) {
+                            vYaw = vPitch = 0;
+                            yaw = tgtY; pitch = tgtP;   // the last hair of correction
+                            coasting = false;
+                            render();
+                            settled = true;
+                            paintCaption();
+                        }
+                    }
+                }
+
+                render();
+
+                raf = (dragging || snapping || coasting) ? requestAnimationFrame(frame) : null;
+            }
+
+            function wake() { if (!raf) raf = requestAnimationFrame(frame); }
+
+            stage.addEventListener('pointerdown', e => {
+                dragging = true;
+                dragDist = 0;
+                lastX = e.clientX; lastY = e.clientY;
+                aimYaw = yaw; aimPitch = pitch;   // grab it exactly where it stands
+                vYaw = vPitch = 0;
+                snapping = false;
+                coasting = false;   // grabbing mid-slide voids the pending correction
+                settled = false;
+                stage.classList.add('is-dragging');
+                /* Deliberately NOT using setPointerCapture. Capturing the
+                   pointer retargets the click that follows to the capture
+                   element, so clicks arrived with target <html> instead of the
+                   piece under the cursor — which silently broke both
+                   click-to-focus and opening a project, since neither the
+                   piece nor its <a> ever saw the event. Listening on window
+                   below keeps the drag alive outside the stage without
+                   touching how clicks are aimed. */
+                paintCaption();
+                wake();
+            });
+
+            // on window, not the stage, so a drag keeps working if the cursor
+            // wanders off the stage mid-throw
+            window.addEventListener('pointermove', e => {
+                if (!dragging) return;
+                const dx = e.clientX - lastX, dy = e.clientY - lastY;
+                lastX = e.clientX; lastY = e.clientY;
+                dragDist += Math.abs(dx) + Math.abs(dy);
+
+                // the pointer only moves the target; the sphere chases it in
+                // the frame loop, which is where the weight comes from
+                aimYaw   += dx * DRAG_K;
+                aimPitch -= dy * DRAG_K;
+                wake();
+            });
+
+            function endDrag(e) {
+                if (!dragging) return;
+                dragging = false;
+                /* No idle check needed any more. Pausing mid-drag used to leave
+                   a stale velocity, so it had to be zeroed by hand — but a
+                   chasing sphere slows down on its own as it closes on the
+                   target, so holding still lets both the gap and the speed
+                   decay together. Zeroing here would now be wrong: it would
+                   strand the sphere partway through catching up. */
+                stage.classList.remove('is-dragging');
+
+                if (Math.hypot(vYaw, vPitch) > THROW_MIN) {
+                    beginCoast();          // a throw: steer it home along the way
+                } else {
+                    // barely moving, so there is no slide to hide a correction
+                    // inside — ease the short distance from a standstill
+                    vYaw = vPitch = 0;
+                    render();              // make sure focal reflects the true pose
+                    beginSnap();
+                }
+                wake();
+            }
+            window.addEventListener('pointerup', endDrag);
+            window.addEventListener('pointercancel', endDrag);
+
+            /* The CSS above stops WebKit picking images up, but Firefox ignores
+               user-drag, and an <a> is draggable whatever the images do — so a
+               drag beginning on a linked piece would still tear off a ghost of
+               it and hand the gesture to the browser. Cancelling dragstart is
+               the part that actually covers every engine. */
+            stage.addEventListener('dragstart', e => e.preventDefault());
+
+            /* Clicking works in two steps, because a piece round the back is
+               far too small to be a sane thing to open by accident: the first
+               click turns the sphere to fetch it, and only once it is sitting
+               on the focal point does a click open it. A throw that happens to
+               finish over a link is not a click at all and is dropped. */
+            stage.addEventListener('click', e => {
+                if (dragDist > CLICK_SLOP) { e.preventDefault(); e.stopPropagation(); return; }
+
+                const el = e.target.closest && e.target.closest('.piece');
+                if (!el || el === focal) return;   // already in focus: let it through
+
+                e.preventDefault();
+                e.stopPropagation();
+                const n = nodes.find(q => q.el === el);
+                if (!n) return;
+                coasting = false;
+                vYaw = vPitch = 0;
+                beginSnap(n);
+                wake();
+            }, true);
+
+            pieces.forEach(p => {
+                p.addEventListener('mouseenter', () => { hovered = p; paintCaption(); });
+                p.addEventListener('mouseleave', () => { if (hovered === p) hovered = null; paintCaption(); });
+                p.addEventListener('focus',      () => { hovered = p; paintCaption(); });
+                p.addEventListener('blur',       () => { if (hovered === p) hovered = null; paintCaption(); });
+            });
+
+            /* Watch the stage's own box rather than trusting resize events.
+               Everything about the layout is derived from the viewport, so if
+               a resize is ever missed the whole sphere stays sized for the old
+               one — pieces end up flung far outside the frame, because the
+               radius is still the old, larger vmin. Mobile browsers are the
+               real risk: showing and hiding the URL bar changes the viewport
+               without reliably firing resize. A ResizeObserver fires on the
+               box actually changing, whatever the cause. */
+            const relayout = () => { syncSpread(); measure(); render(); };
+            if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(stage);
+            window.addEventListener('resize', relayout);   // older browsers
+            // the box sizes come from the intrinsic width/height attributes, so
+            // they are right immediately, but re-take them once the media has
+            // actually decoded in case anything rounded differently
+            window.addEventListener('load', () => { measure(); render(); });
+
+            // open with the flagship already parked on the focal point
+            syncSpread();
+            measure();
+            const start = targetFor(nodes[0]);
+            yaw = start.yaw; pitch = start.pitch;
+            render();
+            settled = true;
+            paintCaption();
         })();
 
         (function cursorFX() {

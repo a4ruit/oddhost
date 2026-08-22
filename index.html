@@ -237,6 +237,13 @@
                fraction, so the two are worth tuning apart. */
             --sweep: 7.0;
 
+            /* How eagerly the magnet claims a release. 1 is the original feel;
+               below 1 the sphere is allowed to coast further before being
+               pulled in and the pull itself is slower, above 1 it grabs sooner
+               and closes faster. Read by the script; the media query gives
+               touch its own. Where it lands never changes — only how keenly. */
+            --magnet: 0.2;
+
             position: relative;
             width: 100%;
             margin-top: 47px;
@@ -444,7 +451,7 @@
             /* --scale resizes every thumbnail at once, mobile only. 1 leaves
                the tiers below exactly as they are; 0.85 shrinks the whole set,
                1.15 grows it. The ratios between tiers stay put. */
-            .gallery { --spread: 1.34; --scale: 2.5; --sweep: 1.0; }
+            .gallery { --spread: 1.34; --scale: 2.5; --sweep: 1.0; --magnet: 1; }
 
             .xl { --w: 26vmin; }
             .lg { --w: 22vmin; }
@@ -735,10 +742,39 @@
                step. At 0.0007 that gap was ~4px, which showed up as a visible
                hop right as everything else had gone still. */
             const COAST_END = 0.0002;               // rad/frame below which the throw is spent
-            const THROW_MIN = 0.004;                // rad/frame under which a release is a place, not a throw
             const SNAP_MIN  = reduce ? 1 : 260;     // ms, a tiny correction
             const SNAP_MAX  = reduce ? 1 : 900;     // ms — a click can ask for a half turn
             const CLICK_SLOP = 5;                   // px of drift that still counts as a click
+
+            /* ── MAGNET STRENGTH ──
+               Read from --magnet in CSS so touch and desktop each get their own,
+               the same way --spread and --sweep work. 1 is the behaviour that
+               was here before; higher grabs harder, lower lets the sphere run.
+
+               Two things make up what reads as strength, and they move together:
+
+               THROW_MIN is the line between "that was a throw" and "that was a
+               placement". Under it, a release skips the slide entirely and goes
+               straight to the tween — which is the actual mechanism behind a
+               swipe that snaps instead of gliding, since a gentle swipe makes
+               less velocity than the threshold. Lowering --magnet lowers the
+               bar, so more releases are allowed to coast.
+
+               SNAP_PACE is how long the tween takes per radian it has to cover.
+               Dividing by --magnet means a stronger magnet closes faster.
+
+               What --magnet deliberately does NOT change is where the sphere
+               comes to rest: a piece still lands exactly on the focal point
+               either way. Only the eagerness changes, never the destination. */
+            const THROW_BASE = 0.004;               // rad/frame, at --magnet: 1
+            const SNAP_PACE  = 620;                 // ms per radian, at --magnet: 1
+            let THROW_MIN = THROW_BASE, snapPace = SNAP_PACE;
+            function syncMagnet() {
+                const v = parseFloat(getComputedStyle(stage).getPropertyValue('--magnet'));
+                const m = (!Number.isNaN(v) && v > 0) ? v : 1;
+                THROW_MIN = THROW_BASE * m;
+                snapPace  = SNAP_PACE / m;
+            }
 
             /* Fibonacci sphere — spreads N points evenly without the bunching
                at the poles a naive lat/long grid gives. The (2i+1)/N offset
@@ -816,7 +852,7 @@
                 // a nudge should be quick, a longer reach should take longer —
                 // a fixed duration makes big corrections feel like a lurch
                 const reach = Math.hypot(y1 - y0, p1 - p0);
-                snapMs = Math.min(SNAP_MAX, Math.max(SNAP_MIN, reach * 620));
+                snapMs = Math.min(SNAP_MAX, Math.max(SNAP_MIN, reach * snapPace));
                 snapT0 = performance.now();
                 snapping = true;
             }
@@ -1234,7 +1270,7 @@
                real risk: showing and hiding the URL bar changes the viewport
                without reliably firing resize. A ResizeObserver fires on the
                box actually changing, whatever the cause. */
-            const relayout = () => { syncSpread(); syncDrag(); measure(); render(); };
+            const relayout = () => { syncSpread(); syncDrag(); syncMagnet(); measure(); render(); };
             if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(stage);
             window.addEventListener('resize', relayout);   // older browsers
             // the box sizes come from the intrinsic width/height attributes, so
@@ -1245,6 +1281,7 @@
             // open with the flagship already parked on the focal point
             syncSpread();
             syncDrag();
+            syncMagnet();
             measure();
             const start = targetFor(nodes[0]);
             yaw = start.yaw; pitch = start.pitch;

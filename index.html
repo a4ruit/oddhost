@@ -884,6 +884,18 @@
             let aimYaw = 0, aimPitch = 0;   // where the pointer has asked the sphere to go
             let raf = null, hovered = null, focal = null, settled = false;
 
+            /* Touch has no hover, but it fakes one: tapping fires mouseenter on
+               whatever was under the finger, and that latches `hovered` onto a
+               background piece for good — nothing ever moves away to fire the
+               matching mouseleave. Since `hovered` outranks `focal`, the info
+               kept describing the piece last touched instead of the one the
+               magnet had just parked on the focal point.
+
+               Tracked per gesture rather than by device: a hybrid laptop with
+               both a trackpad and a touchscreen should follow the pointer that
+               was actually used last, not a capability check made at load. */
+            let touchInput = false;
+
             // the magnet, as an eased tween rather than a per-frame pull, so
             // it has a definite duration and a real ease-out instead of the
             // exponential rush-then-crawl a fixed per-frame fraction gives
@@ -1146,8 +1158,11 @@
 
             function paintCaption() {
                 // nothing mid-throw; the hovered piece wins once still, and
-                // failing that the piece the magnet parked on the focal point
-                const p = dragging ? null : (hovered || (settled ? focal : null));
+                // failing that the piece the magnet parked on the focal point.
+                // On touch there is no real hover, so the focal point is the
+                // only honest answer — see touchInput above.
+                const h = touchInput ? null : hovered;
+                const p = dragging ? null : (h || (settled ? focal : null));
                 if (!p) { hideMetro(); return; }
                 buildMetro(p, p === focal);
             }
@@ -1251,6 +1266,10 @@
                    either finger lifting would end the throw. First one down owns
                    the gesture until it leaves. */
                 if (dragging) return;
+                // set before the synthetic mouseenter that a tap triggers, so
+                // the stale hover it creates is already being ignored
+                touchInput = (e.pointerType === 'touch' || e.pointerType === 'pen');
+                if (touchInput) hovered = null;
                 activeId = e.pointerId;
                 dragging = true;
                 dragDist = 0;
@@ -1343,8 +1362,21 @@
             }, true);
 
             pieces.forEach(p => {
-                p.addEventListener('mouseenter', () => { hovered = p; paintCaption(); });
-                p.addEventListener('mouseleave', () => { if (hovered === p) hovered = null; paintCaption(); });
+                /* pointerenter, not mouseenter: it carries pointerType, so a
+                   real hover can be told from the one a tap fakes. This is also
+                   how a mouse takes back over on a hybrid device — the first
+                   genuine mouse hover clears the touch flag. */
+                p.addEventListener('pointerenter', e => {
+                    if (e.pointerType === 'touch' || e.pointerType === 'pen') return;
+                    touchInput = false;
+                    hovered = p;
+                    paintCaption();
+                });
+                p.addEventListener('pointerleave', e => {
+                    if (e.pointerType === 'touch' || e.pointerType === 'pen') return;
+                    if (hovered === p) hovered = null;
+                    paintCaption();
+                });
                 p.addEventListener('focus',      () => { hovered = p; paintCaption(); });
                 p.addEventListener('blur',       () => { if (hovered === p) hovered = null; paintCaption(); });
             });

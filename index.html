@@ -229,6 +229,14 @@
                edge. The script reads this value. */
             --spread: 0.48;
 
+            /* Radians of spin for a drag clear across the viewport. Same idea
+               as --spread: the script reads it, so the media query below can
+               give touch its own value. Mouse and thumb want different gain
+               even once the gesture is measured in screen widths — a thumb
+               swipe is shorter and faster than a mouse drag of the same
+               fraction, so the two are worth tuning apart. */
+            --sweep: 7.0;
+
             position: relative;
             width: 100%;
             margin-top: 47px;
@@ -436,7 +444,7 @@
             /* --scale resizes every thumbnail at once, mobile only. 1 leaves
                the tiers below exactly as they are; 0.85 shrinks the whole set,
                1.15 grows it. The ratios between tiers stay put. */
-            .gallery { --spread: 1.34; --scale: 2.5; }
+            .gallery { --spread: 1.34; --scale: 2.5; --sweep: 1.0; }
 
             .xl { --w: 26vmin; }
             .lg { --w: 22vmin; }
@@ -681,14 +689,16 @@
                and 0.66rad magnet pull on both, so the physics was never the
                difference, only the input range.
 
-               SWEEP fixes the gesture in screen terms instead: dragging clear
+               --sweep fixes the gesture in screen terms instead: dragging clear
                across the viewport always spins the sphere by the same amount,
-               whatever the viewport is. 7.9 is what desktop already did at
-               1440px, so the desktop feel is unchanged by construction and the
-               phone is brought up to meet it. */
-            const SWEEP = 7.9;                      // radians per full-width drag
-            let DRAG_K  = 0.0055;                   // recomputed from the viewport
+               whatever the viewport is. It lives in CSS beside --spread, so
+               desktop and touch each carry their own value and can be tuned
+               apart; the fallback here only matters if the property is missing. */
+            let SWEEP  = 7.0;                       // radians per full-width drag
+            let DRAG_K = 0.0055;                    // recomputed from the viewport
             function syncDrag() {
+                const v = parseFloat(getComputedStyle(stage).getPropertyValue('--sweep'));
+                if (!Number.isNaN(v) && v > 0) SWEEP = v;
                 DRAG_K = SWEEP / Math.max(320, window.innerWidth);
             }
 

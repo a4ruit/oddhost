@@ -244,6 +244,11 @@
                touch its own. Where it lands never changes — only how keenly. */
             --magnet: 0.2;
 
+            /* How firmly the drag holds the sphere, per frame. Low is heavy and
+               laggy, 1 tracks the pointer exactly. This is the one that decides
+               whether a small movement registers at all. */
+            --grip: 0.10;
+
             position: relative;
             width: 100%;
             margin-top: 47px;
@@ -451,7 +456,9 @@
             /* --scale resizes every thumbnail at once, mobile only. 1 leaves
                the tiers below exactly as they are; 0.85 shrinks the whole set,
                1.15 grows it. The ratios between tiers stay put. */
-            .gallery { --spread: 1.34; --scale: 2.5; --sweep: 1.0; --magnet: 1; }
+            /* Touch holds firmer than a mouse: a thumb drag is short, so the
+               chase lag has to be small or the gesture vanishes into it. */
+            .gallery { --spread: 1.34; --scale: 2.5; --sweep: 1.0; --magnet: 1; --grip: 0.45; }
 
             .xl { --w: 26vmin; }
             .lg { --w: 22vmin; }
@@ -716,8 +723,21 @@
                while you move, and keeps drifting toward where you dragged
                after you stop. Tracking the cursor exactly, which is what
                moving `yaw` straight from the pointer delta does, is precisely
-               what makes something feel weightless. */
-            const FOLLOW    = reduce ? 1 : 0.10;
+               what makes something feel weightless.
+
+               This is also what makes a slight thumb drag feel stuck. The lag
+               is a FRACTION of the gesture, so it stays invisible behind a long
+               mouse drag and swallows a short one whole: 10% of a small ask is
+               nothing, and the media appears not to respond at all. That is a
+               drag-time symptom, so no amount of magnet tuning reaches it.
+               Hence --grip in CSS, per breakpoint — touch wants a firmer hold
+               on the sphere than a mouse does. 1 tracks the finger exactly. */
+            let FOLLOW = reduce ? 1 : 0.10;
+            function syncGrip() {
+                if (reduce) { FOLLOW = 1; return; }
+                const v = parseFloat(getComputedStyle(stage).getPropertyValue('--grip'));
+                FOLLOW = (!Number.isNaN(v) && v > 0) ? Math.min(1, v) : 0.10;
+            }
             const FRICTION  = reduce ? 0.60 : 0.95; // momentum decay per frame — higher slides longer
 
             /* Both constants above are per FRAME, which quietly makes the feel
@@ -1270,7 +1290,7 @@
                real risk: showing and hiding the URL bar changes the viewport
                without reliably firing resize. A ResizeObserver fires on the
                box actually changing, whatever the cause. */
-            const relayout = () => { syncSpread(); syncDrag(); syncMagnet(); measure(); render(); };
+            const relayout = () => { syncSpread(); syncDrag(); syncMagnet(); syncGrip(); measure(); render(); };
             if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(stage);
             window.addEventListener('resize', relayout);   // older browsers
             // the box sizes come from the intrinsic width/height attributes, so
@@ -1282,6 +1302,7 @@
             syncSpread();
             syncDrag();
             syncMagnet();
+            syncGrip();
             measure();
             const start = targetFor(nodes[0]);
             yaw = start.yaw; pitch = start.pitch;

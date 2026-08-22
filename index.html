@@ -1341,6 +1341,38 @@
             render();
             settled = true;
             paintCaption();
+
+            /* ── #debug ──
+               Tuning by feel on a device you cannot inspect is guesswork, and
+               it has already cost us: a value can be read by nobody, rejected
+               as out of range, or overridden by the reduced-motion branch, and
+               all three look identical from the outside — nothing changes.
+               This prints what the physics is ACTUALLY using, on the device
+               itself. Add #debug to the URL; it costs nothing otherwise. */
+            const wantDebug = location.hash.indexOf('debug') !== -1 ||
+                              location.search.indexOf('debug') !== -1 ||
+                              (function () { try { return localStorage.orbitDebug === '1'; }
+                                             catch (e) { return false; } })();
+            if (wantDebug) {
+                const box = document.createElement('div');
+                box.style.cssText =
+                    'position:fixed;left:8px;bottom:8px;z-index:9999;background:#000;' +
+                    'color:#0f0;font:11px/1.5 monospace;padding:8px 10px;white-space:pre;' +
+                    'pointer-events:none;border:1px solid #0f0;max-width:92vw';
+                document.body.appendChild(box);
+                const css = k => getComputedStyle(stage).getPropertyValue(k).trim() || '(unset)';
+                setInterval(() => {
+                    box.textContent =
+                        'viewport   ' + window.innerWidth + ' x ' + window.innerHeight + '\n' +
+                        'REDUCE     ' + reduce + (reduce ? '  <-- overrides grip+glide' : '') + '\n' +
+                        'grip  css ' + css('--grip')   + '   live FOLLOW   ' + FOLLOW.toFixed(3) + '\n' +
+                        'glide css ' + css('--glide')  + '   live FRICTION ' + FRICTION.toFixed(3) + '\n' +
+                        'sweep css ' + css('--sweep')  + '   live DRAG_K   ' + DRAG_K.toFixed(5) + '\n' +
+                        'magnet css ' + css('--magnet') + '  live THROW    ' + THROW_MIN.toFixed(5) + '\n' +
+                        'snap pace ' + Math.round(snapPace) + 'ms/rad (capped ' + SNAP_MAX + 'ms)\n' +
+                        'spread    ' + css('--spread') + '   radius ' + Math.round(radius()) + 'px';
+                }, 200);
+            }
         })();
 
         (function cursorFX() {

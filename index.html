@@ -227,7 +227,7 @@
                there is spare width either side, but in portrait the stage is
                only as wide as vmin, so the same spread throws pieces off the
                edge. The script reads this value. */
-            --spread: 0.40;
+            --spread: 0.48;
 
             position: relative;
             width: 100%;
@@ -258,8 +258,13 @@
                wide images: at the same tier a 0.56 landscape carries barely a
                third of the visual bulk of a 1.78 portrait, so a piece could
                outrank another and still look like the smallest thing on
-               screen. */
-            width: calc(var(--w) * var(--boost, 1));
+               screen.
+
+               --scale is the other axis: one multiplier over every piece at
+               once, so a breakpoint can resize the whole set without touching
+               the five tiers or disturbing the ratios between them. Inherited
+               from .gallery, so it is set in one place. */
+            width: calc(var(--w) * var(--boost, 1) * var(--scale, 1));
             transform-origin: 50% 50%;
             will-change: transform, opacity;
             text-decoration: none;
@@ -423,7 +428,10 @@
             /* Portrait has no spare width: the stage is only vmin wide, so the
                orbit has to pull in and the pieces come down with it, or the
                outer ones hang off the edge and get clipped. */
-            .gallery { --spread: 0.34; }
+            /* --scale resizes every thumbnail at once, mobile only. 1 leaves
+               the tiers below exactly as they are; 0.85 shrinks the whole set,
+               1.15 grows it. The ratios between tiers stay put. */
+            .gallery { --spread: 1.34; --scale: 2.5; }
 
             .xl { --w: 26vmin; }
             .lg { --w: 22vmin; }
@@ -852,7 +860,7 @@
                stops right against its own edge. It gets a horizontal lead first
                — out, then angle, then down — which carries the whole run clear
                of the orbit before any text starts. */
-            const M_LEAD  = 124;
+            const M_LEAD  = 24;
 
             const STOPS = [
                 { el: capT, key: 'title', extra: 0 },

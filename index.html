@@ -670,7 +670,27 @@
                 if (!Number.isNaN(v) && v > 0) spread = v;
             }
             const CAM       = 2.5;                  // camera distance, in radii
-            const DRAG_K    = 0.0055;               // radians of spin per px dragged
+            /* ── DRAG GAIN ──
+               Radians per pixel is the wrong unit, because the pixels available
+               depend on the device. A mouse drag runs 500-800px and the spin it
+               produces dwarfs the magnet's final correction; a thumb on a 375px
+               screen cannot exceed ~260px, and at that distance the magnet
+               contributes two to four times more rotation than the finger did —
+               which is why the phone felt like it was snapping rather than
+               sliding. Measured, not assumed: 90px gives the same 0.19rad drag
+               and 0.66rad magnet pull on both, so the physics was never the
+               difference, only the input range.
+
+               SWEEP fixes the gesture in screen terms instead: dragging clear
+               across the viewport always spins the sphere by the same amount,
+               whatever the viewport is. 7.9 is what desktop already did at
+               1440px, so the desktop feel is unchanged by construction and the
+               phone is brought up to meet it. */
+            const SWEEP = 7.9;                      // radians per full-width drag
+            let DRAG_K  = 0.0055;                   // recomputed from the viewport
+            function syncDrag() {
+                DRAG_K = SWEEP / Math.max(320, window.innerWidth);
+            }
 
             /* ── WEIGHT ──
                The pointer does not move the sphere, it moves a target the
@@ -1204,7 +1224,7 @@
                real risk: showing and hiding the URL bar changes the viewport
                without reliably firing resize. A ResizeObserver fires on the
                box actually changing, whatever the cause. */
-            const relayout = () => { syncSpread(); measure(); render(); };
+            const relayout = () => { syncSpread(); syncDrag(); measure(); render(); };
             if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(stage);
             window.addEventListener('resize', relayout);   // older browsers
             // the box sizes come from the intrinsic width/height attributes, so
@@ -1214,6 +1234,7 @@
 
             // open with the flagship already parked on the focal point
             syncSpread();
+            syncDrag();
             measure();
             const start = targetFor(nodes[0]);
             yaw = start.yaw; pitch = start.pitch;

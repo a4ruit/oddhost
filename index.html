@@ -265,6 +265,11 @@
                the five tiers or disturbing the ratios between them. Inherited
                from .gallery, so it is set in one place. */
             width: calc(var(--w) * var(--boost, 1) * var(--scale, 1));
+            /* The stage already declares this, but the touch target here is the
+               piece, and leaving it to inherit the intersection is exactly the
+               kind of thing engines disagree on. Stating it means a drag that
+               starts on media can never be claimed as a page gesture. */
+            touch-action: none;
             transform-origin: 50% 50%;
             will-change: transform, opacity;
             text-decoration: none;
@@ -677,6 +682,22 @@
                what makes something feel weightless. */
             const FOLLOW    = reduce ? 1 : 0.10;
             const FRICTION  = reduce ? 0.60 : 0.95; // momentum decay per frame — higher slides longer
+
+            /* Both constants above are per FRAME, which quietly makes the feel
+               depend on the frame rate. Desktop sits at 60fps; a phone decoding
+               eleven looping videos does not, and at 30fps the same numbers give
+               a sphere that takes twice as long in real time to catch the finger
+               and a slide that runs on for twice as far. That is the whole of
+               why the drag did not translate to touch.
+
+               So every frame is measured against a 60fps frame and the constants
+               are re-expressed for that span: pow() is the correct conversion
+               for both, since each is a geometric decay per unit time. The clamp
+               covers a tab returning from the background, where dt is enormous
+               and would otherwise teleport the sphere. */
+            const FRAME = 1000 / 60;
+            let lastT = 0;                          // 0 = first frame, treat as one frame
+            const dtOf = now => (lastT ? Math.min(4, Math.max(0.25, (now - lastT) / FRAME)) : 1);
             /* Where the slide is declared over. This has to be small enough
                that the leftover travel — v/(1-friction), plus the sliver of
                correction still owed — is under a pixel on screen, because the
@@ -706,7 +727,7 @@
             });
 
             let yaw = 0, pitch = 0, vYaw = 0, vPitch = 0;
-            let dragging = false, dragDist = 0, lastX = 0, lastY = 0;
+            let dragging = false, dragDist = 0, lastX = 0, lastY = 0, activeId = null;
             let aimYaw = 0, aimPitch = 0;   // where the pointer has asked the sphere to go
             let raf = null, hovered = null, focal = null, settled = false;
 
@@ -1005,18 +1026,24 @@
                 focal = pickFocal(yaw, pitch).el;
             }
 
-            function frame() {
+            function frame(now) {
+                const dt = dtOf(now || performance.now());
+                lastT = now || performance.now();
+
                 if (dragging) {
                     /* Chase the pointer's target instead of matching it. The
                        throw velocity then falls out for free: it is simply how
                        far the sphere actually turned this frame, which is
                        per-frame by construction — so it no longer matters
-                       whether the device delivered 4 pointer events or 40. */
+                       whether the device delivered 4 pointer events or 40.
+                       Dividing by dt normalises it back to per-60fps-frame, the
+                       unit the coast below spends it in. */
                     const wasY = yaw, wasP = pitch;
-                    yaw   += (aimYaw   - yaw)   * FOLLOW;
-                    pitch += (aimPitch - pitch) * FOLLOW;
-                    vYaw   = yaw - wasY;
-                    vPitch = pitch - wasP;
+                    const f = 1 - Math.pow(1 - FOLLOW, dt);
+                    yaw   += (aimYaw   - yaw)   * f;
+                    pitch += (aimPitch - pitch) * f;
+                    vYaw   = (yaw - wasY) / dt;
+                    vPitch = (pitch - wasP) / dt;
                 } else {
                     if (snapping) {
                         const k = Math.min(1, (performance.now() - snapT0) / snapMs);
@@ -1029,8 +1056,9 @@
                             paintCaption();
                         }
                     } else if (coasting) {
-                        yaw += vYaw; pitch += vPitch;
-                        vYaw *= FRICTION; vPitch *= FRICTION;
+                        yaw += vYaw * dt; pitch += vPitch * dt;
+                        const decay = Math.pow(FRICTION, dt);
+                        vYaw *= decay; vPitch *= decay;
 
                         /* Speed decays by the same factor on both axes, so the
                            fraction of the slide already spent is just how much
@@ -1058,9 +1086,19 @@
                 raf = (dragging || snapping || coasting) ? requestAnimationFrame(frame) : null;
             }
 
-            function wake() { if (!raf) raf = requestAnimationFrame(frame); }
+            // lastT is cleared, not kept: the loop sleeps whenever the sphere is
+            // still, so the gap since the previous frame may be seconds long and
+            // is not a real frame duration. First frame back counts as one.
+            function wake() { if (!raf) { lastT = 0; raf = requestAnimationFrame(frame); } }
 
             stage.addEventListener('pointerdown', e => {
+                /* Touch means more than one pointer is possible. A second finger
+                   landing would otherwise re-grab the sphere — resetting the aim
+                   and the last position mid-drag, which reads as a jump — and
+                   either finger lifting would end the throw. First one down owns
+                   the gesture until it leaves. */
+                if (dragging) return;
+                activeId = e.pointerId;
                 dragging = true;
                 dragDist = 0;
                 lastX = e.clientX; lastY = e.clientY;
@@ -1085,7 +1123,7 @@
             // on window, not the stage, so a drag keeps working if the cursor
             // wanders off the stage mid-throw
             window.addEventListener('pointermove', e => {
-                if (!dragging) return;
+                if (!dragging || e.pointerId !== activeId) return;
                 const dx = e.clientX - lastX, dy = e.clientY - lastY;
                 lastX = e.clientX; lastY = e.clientY;
                 dragDist += Math.abs(dx) + Math.abs(dy);
@@ -1098,8 +1136,9 @@
             });
 
             function endDrag(e) {
-                if (!dragging) return;
+                if (!dragging || (e && e.pointerId !== activeId)) return;
                 dragging = false;
+                activeId = null;
                 /* No idle check needed any more. Pausing mid-drag used to leave
                    a stale velocity, so it had to be zeroed by hand — but a
                    chasing sphere slows down on its own as it closes on the

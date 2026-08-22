@@ -476,7 +476,21 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-            .piece img, .piece video, .metro, .metro-label, .sidebar { transition-duration: 0.01ms; }
+            /* Shortened, not switched off. 0.01ms made the metro labels pop in
+               with no fade, which is a harder visual event than a quick one. */
+            .piece img, .piece video, .metro, .metro-label, .sidebar {
+                transition-duration: 0.12s;
+            }
+
+            /* The stops arrive together instead of marching outward: the
+               staggered reveal is decorative sequencing, and that is the part
+               worth dropping. The fade itself stays. */
+            .metro-label.t, .metro-label.y, .metro-label.d { transition-delay: 0s; }
+
+            /* The line appears rather than drawing itself on — a stroke
+               travelling across the screen is the sustained motion to avoid.
+               The JS sets this inline, so it needs the override. */
+            .metro-line { transition: none !important; stroke-dashoffset: 0 !important; }
         }
 
         /* ── CURSOR DOT ── */
@@ -740,11 +754,33 @@
                drag-time symptom, so no amount of magnet tuning reaches it.
                Hence --grip in CSS, per breakpoint — touch wants a firmer hold
                on the sphere than a mouse does. 1 tracks the finger exactly. */
+            /* ── REDUCED MOTION ──
+               The preference is about motion the user did not cause: long,
+               sustained, full-screen drift that keeps going after the gesture
+               is over. It is NOT a request to remove feedback. Cutting every
+               duration to 1ms, which is what this used to do, replaces motion
+               with teleporting — the orbit stops reading as an orbit at all,
+               and a piece arriving instantly is arguably more disorienting
+               than one that travels there quickly.
+
+               So: the drag itself is untouched, because a sphere following
+               your finger is direct manipulation, not animation. What gets
+               capped is the autonomous part — the free coast is kept short and
+               the snap is quick but real. Everything stays legible as movement.
+
+               These are ceilings, not overrides: a calmer CSS value than the
+               cap still wins, so the tuning knobs keep working here too. */
+            const CALM_GLIDE = 0.88;   // ~0.5s of free slide, vs 3s+ at 0.97
+            const CALM_GRIP  = 0.40;   // floor: less lag means less drift after you stop
+
             let FOLLOW = reduce ? 1 : 0.10;
             function syncGrip() {
-                if (reduce) { FOLLOW = 1; return; }
                 const v = parseFloat(getComputedStyle(stage).getPropertyValue('--grip'));
-                FOLLOW = (!Number.isNaN(v) && v > 0) ? Math.min(1, v) : 0.10;
+                let f = (!Number.isNaN(v) && v > 0) ? Math.min(1, v) : 0.10;
+                // a loose grip drifts toward the target after the finger stops,
+                // which is exactly the uncommanded motion to avoid here
+                if (reduce) f = Math.max(f, CALM_GRIP);
+                FOLLOW = f;
             }
             /* ── GLIDE ──
                How much speed survives each frame once you let go. This is the
@@ -757,11 +793,14 @@
                A throw travels v/(1-glide) in total, so the effect is not linear:
                0.95 goes 20x the first frame's step, 0.97 goes 33x, 0.98 goes
                50x. Past ~0.985 it drifts long enough to feel unmoored. */
-            let FRICTION = reduce ? 0.60 : 0.95;
+            let FRICTION = reduce ? 0.88 : 0.95;
             function syncGlide() {
-                if (reduce) { FRICTION = 0.60; return; }
                 const v = parseFloat(getComputedStyle(stage).getPropertyValue('--glide'));
-                FRICTION = (!Number.isNaN(v) && v > 0 && v < 1) ? v : 0.95;
+                let f = (!Number.isNaN(v) && v > 0 && v < 1) ? v : 0.95;
+                // the coast is the one genuinely uncommanded stretch of motion,
+                // so it is shortened here rather than removed
+                if (reduce) f = Math.min(f, CALM_GLIDE);
+                FRICTION = f;
             }
 
             /* Both constants above are per FRAME, which quietly makes the feel
@@ -786,8 +825,12 @@
                step. At 0.0007 that gap was ~4px, which showed up as a visible
                hop right as everything else had gone still. */
             const COAST_END = 0.0002;               // rad/frame below which the throw is spent
-            const SNAP_MIN  = reduce ? 1 : 260;     // ms, a tiny correction
-            const SNAP_MAX  = reduce ? 1 : 900;     // ms — a click can ask for a half turn
+            /* Brisk, not absent. 1ms here was the teleport: tapping a piece
+               moved it across the sphere between one frame and the next, with
+               nothing to show the connection between the two positions. 150-380
+               is short enough to feel immediate and long enough to be followed. */
+            const SNAP_MIN  = reduce ? 150 : 260;   // ms, a tiny correction
+            const SNAP_MAX  = reduce ? 380 : 900;   // ms — a click can ask for a half turn
             const CLICK_SLOP = 5;                   // px of drift that still counts as a click
 
             /* ── MAGNET STRENGTH ──

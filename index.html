@@ -249,6 +249,12 @@
                whether a small movement registers at all. */
             --grip: 0.05;
 
+            /* The ice. Fraction of speed kept per frame after release, so it
+               only affects the slide, never the drag. 0.9 stops quickly,
+               0.95 is the default, 0.97-0.98 glides a long way. Must stay
+               under 1 — at 1 it would never stop. */
+            --glide: 0.95;
+
             position: relative;
             width: 100%;
             margin-top: 47px;
@@ -460,7 +466,7 @@
                it and the phone silently inherits the base rule, which is what
                put a 333ms drag lag back on touch. Higher = tracks the thumb
                more closely; 1 is exact, 0.05 is nearly frozen. */
-            .gallery { --spread: 1.34; --scale: 2.5; --sweep: 2.2; --magnet: .02; --grip: 2; }
+            .gallery { --spread: 1.34; --scale: 2.5; --sweep: 2.2; --magnet: .02; --grip: 1; --glide: 0.97; }
 
             .xl { --w: 26vmin; }
             .lg { --w: 22vmin; }
@@ -740,7 +746,23 @@
                 const v = parseFloat(getComputedStyle(stage).getPropertyValue('--grip'));
                 FOLLOW = (!Number.isNaN(v) && v > 0) ? Math.min(1, v) : 0.10;
             }
-            const FRICTION  = reduce ? 0.60 : 0.95; // momentum decay per frame — higher slides longer
+            /* ── GLIDE ──
+               How much speed survives each frame once you let go. This is the
+               ice: --sweep only changes how fast the throw STARTS, and buying a
+               longer slide that way costs you a twitchy drag, because it is the
+               same gain applied to every movement. Friction is independent of
+               the gesture — it only governs what happens after the finger is
+               gone, so a long glide costs nothing during the drag.
+
+               A throw travels v/(1-glide) in total, so the effect is not linear:
+               0.95 goes 20x the first frame's step, 0.97 goes 33x, 0.98 goes
+               50x. Past ~0.985 it drifts long enough to feel unmoored. */
+            let FRICTION = reduce ? 0.60 : 0.95;
+            function syncGlide() {
+                if (reduce) { FRICTION = 0.60; return; }
+                const v = parseFloat(getComputedStyle(stage).getPropertyValue('--glide'));
+                FRICTION = (!Number.isNaN(v) && v > 0 && v < 1) ? v : 0.95;
+            }
 
             /* Both constants above are per FRAME, which quietly makes the feel
                depend on the frame rate. Desktop sits at 60fps; a phone decoding
@@ -1292,7 +1314,14 @@
                real risk: showing and hiding the URL bar changes the viewport
                without reliably firing resize. A ResizeObserver fires on the
                box actually changing, whatever the cause. */
-            const relayout = () => { syncSpread(); syncDrag(); syncMagnet(); measure(); render(); };
+            /* Every sync must be listed here. A tuning variable that is read
+               nowhere fails silently — the CSS resolves, the value looks right
+               in devtools, and the constant it was meant to replace quietly
+               keeps its default. That is exactly what happened to --grip. */
+            const relayout = () => {
+                syncSpread(); syncDrag(); syncMagnet(); syncGrip(); syncGlide();
+                measure(); render();
+            };
             if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(stage);
             window.addEventListener('resize', relayout);   // older browsers
             // the box sizes come from the intrinsic width/height attributes, so
@@ -1304,6 +1333,8 @@
             syncSpread();
             syncDrag();
             syncMagnet();
+            syncGrip();
+            syncGlide();
             measure();
             const start = targetFor(nodes[0]);
             yaw = start.yaw; pitch = start.pitch;

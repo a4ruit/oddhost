@@ -130,7 +130,15 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s ease, visibility 0.3s;
-            z-index: 130;
+            /* Above the orbit, not below it. These used to be 130/140, written
+               against the header's 120 — but that predates the landing page,
+               where .piece carries an inline z-index up to 1000 and .metro sits
+               at 1200. .gallery is position:relative with z-index auto, so it
+               opens no stacking context of its own and every piece competes
+               directly with the menu at the root level. The result was
+               thumbnails punching through an open sidebar, and staying
+               clickable through it. */
+            z-index: 1300;
         }
 
         .scrim.open { opacity: 1; visibility: visible; }
@@ -147,7 +155,7 @@
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            z-index: 140;
+            z-index: 1400;   /* above the scrim, which is above the orbit */
             transform: translateX(-100%);
             transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
         }
@@ -254,6 +262,11 @@
                0.95 is the default, 0.97-0.98 glides a long way. Must stay
                under 1 — at 1 it would never stop. */
             --glide: 0.95;
+
+            /* Which edge of the description block is flush.
+               hug  = flush against the metro line (typographic default)
+               edge = flush toward the screen edge, ragged edge facing inward */
+            --metro-align: hug;
 
             position: relative;
             width: 100%;
@@ -466,7 +479,8 @@
                it and the phone silently inherits the base rule, which is what
                put a 333ms drag lag back on touch. Higher = tracks the thumb
                more closely; 1 is exact, 0.05 is nearly frozen. */
-            .gallery { --spread: 1.3; --scale: 2.5; --sweep: 2.2; --magnet: .02; --grip: .2; --glide: .95; }
+            .gallery { --spread: 1.3; --scale: 2.5; --sweep: 2.2; --magnet: .02; --grip: .2; --glide: .95;
+                       --metro-align: edge; }
 
             .xl { --w: 26vmin; }
             .lg { --w: 22vmin; }
@@ -638,7 +652,7 @@
             <img src="images/cadenacam.png" alt="" width="459" height="982">
         </div>
 
-        <div class="piece xs" data-title="Major Project" style="--boost: 1.45" data-desc="Capstone installation for the Bachelor of Digital Media. Dean's Award, 2024." data-year="2023">
+        <div class="piece xs" data-title="NeuroMetrix&trade;" style="--boost: 1.45" data-desc="Capstone installation for the Bachelor of Digital Media. Dean's Award, 2024." data-year="2023">
             <img src="images/neurometrix.png" alt="" width="826" height="978">
         </div>
 
@@ -1048,12 +1062,24 @@
                of the orbit before any text starts. */
             const M_LEAD  = 24;
 
+            // 'hug' or 'edge' — see where it is applied, further down. Read from
+            // CSS so the breakpoint owns it, same as --spread and the rest.
+            let metroAlign = 'hug';
+            function syncMetroAlign() {
+                const v = getComputedStyle(stage).getPropertyValue('--metro-align').trim();
+                metroAlign = (v === 'edge') ? 'edge' : 'hug';
+            }
+
             const STOPS = [
                 { el: capT, key: 'title', extra: 0 },
                 { el: capY, key: 'year',  extra: 0 },
-                // the description is a wrapped block, so it needs more room
-                // before it than the single-line stops above it
-                { el: capD, key: 'desc',  extra: 22 }
+                /* hang: the block grows DOWNWARD from its stop instead of being
+                   centred on it. A single-line stop centres fine, but a wrapped
+                   one centred on its stop grows in both directions, and every
+                   line it gains pushes half a line upward into the stop above —
+                   so a long description collided with the year. Hanging it
+                   means length only ever consumes empty space below. */
+                { el: capD, key: 'desc',  extra: 22, hang: true }
             ];
             STOPS.forEach(s => { s.txt = s.el.firstElementChild; });
 
@@ -1106,7 +1132,10 @@
                 // assumed. Estimating it here is what put it off the bottom.
                 let runLen = M_LEG;
                 STOPS.forEach(s => { runLen += M_STEP + s.extra; });
-                const tail = runLen + STOPS[STOPS.length - 1].el.offsetHeight / 2 + M_EDGE;
+                // a hanging block reaches its whole height past the last stop,
+                // where a centred one only reaches half
+                const last = STOPS[STOPS.length - 1];
+                const tail = runLen + last.el.offsetHeight * (last.hang ? 1 : 0.5) + M_EDGE;
                 if (py + sy * tail > sr.height || py + sy * tail < 0) sy = -sy;
 
                 const ox = px + sx * (hw + M_GAP);      // origin, clear of the piece
@@ -1140,8 +1169,45 @@
                     left = Math.max(M_EDGE, Math.min(left, sr.width - w - M_EDGE));
                     el.style.left = left + 'px';
                     el.style.right = 'auto';
-                    el.style.transform = 'translateY(-50%)';
-                    el.style.textAlign = sx > 0 ? 'left' : 'right';
+                    /* A hanging block is offset by half of its FIRST LINE, not
+                       half of itself, so that line sits centred on the stop just
+                       like a single-line label does — the stops stay evenly
+                       spaced and only the text below extends. Measured from the
+                       rendered line box rather than computed from line-height,
+                       because the plate's padding counts toward it too. */
+                    if (STOPS[i].hang) {
+                        const rects = m.el.firstElementChild.getClientRects();
+                        const h = rects.length ? rects[0].height : 0;
+                        /* Hang AWAY from the stops above, which means following
+                           the run: downward runs put the first line on the stop
+                           and grow down, upward runs put the LAST line on the
+                           stop and grow up. Always hanging down was still
+                           colliding on the upward runs, since the block then
+                           grew straight back over the year it was meant to
+                           clear. Either way the stop keeps a line centred on
+                           it, so the spacing still reads as even. */
+                        const off = sy > 0 ? h / 2 : el.offsetHeight - h / 2;
+                        el.style.transform = 'translateY(-' + off.toFixed(1) + 'px)';
+                    } else {
+                        el.style.transform = 'translateY(-50%)';
+                    }
+                    /* Two defensible readings, and they want opposite results,
+                       so this is a setting rather than a rule:
+
+                       'hug'  — flush against the line, ragged edge outward.
+                                The typographic convention: the line acts as the
+                                margin the block is set against. Wants room to
+                                run into, so it suits the wide stage.
+                       'edge' — flush toward the screen edge, ragged edge facing
+                                back at the sphere. Reads better where the block
+                                is close to the edge and the line is crowded in
+                                among the media, as on a phone.
+
+                       Only the description shows the difference — the title and
+                       year sit in shrink-to-fit boxes where both render alike. */
+                    el.style.textAlign = (metroAlign === 'edge')
+                        ? (sx > 0 ? 'right' : 'left')
+                        : (sx > 0 ? 'left'  : 'right');
                 });
 
                 // draw the line on, rather than having it simply appear
@@ -1395,6 +1461,7 @@
                keeps its default. That is exactly what happened to --grip. */
             const relayout = () => {
                 syncSpread(); syncDrag(); syncMagnet(); syncGrip(); syncGlide();
+                syncMetroAlign();
                 measure(); render();
             };
             if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(stage);
@@ -1410,6 +1477,7 @@
             syncMagnet();
             syncGrip();
             syncGlide();
+            syncMetroAlign();
             measure();
             const start = targetFor(nodes[0]);
             yaw = start.yaw; pitch = start.pitch;

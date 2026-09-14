@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PACK MENTALITY — @oddh0st</title>
+    <link rel="icon" type="image/png" href="images/logo/oddh0stlogo.png">
+    <link rel="apple-touch-icon" href="images/logo/oddh0stlogo.png">
+    <link rel="preconnect" href="https://api.fontshare.com">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="project.css">
+    <style>
+        /* Media-led rather than text-led: the work is a room of people around a
+           projected table, so it is shown rather than described. Structure, type
+           scale and fields all come from project.css, shared with the other
+           project pages — this only changes how the media is sized.
+
+           NOTHING IS CROPPED HERE. The shared .ph-wide/.ph-square/.ph-tall slots
+           force an aspect-ratio and object-fit: cover, which is right when a
+           page needs a tidy grid out of mismatched sources. These frames are
+           composed — a hand reaching in, a projector at the edge — so cropping
+           them to a slot would cut the subject out. Every item keeps its own
+           ratio and the layout is built around the ratios instead. */
+        /* Its own class rather than .hero-shot, which hard-codes 16/9 + cover.
+           Note there is deliberately NO aspect-ratio here: an img with width and
+           height attributes already gets `aspect-ratio: auto W/H` from the UA
+           stylesheet, and writing `aspect-ratio: auto` DISCARDS that, leaving an
+           unloaded image with no reserved height at all — it collapsed to an
+           18px sliver. Declaring nothing is what keeps the file's own ratio. */
+        .hero-natural {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 1px solid var(--rule-soft);
+            background: var(--ph);
+        }
+
+        .media-stack.natural { gap: 14px; }
+
+        .media-stack.natural img,
+        .media-stack.natural video {
+            width: 100%;
+            height: auto;          /* the ratio comes from the file itself */
+            display: block;
+            border: 1px solid var(--rule-soft);
+            background: var(--ph);
+        }
+
+        /* Pairs are chosen so the two items already share a ratio, which is what
+           keeps the rows level without cropping anything to make them match.
+           align-items:start so an odd pair steps rather than stretches. */
+        .media-stack.natural .media-pair {
+            gap: 14px;
+            align-items: start;
+        }
+
+        @media (max-width: 900px) {
+            /* one column: side by side at phone width leaves each frame too
+               small to read, and a portrait pair especially */
+            .media-stack.natural .media-pair { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="site-header">
+        <nav class="crumb">
+            <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
+            <span class="crumb-text"><a href="index.html">Work</a></span>
+            <span class="sep crumb-text">/</span>
+            <span class="crumb-text">Installation</span>
+        </nav>
+        <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
+           rel="noopener noreferrer">@oddh0st</a>
+        <div class="header-right">
+            <a href="index.html">Index</a>
+        </div>
+    </header>
+
+    <!-- ── HERO ── -->
+    <section class="hero">
+        <div class="hero-text">
+            <div class="eyebrow">Game Installation</div>
+            <h1 class="project-title">PACK<br>MENTALITY</h1>
+            <div class="title-meta">
+                <span class="meta-lead">2026</span>
+                <span class="meta-sub">Installation</span>
+                <span class="meta-note">
+                    Projected table, phone controllers<br>
+                    <a href="#gallery">See the installation ↓</a>
+                </span>
+            </div>
+        </div>
+
+        <div class="hero-media">
+            <img class="hero-natural" src="images/projectmedia/packmentality26/exhibition-02.jpg"
+                 alt="PACK MENTALITY installed — players gathered around the projected table"
+                 width="2400" height="1600">
+        </div>
+    </section>
+
+    <!-- ── DETAIL ── -->
+    <section class="detail" id="info">
+        <div class="detail-info">
+            <div class="field">
+                <div class="field-label">Description</div>
+                <p class="body-copy">A phone-controlled multiplayer game installation.</p>
+            </div>
+
+            <div class="field">
+                <div class="field-label">More info</div>
+                <ul class="spec">
+                    <li><span class="k">(01) Year</span><span class="v">2026</span></li>
+                    <li><span class="k">(02) Type</span><span class="v">Game installation</span></li>
+                    <!-- Add the rest yourself — role, venue, context, collaborators.
+                         Left out rather than guessed at. Copy a line and renumber. -->
+                </ul>
+            </div>
+
+            <!-- BUILT WITH — omitted rather than invented. To add it, paste this
+                 back in above the CTA and fill the tags:
+
+            <div class="field">
+                <div class="field-label">Built with</div>
+                <div class="tags">
+                    <span class="tag">…</span>
+                </div>
+            </div>
+            -->
+
+            <a class="cta" href="index.html">Back to index</a>
+        </div>
+
+        <!-- Ratios noted per row: pairs share one, so the rows sit level with no
+             cropping. Reordering is safe as long as a pair keeps matched ratios. -->
+        <div class="media-stack natural" id="gallery">
+
+            <!-- 3:2 -->
+            <img src="images/projectmedia/packmentality26/exhibition-01.jpg"
+                 alt="Two players holding phones over the projected table"
+                 width="1800" height="1200">
+
+            <!-- 3:2 + 3:2 -->
+            <div class="media-pair">
+                <img src="images/projectmedia/packmentality26/exhibition-04.jpg"
+                     alt="" width="1800" height="1200">
+                <img src="images/projectmedia/packmentality26/exhibition-03.jpg"
+                     alt="" width="1800" height="1200">
+            </div>
+
+            <!-- 3:2 -->
+            <img src="images/projectmedia/packmentality26/exhibition-06.jpg"
+                 alt="Players either side of the table, projector on its stand"
+                 width="1800" height="1200">
+
+            <!-- 2:3 — full width. Pairing it with a 3:4 stepped the row by 53px,
+                 and nothing else on the page shares 2:3, so it takes its own. -->
+            <img src="images/projectmedia/packmentality26/exhibition-05.jpg"
+                 alt="A hand reaching onto the projected surface"
+                 width="1200" height="1800">
+
+            <!-- 4:3 + 4:3 -->
+            <div class="media-pair">
+                <img src="images/projectmedia/packmentality26/pack-wide-02.png"
+                     alt="The projected game board" width="1479" height="1102">
+                <img src="images/projectmedia/packmentality26/pack-wide-01.png"
+                     alt="" width="1444" height="1094">
+            </div>
+
+            <!-- 3:4 + 3:4 -->
+            <div class="media-pair">
+                <img src="images/projectmedia/packmentality26/pack-02.png"
+                     alt="" width="646" height="862">
+                <img src="images/projectmedia/packmentality26/pack-04.png"
+                     alt="" width="834" height="1112">
+            </div>
+
+            <!-- 3:4 — the odd one out of three at this ratio -->
+            <img src="images/projectmedia/packmentality26/pack-05.png"
+                 alt="" width="830" height="1109">
+
+            <!-- 9:16 + 9:16 -->
+            <div class="media-pair">
+                <!-- 1080x1920, not 1920x1080: the source is a 1920x1080 stream
+                     carrying a -90deg rotation matrix, so browsers present it
+                     portrait. The attributes describe the DISPLAYED shape. -->
+                <video autoplay muted loop playsinline
+                       width="1080" height="1920"
+                       poster="images/projectmedia/packmentality26/heroshot-poster.jpg">
+                    <source src="images/projectmedia/packmentality26/heroshot.mp4" type="video/mp4">
+                </video>
+                <img src="images/projectmedia/packmentality26/pack-03.png"
+                     alt="" width="568" height="1004">
+            </div>
+
+            <!-- both very tall, ~1:2.2 -->
+            <div class="media-pair">
+                <img src="images/projectmedia/packmentality26/pack-phone-ui.png"
+                     alt="The phone controller" width="1170" height="2532">
+                <img src="images/projectmedia/packmentality26/pack-01.jpg"
+                     alt="" width="923" height="2048">
+            </div>
+
+        </div>
+    </section>
+
+    <a class="next" href="luminous-festival.html">
+        <span class="next-label">Next project</span>
+        <span class="next-title">Luminous Festival →</span>
+    </a>
+
+    <footer class="site-footer">
+        <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
+        <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
+    </footer>
+
+</body>
+</html>

@@ -612,12 +612,16 @@
              made this 335px wide when nothing else on screen passed 236px, and
              width is what reads as "big". Left at the plain tier, it is no wider
              than the flagship. -->
-        <div class="piece xl" data-title="PACK MENTALITY" style="--boost: 0.75" data-desc="A phone-controlled multiplayer game installation." data-year="2026">
-            <video autoplay muted loop playsinline width="1920" height="1080"
+        <!-- 1080x1920, not 1920x1080: the file is a 1920x1080 stream carrying a
+             -90deg rotation matrix, so every browser presents it portrait. The
+             attributes describe the DISPLAYED shape, since that is what reserves
+             the right box before the video has loaded. -->
+        <a class="piece xl" href="pack-mentality.html" data-title="PACK MENTALITY" style="--boost: 0.75" data-desc="A phone-controlled multiplayer game installation." data-year="2026">
+            <video autoplay muted loop playsinline width="1080" height="1920"
                    poster="images/projectmedia/packmentality26/heroshot-poster.jpg">
                 <source src="images/projectmedia/packmentality26/heroshot.mp4" type="video/mp4">
             </video>
-        </div>
+        </a>
 
         <a class="piece xl" href="luminous-festival.html" data-title="Luminous Festival" data-desc="Outdoor forest installation on dual vertical displays. Hand tracking drives an ASCII boid flock as a live force field, hunted by a whale." data-year="2025">
             <video autoplay muted loop playsinline width="1080" height="1920" poster="images/luminous.png">

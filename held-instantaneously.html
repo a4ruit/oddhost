@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Held, Instantaneously — @oddh0st</title>
+    <link rel="icon" type="image/png" href="images/logo/oddh0stlogo.png">
+    <link rel="apple-touch-icon" href="images/logo/oddh0stlogo.png">
+    <link rel="preconnect" href="https://api.fontshare.com">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="project.css">
+    <style>
+        /* Media keeps its own shape here. The shared .ph-* slots force an
+           aspect-ratio plus object-fit: cover, which is right for building a
+           tidy grid out of mismatched sources but wrong for these: the pixel
+           art would lose its edges and the photographs their framing. Same
+           approach as pack-mentality.html.
+
+           Note there is deliberately no aspect-ratio declared: an img carrying
+           width and height attributes already gets `aspect-ratio: auto W/H`
+           from the UA stylesheet, which reserves the right box before the file
+           loads. Writing `aspect-ratio: auto` here would discard that. */
+        .hero-natural,
+        .media-stack.natural img,
+        .media-stack.natural video {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 1px solid var(--rule-soft);
+            background: var(--ph);
+        }
+
+        .media-stack.natural { gap: 14px; }
+
+        /* pairs are grouped by matching ratio, so rows sit level without
+           cropping; start-aligned so any odd pair steps rather than stretches */
+        .media-stack.natural .media-pair { gap: 14px; align-items: start; }
+
+        @media (max-width: 900px) {
+            .media-stack.natural .media-pair { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<!--
+    BLANK PAGE — ready to fill in.
+
+    Nothing here is invented. Only the title and the year are filled, both taken
+    from what archive.html already said. Everything else is a [bracketed]
+    placeholder: visible on the page, so it cannot ship by accident. Search this
+    file for "[" to find every one.
+
+    No page-specific CSS on purpose — all styling comes from project.css,
+    shared with the other project pages, so these stay consistent.
+
+    The one-liner archive.html already carries for this project:
+      A satirical dating app built on adversarial UX. Swipes spawn NPCs into a Unity terrarium, where matches bond and rejects fade into a graveyard.
+    Use it, rewrite it, or ignore it.
+-->
+<body>
+
+    <header class="site-header">
+        <nav class="crumb">
+            <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
+            <span class="crumb-text"><a href="index.html">Work</a></span>
+            <span class="sep crumb-text">/</span>
+            <span class="crumb-text">[category]</span>
+        </nav>
+        <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
+           rel="noopener noreferrer">@oddh0st</a>
+        <div class="header-right">
+            <a href="index.html">Index</a>
+        </div>
+    </header>
+
+    <!-- ── HERO ── -->
+    <section class="hero">
+        <div class="hero-text">
+            <div class="eyebrow">[kind of work]</div>
+            <h1 class="project-title">Held,<br>Instantaneously</h1>
+            <div class="title-meta">
+                <span class="meta-lead">2025</span>
+                <span class="meta-sub">[type]</span>
+                <span class="meta-note">
+                    [short note]<br>
+                    <a href="#info">Full credits ↓</a>
+                </span>
+            </div>
+        </div>
+
+        <div class="hero-media">
+            <img class="hero-natural" src="images/projectmedia/heldinstant/held-display.jpg"
+                 alt="Held, Instantaneously running on a vertical display"
+                 width="1200" height="1600">
+        </div>
+    </section>
+
+    <!-- ── DETAIL ── -->
+    <section class="detail" id="info">
+        <div class="detail-info">
+            <div class="field">
+                <div class="field-label">Description</div>
+                <p class="body-copy">[description]</p>
+                <!-- more paragraphs: repeat <p class="body-copy">...</p> -->
+            </div>
+
+            <div class="field">
+                <div class="field-label">More info</div>
+                <ul class="spec">
+                    <li><span class="k">(01) Year</span><span class="v">2025</span></li>
+                    <li><span class="k">(02) Type</span><span class="v">[type]</span></li>
+                    <li><span class="k">(03) Role</span><span class="v">[role]</span></li>
+                    <!-- copy a line and renumber to add more -->
+                </ul>
+            </div>
+
+            <div class="field">
+                <div class="field-label">Built with</div>
+                <div class="tags">
+                    <span class="tag">[tool]</span>
+                    <span class="tag">[tool]</span>
+                </div>
+            </div>
+
+            <a class="cta" href="index.html">Back to index</a>
+        </div>
+
+        <div class="media-stack natural" id="gallery">
+            <!-- 9:16 + 9:16 — both clips, so the row sits level.
+                 720x1280 and genuinely portrait: the sources were 1920x1080
+                 with a -90deg rotation matrix, and the rotation is baked into
+                 these files rather than left for the browser to apply. -->
+            <div class="media-pair">
+                <video autoplay muted loop playsinline width="720" height="1280"
+                       poster="images/projectmedia/heldinstant/held-clip-01-poster.jpg">
+                    <source src="images/projectmedia/heldinstant/held-clip-01.mp4" type="video/mp4">
+                </video>
+                <video autoplay muted loop playsinline width="720" height="1280"
+                       poster="images/projectmedia/heldinstant/held-clip-02-poster.jpg">
+                    <source src="images/projectmedia/heldinstant/held-clip-02.mp4" type="video/mp4">
+                </video>
+            </div>
+
+            <!-- 700x940 -->
+            <img src="images/projectmedia/heldinstant/held-night.jpg"
+                 alt="The display seen from the next room" width="700" height="940">
+            <p class="caption">[caption]</p>
+        </div>
+    </section>
+
+    <a class="next" href="digital-media-exhibition.html">
+        <span class="next-label">Next project</span>
+        <span class="next-title">Digital Media Exhibition →</span>
+    </a>
+
+    <footer class="site-footer">
+        <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
+        <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
+    </footer>
+
+</body>
+</html>

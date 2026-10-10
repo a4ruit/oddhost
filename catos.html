@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CatOS — @oddh0st</title>
+    <link rel="icon" type="image/png" href="images/logo/oddh0stlogo.png">
+    <link rel="apple-touch-icon" href="images/logo/oddh0stlogo.png">
+    <link rel="preconnect" href="https://api.fontshare.com">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="project.css">
+    <style>
+        /* Media keeps its own shape here. The shared .ph-* slots force an
+           aspect-ratio plus object-fit: cover, which is right for building a
+           tidy grid out of mismatched sources but wrong for these: the pixel
+           art would lose its edges and the photographs their framing. Same
+           approach as pack-mentality.html.
+
+           Note there is deliberately no aspect-ratio declared: an img carrying
+           width and height attributes already gets `aspect-ratio: auto W/H`
+           from the UA stylesheet, which reserves the right box before the file
+           loads. Writing `aspect-ratio: auto` here would discard that. */
+        .hero-natural,
+        .media-stack.natural img,
+        .media-stack.natural video {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 1px solid var(--rule-soft);
+            background: var(--ph);
+        }
+
+        .media-stack.natural { gap: 14px; }
+
+        /* pairs are grouped by matching ratio, so rows sit level without
+           cropping; start-aligned so any odd pair steps rather than stretches */
+        .media-stack.natural .media-pair { gap: 14px; align-items: start; }
+
+        @media (max-width: 900px) {
+            .media-stack.natural .media-pair { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<!--
+    BLANK PAGE — ready to fill in.
+
+    Nothing here is invented. Only the title and the year are filled, both taken
+    from what archive.html already said. Everything else is a [bracketed]
+    placeholder: visible on the page, so it cannot ship by accident. Search this
+    file for "[" to find every one.
+
+    No page-specific CSS on purpose — all styling comes from project.css,
+    shared with the other project pages, so these stay consistent.
+
+    The one-liner archive.html already carries for this project:
+      A game made with lactosefreecat and Kora Lee.
+    Use it, rewrite it, or ignore it.
+-->
+<body>
+
+    <header class="site-header">
+        <nav class="crumb">
+            <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
+            <span class="crumb-text"><a href="index.html">Work</a></span>
+            <span class="sep crumb-text">/</span>
+            <span class="crumb-text">[category]</span>
+        </nav>
+        <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
+           rel="noopener noreferrer">@oddh0st</a>
+        <div class="header-right">
+            <a href="index.html">Index</a>
+        </div>
+    </header>
+
+    <!-- ── HERO ── -->
+    <section class="hero">
+        <div class="hero-text">
+            <div class="eyebrow">[kind of work]</div>
+            <h1 class="project-title">CatOS</h1>
+            <div class="title-meta">
+                <span class="meta-lead">2025</span>
+                <span class="meta-sub">[type]</span>
+                <span class="meta-note">
+                    [short note]<br>
+                    <a href="#info">Full credits ↓</a>
+                </span>
+            </div>
+        </div>
+
+        <div class="hero-media">
+            <img class="hero-natural" src="images/projectmedia/catos/catos-key.png"
+                 alt="CatOS key art" width="1024" height="1024">
+        </div>
+    </section>
+
+    <!-- ── DETAIL ── -->
+    <section class="detail" id="info">
+        <div class="detail-info">
+            <div class="field">
+                <div class="field-label">Description</div>
+                <p class="body-copy">[description]</p>
+                <!-- more paragraphs: repeat <p class="body-copy">...</p> -->
+            </div>
+
+            <div class="field">
+                <div class="field-label">More info</div>
+                <ul class="spec">
+                    <li><span class="k">(01) Year</span><span class="v">2025</span></li>
+                    <li><span class="k">(02) Type</span><span class="v">[type]</span></li>
+                    <li><span class="k">(03) Role</span><span class="v">[role]</span></li>
+                    <!-- copy a line and renumber to add more -->
+                </ul>
+            </div>
+
+            <div class="field">
+                <div class="field-label">Built with</div>
+                <div class="tags">
+                    <span class="tag">[tool]</span>
+                    <span class="tag">[tool]</span>
+                </div>
+            </div>
+
+            <a class="cta" href="index.html">Back to index</a>
+        </div>
+
+        <div class="media-stack natural" id="gallery">
+            <!-- 800x644 -->
+            <img src="images/projectmedia/catos/catos-restart.png"
+                 alt="The restart screen" width="800" height="644">
+            <p class="caption">[caption]</p>
+        </div>
+    </section>
+
+    <a class="next" href="sos2.html">
+        <span class="next-label">Next project</span>
+        <span class="next-title">S0S2 →</span>
+    </a>
+
+    <footer class="site-footer">
+        <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
+        <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
+    </footer>
+
+</body>
+</html>

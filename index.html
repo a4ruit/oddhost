@@ -34,7 +34,16 @@
             top: 0;
             left: 0;
             right: 0;
-            z-index: 120;
+            /* Above everything the gallery draws, below the menu that covers
+               the page. 120 was written when the only thing underneath was the
+               old scrolling index; the orbit gives pieces an inline z-index up
+               to 1000, and in the archive the media is scaled to cover the
+               panel, so its box reaches well above the gallery's top edge.
+               Painting is clipped there, but relying on a clip to protect the
+               header is a thin guarantee — this makes the order explicit.
+                 pieces <= 1000 < seam 1050 < index 1100 < header 1200
+                 < scrim 1300 < sidebar 1400 */
+            z-index: 1200;
             display: flex;
             align-items: stretch;
             border-bottom: 1px solid #ffffff1a;
@@ -42,6 +51,12 @@
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
         }
+
+        /* Translucency is fine over the orbit's scattered media on black, but
+           in the archive a full-bleed image runs right up under the header and
+           shows through the blur, which is what made the button hard to read.
+           Solid while the archive is up, translucent the rest of the time. */
+        body.archive-open .site-header { background: #0e0e0e; }
 
         .menu-btn {
             display: flex;
@@ -283,6 +298,147 @@
         }
 
         .gallery.is-dragging { cursor: grabbing; }
+
+        /* ── ARCHIVE ──
+           The orbit does not switch to another page, it resolves into one.
+           The destination is the layout archive.html already uses — a column
+           of big titles on the left, a single piece of media on the right —
+           so there is no separate archive to keep in step with this.
+
+           Only the chrome is here. Every piece is still positioned by the
+           script, interpolating between its point on the sphere and its place
+           in this layout, which is what lets the two be one movement. */
+        .archive-index {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            padding: 6vh 2vw 8vh 5vw;
+            /* pieces carry inline z-index up to 1000 */
+            z-index: 1100;
+            opacity: 0;                /* the script fades this with the unfold */
+            pointer-events: none;
+            scrollbar-width: none;
+        }
+
+        .archive-index::-webkit-scrollbar { display: none; }
+        .gallery.is-archive .archive-index { pointer-events: auto; }
+        .gallery.is-archive { cursor: default; }
+
+        /* The seam. In the archive this is .stage::after — a gradient over the
+           media's leading edge that sinks it into the black where it meets the
+           list, so the two halves share an edge instead of butting against one.
+           There is no stage element here, the media sits straight on the
+           gallery, so it needs its own layer: above the pieces, below the
+           index, and inert to the pointer. Faded in by the script with the
+           unfold, since it has no business existing while the orbit is up. */
+        .archive-seam {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 1050;                       /* pieces reach 1000 */
+            background: linear-gradient(to right, rgba(14,14,14,0.85), rgba(14,14,14,0) 22%);
+        }
+
+        @media (max-width: 900px) {
+            /* the list sits BELOW the media here, so the seam runs along the
+               bottom edge rather than the left */
+            .archive-seam {
+                left: 0;
+                width: 100%;
+                height: 42%;
+                background: linear-gradient(to bottom, rgba(14,14,14,0) 70%, rgba(14,14,14,0.85));
+            }
+        }
+
+        /* The stage sets touch-action:none so a drag spins rather than pans.
+           The index is the one thing here that genuinely scrolls, so it has to
+           opt back in or a finger could never move it. */
+        .archive-index { touch-action: pan-y; }
+
+        /* Filling the panel means the media ends up LARGER than the panel, so
+           it must be cut at the panel edge or it would spill across the index.
+           The script writes this per frame in the piece's own pre-transform
+           coordinates, easing it in with the unfold so nothing is clipped while
+           the orbit is still the orbit. */
+        .piece { clip-path: inset(var(--clipT, 0px) var(--clipR, 0px) var(--clipB, 0px) var(--clipL, 0px)); }
+
+        .a-entry { border-bottom: 1px solid #ffffff14; }
+
+        .a-head {
+            display: inline-flex;
+            align-items: flex-start;
+            gap: 14px;
+            max-width: 100%;
+            padding: 14px 0;
+        }
+
+        .a-title {
+            /* the archive's own scale, matched exactly rather than
+               approximated — the index is 50vw here as it is there, so the
+               vw term resolves the same */
+            font-size: clamp(30px, 4.6vw, 68px);
+            font-weight: 700;
+            letter-spacing: -0.035em;
+            line-height: 1;
+            color: #5c5c5c;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .a-title a { color: inherit; text-decoration: none; display: block; }
+
+        /* the hovered entry is the one whose media is up, so it is the only
+           one at full strength — same rule the archive page uses */
+        .a-entry.is-hot .a-title { color: #ffffff; }
+
+        .a-year {
+            font-size: 11px;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+            color: #8a8a8a;
+            margin-top: 0.35em;
+            flex-shrink: 0;
+        }
+
+        /* The tray opens to a MEASURED height rather than to `auto` or via a
+           0fr/1fr grid row. Neither animates reliably: height has no transition
+           from auto, and the grid-row trick collapses to nothing once the inner
+           element is given overflow. The script measures each inner block and
+           writes it to --tray-h. */
+        .a-tray {
+            height: 0;
+            overflow: hidden;
+            transition: height 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .a-entry.is-hot .a-tray { height: var(--tray-h, 0px); }
+
+        /* No "Description" label above the copy — the text sits directly under
+           the title it belongs to, so saying so was redundant. The small top
+           padding stands in for the space the label used to hold open. */
+        .a-tray-inner { padding: 2px 0 20px; max-width: 46ch; }
+
+        .a-desc { font-size: 13.5px; line-height: 1.5; color: #c4c4c4; }
+
+        @media (max-width: 900px) {
+            /* no room for two columns: the media takes a band across the top
+               and the index runs underneath it */
+            .archive-index {
+                top: 42%;
+                width: 100%;
+                height: 58%;
+                padding: 3vh 18px 8vh 18px;
+            }
+            .a-title { font-size: clamp(26px, 8vw, 44px); }
+        }
 
         .piece {
             position: absolute;
@@ -569,7 +725,10 @@
         <div class="header-meta">
             <span>Adrian Frichitthavong</span>
         </div>
-        <a class="corner-btn" href="archive.html">Archive</a>
+        <!-- The href stays as a no-JS fallback and for open-in-new-tab, but the
+             script below intercepts the ordinary click and resolves the orbit
+             into the archive in place rather than navigating. -->
+        <a class="corner-btn" id="archiveBtn" href="archive.html">Archive</a>
     </header>
 
     <!-- OFF-CANVAS INFO -->
@@ -587,12 +746,15 @@
         </div>
         <div class="sidebar-section">
             <div class="sidebar-label">Exhibitions</div>
-            <p>Platform Presents, "SOUND CHECK: HYBRID" Dec 2025</p>
+            <p>City of Casey, "Bunjil Place, Games Day" Oct 2026</p>
+            <p>Platform Presents, "SOUND CHECK: HYBRID 003" Sep 2026</p>
+            <p>Platform Presents, "SOUND CHECK: HYBRID 001" Dec 2025</p>
             <p style="margin-top:6px">Platform Presents, "Held, Briefly" Nov 2025</p>
             <p style="margin-top:6px">N0_R3PLY Collective, 2024 — Present</p>
         </div>
         <div class="sidebar-section">
             <div class="sidebar-label">Workshops</div>
+            <p>"Unity + Smartphone Integration", RMIT 2026</p>
             <p>"End the Boring Internet" — Three.js + GitHub Pages, RMIT 2025</p>
             <p style="margin-top:6px">TouchDesigner + Blender, RMIT 2025</p>
             <p style="margin-top:6px">Friday Blender, RMIT 2021 — 2024</p>
@@ -637,33 +799,33 @@
             <img src="images/magiexpo.png" alt="" width="1915" height="1065">
         </a>
 
-        <div class="piece md" data-title="Held, Instantaneously" data-desc="A satirical dating app built on adversarial UX. Swipes spawn NPCs into a Unity terrarium, where matches bond and rejects fade into a graveyard." data-year="2025">
+        <a href="held-instantaneously.html" class="piece md" data-title="Held, Instantaneously" data-desc="A satirical dating app built on adversarial UX. Swipes spawn NPCs into a Unity terrarium, where matches bond and rejects fade into a graveyard." data-year="2025">
             <img src="images/heldinstant.png" alt="" width="582" height="1029">
-        </div>
+        </a>
 
-        <div class="piece md" data-title="MAGI Milk Bar" data-desc="Interactive studio project for MAGI at RMIT." data-year="2025">
+        <a href="magi-milk-bar.html" class="piece md" data-title="MAGI Milk Bar" data-desc="Interactive studio project for MAGI at RMIT." data-year="2025">
             <img src="images/milkbar.png" alt="" width="555" height="723">
-        </div>
+        </a>
 
-        <div class="piece md" data-title="TouchDesigner + Blender" data-desc="Projection mapping and real-time VFX, from TouchDesigner nodes into Blender. Free, hands-on, for anyone who turned up." data-year="2025">
+        <a href="touchdesigner-blender.html" class="piece md" data-title="TouchDesigner + Blender" data-desc="Projection mapping and real-time VFX, from TouchDesigner nodes into Blender. Free, hands-on, for anyone who turned up." data-year="2025">
             <img src="images/workshop.png" alt="" width="763" height="1012">
-        </div>
+        </a>
 
-        <div class="piece sm" data-title="Digital Media Exhibition" style="--boost: 1.70" data-desc="Minimalist styled card profile system" data-year="2024">
+        <a href="digital-media-exhibition.html" class="piece sm" data-title="Digital Media Exhibition" style="--boost: 1.70" data-desc="Minimalist styled card profile system" data-year="2024">
             <img src="images/digitalmedia.png" alt="" width="1919" height="1062">
-        </div>
+        </a>
 
-        <div class="piece sm" data-title="N0_R3PLY Collective" data-desc="Ongoing collective work in WebSocket-driven performance art and experimental live environments." data-year="2024">
+        <a href="n0-r3ply-collective.html" class="piece sm" data-title="N0_R3PLY Collective" data-desc="Ongoing collective work in WebSocket-driven performance art and experimental live environments." data-year="2024">
             <img src="images/cadenacam.png" alt="" width="459" height="982">
-        </div>
+        </a>
 
-        <div class="piece xs" data-title="NeuroMetrix&trade;" style="--boost: 1.45" data-desc="Capstone installation for the Bachelor of Digital Media. Dean's Award, 2024." data-year="2023">
+        <a href="neurometrix.html" class="piece xs" data-title="NeuroMetrix&trade;" style="--boost: 1.45" data-desc="Capstone installation for the Bachelor of Digital Media. Dean's Award, 2024." data-year="2023">
             <img src="images/neurometrix.png" alt="" width="826" height="978">
-        </div>
+        </a>
 
-        <div class="piece xs" data-title="SOS2" data-desc="Live performance where networked systems collapse the line between performer and audience." data-year="2023">
+        <a href="sos2.html" class="piece xs" data-title="SOS2" data-desc="Live performance where networked systems collapse the line between performer and audience." data-year="2023">
             <img src="images/sos2.png" alt="" width="765" height="976">
-        </div>
+        </a>
 
         <!-- metro info overlay: line + stops in SVG, labels as real text -->
         <div class="metro" id="metro" aria-hidden="true">
@@ -681,7 +843,7 @@
 
     <!-- CURSOR DOT + GLITCH TRAIL -->
     <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
-    <div class="cursor-glitches" id="cursorGlitches" aria-hidden="true"></div>
+    <div class="cursor-glitches" id="cursorGlitches" aria-hidden="true"></div> */
     <script>
         /* ── MENU ── */
         const sidebar = document.getElementById('sidebar');
@@ -1232,10 +1394,210 @@
                 // failing that the piece the magnet parked on the focal point.
                 // On touch there is no real hover, so the focal point is the
                 // only honest answer — see touchInput above.
+                // the spread has its own labels; the metro belongs to the orbit
+                if (archiveOn) { hideMetro(); return; }
                 const h = touchInput ? null : hovered;
                 const p = dragging ? null : (h || (settled ? focal : null));
                 if (!p) { hideMetro(); return; }
                 buildMetro(p, p === focal);
+            }
+
+            /* ── SPREAD ──
+               Not a second view of the work — the orbit itself, unfolded. Every
+               piece stays in the same absolutely-positioned, transform-driven
+               system; render() just interpolates between where the sphere puts
+               it and where the layout wants it. At mix 0 it is exactly the
+               orbit, at mix 1 exactly the spread, and the travel between them
+               is the whole point. One place the work lives, in two poses.
+
+               The layout is justified rows — the shape a contact sheet takes:
+               pick a row height, fill the row, then scale that row until it
+               meets both margins. Since every item in a row shares a height and
+               keeps its own width, ASPECT RATIOS SURVIVE. A square grid would
+               have had to crop them. */
+            let archiveOn  = false;    // true the moment the unfold starts
+            let archiveP   = 0;        // 0 orbit → 1 spread
+            let archiveDir = 0;        // +1 opening, -1 closing, 0 at rest
+            let archiveP0  = 0, archiveT0 = 0;
+            let layout    = null;     // Map node -> {cx, cy, s}
+
+            const ARCH_MS      = 620;   // one piece's flight
+            const ARCH_STAGGER = 38;    // ms between neighbours setting off
+
+            /* The weight of the drop, peaking mid-transition. Scaled against an
+               800px-tall stage so the sag is the same gesture on a phone as on
+               a desktop rather than a fixed pixel amount that reads as huge on
+               one and invisible on the other. */
+            const DROP_PX   = 90;         // how far the ball is hauled down
+            const DROP_TILT = 0.20;       // radians it tips while falling
+            const DROP_PULL = 0.10;       // how much it shrinks away from the camera
+            function archiveTotal() { return ARCH_MS + ARCH_STAGGER * (nodes.length - 1); }
+
+            /* Widths come from each piece's own layout box, so the ratio it is
+               shown at is the ratio it has. */
+            /* Where the media sits once the orbit has resolved. Every piece
+               targets the SAME rect — the archive shows one work at a time —
+               and which one is visible is decided by opacity, not position.
+               That is what makes swapping between entries free: they are
+               already stacked in the right place.
+
+               Contained, not cropped: scaled to fit inside the rect so the
+               ratio is kept whole. Cover would fill the panel more completely
+               but would cut into frames that are composed. */
+            function computeArchiveLayout() {
+                const W = stage.clientWidth, H = stage.clientHeight;
+                if (!W || !H) return null;
+
+                const narrow = W < 900;
+                const rect = narrow
+                    ? { x: 0,       y: 0, w: W,       h: H * 0.42 }   // band on top
+                    : { x: W * 0.5, y: 0, w: W * 0.5, h: H };         // right half
+
+                /* COVER, not contain: the panel is filled edge to edge and the
+                   overflow is clipped, which is what the archive does and what
+                   makes the media read as a full-height plate rather than a
+                   picture floating in a box. The cost is a crop, so the scale
+                   is the larger of the two fits rather than the smaller. */
+                const out = new Map();
+                for (const n of nodes) {
+                    const cover = Math.max(rect.w / n.w, rect.h / n.h);
+                    out.set(n, {
+                        cx: rect.x + rect.w / 2,
+                        cy: rect.y + rect.h / 2,
+                        s: cover,
+                        rect: rect
+                    });
+                }
+                return out;
+            }
+
+            /* The index, built from the pieces rather than written out again.
+               Titles, years and links all come off the same data attributes the
+               orbit already uses, so there is exactly one list of works in the
+               project and no second copy to drift out of step. */
+            let activeIdx = 0;
+            let fading = false;        // true while a cross-fade is still running
+
+            /* The archive cross-fades its stage items (opacity 0.55s) and lets
+               the incoming one settle from scale(1.04). That is a CSS
+               transition there, which cannot work here: render() writes opacity
+               inline on every frame, so a transition would be overwritten before
+               it ever ran. The fade is therefore driven by the same loop as
+               everything else — each node carries its own `vis`, eased toward 1
+               if it is the shown one and 0 otherwise. */
+            const FADE = 0.09;         // per 60fps frame ≈ 0.55s to settle
+            const FADE_POP = 0.04;     // the 1.04 the archive comes in from
+            const indexEl = document.createElement('div');
+            indexEl.className = 'archive-index';
+            indexEl.innerHTML = nodes.map(function (n, i) {
+                const d = n.el.dataset;
+                const href = n.el.getAttribute('href');
+                const title = d.title || '';
+                const desc = d.desc || '';
+                return '<article class="a-entry" data-i="' + i + '">' +
+                       '<div class="a-head">' +
+                       '<h2 class="a-title">' +
+                       (href ? '<a href="' + href + '">' + title + '</a>' : title) +
+                       '</h2>' +
+                       '<span class="a-year">' + (d.year || '') + '</span>' +
+                       '</div>' +
+                       '<div class="a-tray"><div class="a-tray-inner">' +
+                       '<p class="a-desc">' + desc + '</p>' +
+                       '</div></div></article>';
+            }).join('');
+            // sits under the index in the stacking order, over the media
+            const seamEl = document.createElement('div');
+            seamEl.className = 'archive-seam';
+            seamEl.setAttribute('aria-hidden', 'true');
+            stage.appendChild(seamEl);
+
+            stage.appendChild(indexEl);
+            const entryEls = [...indexEl.querySelectorAll('.a-entry')];
+
+            /* Measured once here and again on resize, because the description
+               rewraps with the column width and a stale height would either
+               clip the text or leave a gap under it. offsetHeight is the layout
+               box, so the collapsed parent does not affect it. */
+            function measureTrays() {
+                for (const el of entryEls) {
+                    const inner = el.querySelector('.a-tray-inner');
+                    el.style.setProperty('--tray-h', inner.offsetHeight + 'px');
+                }
+            }
+            measureTrays();
+
+            function setActive(i) {
+                if (i === activeIdx || i < 0 || i >= nodes.length) return;
+                activeIdx = i;
+                entryEls.forEach(function (el, j) { el.classList.toggle('is-hot', j === i); });
+                // wake, do not render: the swap is a fade over time, not a frame
+                fading = true;
+                wake();
+            }
+
+            // hovering a title raises its media, exactly as the archive does
+            indexEl.addEventListener('pointerover', function (e) {
+                const en = e.target.closest && e.target.closest('.a-entry');
+                if (en) setActive(+en.dataset.i);
+            });
+
+            // eased both ways, so opening and closing feel like one gesture
+            function easeInOut(k) {
+                return k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+            }
+
+            /* Per-piece progress. The stagger is what makes it read as the
+               sphere coming apart, rather than everything sliding at once. */
+            function mixOf(i) {
+                const elapsed = archiveP * archiveTotal();
+                const k = (elapsed - i * ARCH_STAGGER) / ARCH_MS;
+                return easeInOut(Math.max(0, Math.min(1, k)));
+            }
+
+            function setArchive(on) {
+                if (on === archiveOn) return;
+
+                /* Everything that can fail happens BEFORE anything is mutated.
+                   The layout returns null when the stage has no size yet, and
+                   the old order had already flipped the state and two classes
+                   by then — the bail-out undid some of them and left the rest
+                   stranded, so the header stayed solid over an orbit that had
+                   never opened. Nothing to unwind if nothing was set. */
+                let next = null;
+                if (on) {
+                    measure();                   // the layout needs current boxes
+                    next = computeArchiveLayout();
+                    if (!next) return;           // no size: stay where we are
+                }
+
+                archiveOn = on;
+                stage.classList.toggle('is-archive', on);
+                // the header reads off this to go solid; a class rather than
+                // :has() so it does not depend on selector support
+                document.body.classList.toggle('archive-open', on);
+
+                if (on) {
+                    layout = next;
+                    dragging = false; snapping = false; coasting = false;
+                    vYaw = vPitch = 0;
+                    hideMetro();
+                    // carry the piece you were looking at into the archive,
+                    // so the transition lands on the same work it left on
+                    const fi = nodes.findIndex(function (q) { return q.el === focal; });
+                    activeIdx = fi < 0 ? 0 : fi;
+                    entryEls.forEach(function (el, j) { el.classList.toggle('is-hot', j === activeIdx); });
+                    indexEl.scrollTop = 0;
+                    fading = true;      // fade the chosen one up as it arrives
+                } else {
+                    settled = true;
+                }
+                archiveP0  = archiveP;
+                archiveDir = on ? 1 : -1;
+                archiveT0  = performance.now();
+                // every route in and out runs through here, so the header
+                // button's label only needs updating in this one place
+                syncArchiveBtn();
+                wake();
             }
 
             function render() {
@@ -1243,22 +1605,101 @@
                 const D = CAM * R;
                 const F = D - R;   // focal length chosen so the sphere's front lands at scale 1
 
-                const cp = Math.cos(pitch), sp = Math.sin(pitch);
-                const ca = Math.cos(yaw),   sa = Math.sin(yaw);
+                /* ── THE DROP ──
+                   Without this the pieces simply depart for their slots, which
+                   reads as a cut. Here the whole sphere is first hauled
+                   downward, tipped, and pushed back a little, as though the
+                   scroll had weight and the ball were being pulled out of the
+                   air before it comes apart into the grid.
 
-                for (const n of nodes) {
+                   sin(pi * p) is zero at both ends and peaks in the middle, so
+                   the sag grows into the gesture and is gone by the time the
+                   layout owns the frame. It is applied to the ORBIT side of the
+                   interpolation, which means the (1 - m) weighting of the blend
+                   retires it automatically, piece by piece, as each one arrives.
+                   Being symmetric in p, it also plays in reverse on the way
+                   back: the grid gathers itself up and lifts into the ball. */
+                /* Skewed so the peak lands around a third of the way in rather
+                   than halfway. At the midpoint most pieces have already left
+                   for their slots, and a sag weighted by (1 - m) has almost
+                   nothing left to act on — the ball has to be seen to fall
+                   BEFORE it comes apart, not while. */
+                const swell = archiveP > 0 ? Math.sin(Math.PI * Math.pow(archiveP, 0.62)) : 0;
+                const sag   = DROP_PX   * swell * stage.clientHeight / 800;
+                const tip   = DROP_TILT * swell;
+                const pull  = 1 - DROP_PULL * swell;   // ease it away from the camera
+
+                const pitchD = pitch + tip;
+                const cp = Math.cos(pitchD), sp = Math.sin(pitchD);
+                const ca = Math.cos(yaw),    sa = Math.sin(yaw);
+
+                // layout coords are stage-relative, orbit coords are measured
+                // from the centre — shifting one lets the two be interpolated
+                const cw = stage.clientWidth / 2, ch = stage.clientHeight / 2;
+
+                for (let i = 0; i < nodes.length; i++) {
+                    const n = nodes[i];
                     const q = poseOf(n, cp, sp, ca, sa);
                     const s = F / (D - q.z * R);   // nearer = bigger
                     const t = (q.z + 1) / 2;       // 0 at the back, 1 at the front
 
-                    n.el.style.transform =
-                        'translate(calc(-50% + ' + (q.x * R * s).toFixed(1) + 'px), ' +
-                        'calc(-50% + ' + (q.y * R * s).toFixed(1) + 'px)) scale(' + s.toFixed(4) + ')';
+                    let X = q.x * R * s * pull;
+                    let Y = q.y * R * s * pull + sag;
+                    let S = s * pull;
                     // floor lifted from 0.25 so the back of the sphere still
                     // reads as media rather than dissolving into the black
-                    n.el.style.opacity = (0.40 + 0.60 * Math.pow(t, 1.3)).toFixed(3);
-                    n.el.style.zIndex = String(Math.round(t * 1000));
+                    let O = 0.40 + 0.60 * Math.pow(t, 1.3);
+                    let Z = Math.round(t * 1000);
+
+                    const L = (layout && archiveP > 0) ? layout.get(n) : null;
+                    if (L) {
+                        const m = mixOf(i);
+                        X += (L.cx - cw - X) * m;
+                        Y += (L.cy - ch - Y) * m;
+                        S += (L.s - S) * m;
+                        /* The pieces all land on the same rect, so the one on
+                           show is chosen by fading the rest out rather than by
+                           moving anything. Swapping entries is then free. */
+                        const vis = n.vis === undefined ? 0 : n.vis;
+                        O += (vis - O) * m;
+                        Z = Math.round(Z + ((i === activeIdx ? 600 : 500) - Z) * m);
+                        // and it settles in from slightly oversized, as the
+                        // archive's stage items do
+                        S *= 1 + FADE_POP * (1 - vis) * m;
+                    }
+
+                    /* Clip back to the panel. Worked out in the piece's own
+                       coordinates, since clip-path is applied before the
+                       transform: divide the overhang in stage pixels by the
+                       scale to get there. Multiplied by m so it arrives with
+                       the rest of the movement. */
+                    if (L && L.rect) {
+                        const m2 = mixOf(i);
+                        const halfW = n.w * S / 2, halfH = n.h * S / 2;
+                        const over = function (a) { return Math.max(0, a) / S * m2; };
+                        const cxs = cw + X, cys = ch + Y;
+                        n.el.style.setProperty('--clipL', over(L.rect.x - (cxs - halfW)).toFixed(1) + 'px');
+                        n.el.style.setProperty('--clipR', over((cxs + halfW) - (L.rect.x + L.rect.w)).toFixed(1) + 'px');
+                        n.el.style.setProperty('--clipT', over(L.rect.y - (cys - halfH)).toFixed(1) + 'px');
+                        n.el.style.setProperty('--clipB', over((cys + halfH) - (L.rect.y + L.rect.h)).toFixed(1) + 'px');
+                    } else if (archiveP === 0) {
+                        n.el.style.setProperty('--clipL', '0px');
+                        n.el.style.setProperty('--clipR', '0px');
+                        n.el.style.setProperty('--clipT', '0px');
+                        n.el.style.setProperty('--clipB', '0px');
+                    }
+
+                    n.el.style.setProperty('--s', S.toFixed(4));
+                    n.el.style.transform =
+                        'translate(calc(-50% + ' + X.toFixed(1) + 'px), ' +
+                        'calc(-50% + ' + Y.toFixed(1) + 'px)) scale(' + S.toFixed(4) + ')';
+                    n.el.style.opacity = O.toFixed(3);
+                    n.el.style.zIndex = String(Z);
                 }
+
+                // the index and its seam arrive with the media they describe
+                indexEl.style.opacity = archiveP.toFixed(3);
+                seamEl.style.opacity = archiveP.toFixed(3);
 
                 // same edge rule the magnet aims with, so the caption and the
                 // thing it lands on can never disagree
@@ -1266,8 +1707,48 @@
             }
 
             function frame(now) {
-                const dt = dtOf(now || performance.now());
-                lastT = now || performance.now();
+                const t = now || performance.now();
+                const dt = dtOf(t);
+                lastT = t;
+
+                /* Advance the unfold. Driven off wall-clock rather than dt so
+                   the sequence takes the same time on any frame rate, the same
+                   reasoning as the snap tween. While this runs the orbit pose
+                   is still being computed underneath — render() interpolates
+                   against it — so a spread begun mid-coast still flies from
+                   wherever each piece actually was. */
+                if (archiveDir !== 0) {
+                    /* Elapsed is clamped at zero because a rAF callback's
+                       timestamp is the frame's START, which can predate the
+                       performance.now() captured when the tween was armed —
+                       giving a negative first step.
+
+                       And the tween ends only at the endpoint it is heading
+                       for, not at either one. Testing for both stopped an
+                       opening dead on its first frame, since it begins at
+                       exactly 0 and a closing begins at exactly 1. */
+                    const elapsed = Math.max(0, t - archiveT0);
+                    archiveP = Math.max(0, Math.min(1, archiveP0 + elapsed / archiveTotal() * archiveDir));
+                    if ((archiveDir > 0 && archiveP >= 1) || (archiveDir < 0 && archiveP <= 0)) archiveDir = 0;
+                }
+
+                /* Ease each piece toward shown or hidden. Runs whenever the
+                   archive is up or a fade is still finishing, so hovering a
+                   title while the loop is asleep brings it back for exactly as
+                   long as the cross-fade needs. */
+                if (archiveP > 0 || fading) {
+                    const f = 1 - Math.pow(1 - FADE, dt);
+                    let moving = false;
+                    for (let i = 0; i < nodes.length; i++) {
+                        const n = nodes[i];
+                        const tgt = (i === activeIdx) ? 1 : 0;
+                        if (n.vis === undefined) n.vis = 0;
+                        n.vis += (tgt - n.vis) * f;
+                        if (Math.abs(tgt - n.vis) > 0.002) moving = true;
+                        else n.vis = tgt;
+                    }
+                    fading = moving;
+                }
 
                 if (dragging) {
                     /* Chase the pointer's target instead of matching it. The
@@ -1322,7 +1803,11 @@
 
                 render();
 
-                raf = (dragging || snapping || coasting) ? requestAnimationFrame(frame) : null;
+                // archiveDir keeps the loop alive for the unfold; once it lands
+                // the loop sleeps again and the pieces simply stay where the
+                // layout put them
+                raf = (dragging || snapping || coasting || archiveDir !== 0 || fading)
+                    ? requestAnimationFrame(frame) : null;
             }
 
             // lastT is cleared, not kept: the loop sleeps whenever the sphere is
@@ -1330,13 +1815,59 @@
             // is not a real frame duration. First frame back counts as one.
             function wake() { if (!raf) { lastT = 0; raf = requestAnimationFrame(frame); } }
 
+            /* ── GESTURES INTO AND OUT OF THE SPREAD ──
+               Two input models, two gestures, chosen so neither collides with
+               the thing that device already does here.
+
+               Desktop: the wheel. There is nothing to scroll on this page, so
+               the wheel is free; down opens the spread, up returns to the orbit.
+               Deltas accumulate rather than triggering on the first notch,
+               because a trackpad emits a long tail of small ones and a single
+               flick would otherwise toggle repeatedly.
+
+               Touch: pinch. Dragging already means spin, so scroll and drag are
+               both taken — but two fingers are not. Zoom OUT to pull back and
+               see everything laid out, zoom IN to dive back into the orbit,
+               which matches what the two poses already feel like.
+
+               Crucially the pinch has to keep working while the spread is open,
+               or there would be no way to zoom back in. So the pointer
+               bookkeeping below tracks every finger; only the one-finger DRAG
+               is suppressed in the spread. */
+            const pts = new Map();     // every pointer currently down on the stage
+            let pinchD0 = 0;           // distance when the pinch began
+            const PINCH_OUT = 0.80;    // shrink to 80% to open
+            const PINCH_IN  = 1.25;    // grow to 125% to close
+
+            function pinchDist() {
+                const v = [...pts.values()];
+                return Math.hypot(v[0].x - v[1].x, v[0].y - v[1].y);
+            }
+
             stage.addEventListener('pointerdown', e => {
+                pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+                /* A second finger means a pinch, not a drag. Abandon any drag
+                   in progress rather than letting the two fight: the sphere
+                   would otherwise keep spinning off one finger while the other
+                   is trying to resize. */
+                if (pts.size === 2) {
+                    pinchD0 = pinchDist();
+                    if (dragging) { dragging = false; activeId = null; stage.classList.remove('is-dragging'); }
+                    return;
+                }
+                if (pts.size > 2) return;
+
                 /* Touch means more than one pointer is possible. A second finger
                    landing would otherwise re-grab the sphere — resetting the aim
                    and the last position mid-drag, which reads as a jump — and
                    either finger lifting would end the throw. First one down owns
                    the gesture until it leaves. */
                 if (dragging) return;
+                // no spinning a grid: in the spread a one-finger drag does
+                // nothing, and dragDist must stay 0 or the click that follows
+                // would be dropped as the tail of a throw
+                if (archiveOn) return;
                 // set before the synthetic mouseenter that a tap triggers, so
                 // the stale hover it creates is already being ignored
                 touchInput = (e.pointerType === 'touch' || e.pointerType === 'pen');
@@ -1366,6 +1897,21 @@
             // on window, not the stage, so a drag keeps working if the cursor
             // wanders off the stage mid-throw
             window.addEventListener('pointermove', e => {
+                if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+                if (pts.size === 2) {
+                    if (!pinchD0) { pinchD0 = pinchDist(); return; }
+                    const ratio = pinchDist() / pinchD0;
+                    if (!archiveOn && ratio < PINCH_OUT) {
+                        setArchive(true);
+                        pinchD0 = pinchDist();   // rebase, so one pinch fires once
+                    } else if (archiveOn && ratio > PINCH_IN) {
+                        setArchive(false);
+                        pinchD0 = pinchDist();
+                    }
+                    return;                      // a pinch never also spins
+                }
+
                 if (!dragging || e.pointerId !== activeId) return;
                 const dx = e.clientX - lastX, dy = e.clientY - lastY;
                 lastX = e.clientX; lastY = e.clientY;
@@ -1379,6 +1925,9 @@
             });
 
             function endDrag(e) {
+                if (e) pts.delete(e.pointerId);
+                // lifting out of a pinch must not be read as the end of a throw
+                if (pts.size < 2) pinchD0 = 0;
                 if (!dragging || (e && e.pointerId !== activeId)) return;
                 dragging = false;
                 activeId = null;
@@ -1411,26 +1960,108 @@
                the part that actually covers every engine. */
             stage.addEventListener('dragstart', e => e.preventDefault());
 
-            /* Clicking works in two steps, because a piece round the back is
-               far too small to be a sane thing to open by accident: the first
-               click turns the sphere to fetch it, and only once it is sitting
-               on the focal point does a click open it. A throw that happens to
-               finish over a link is not a click at all and is dropped. */
+            /* Clicking still works in two steps, but the first step is now the
+               spread rather than a turn of the sphere. Clicking any piece lays
+               the whole set out as a catalogue; clicking a plate in that
+               catalogue opens the project. The orbit is for browsing, the
+               spread is for choosing, and opening a project stays a deliberate
+               second action rather than something a stray click can do.
+
+               A throw that happens to finish over a link is not a click at all
+               and is still dropped. */
             stage.addEventListener('click', e => {
                 if (dragDist > CLICK_SLOP) { e.preventDefault(); e.stopPropagation(); return; }
 
                 const el = e.target.closest && e.target.closest('.piece');
-                if (!el || el === focal) return;   // already in focus: let it through
+
+                if (archiveOn) {
+                    /* In the archive, the titles and the media both open their
+                       project, so any link is left alone. A click on bare
+                       background is the way back to the orbit. */
+                    if (el || (e.target.closest && e.target.closest('.archive-index'))) return;
+                    e.preventDefault(); e.stopPropagation();
+                    setArchive(false);
+                    return;
+                }
 
                 e.preventDefault();
                 e.stopPropagation();
-                const n = nodes.find(q => q.el === el);
-                if (!n) return;
-                coasting = false;
-                vYaw = vPitch = 0;
-                beginSnap(n);
-                wake();
+                if (el) setArchive(true);
             }, true);
+
+            /* The wheel, accumulated. A single trackpad flick arrives as a long
+               tail of small deltas, so triggering on the first one would fire
+               the moment a gesture starts and then fire again all the way
+               through it. Summing until a threshold is crossed, then zeroing,
+               makes one flick mean one thing. The sum also resets whenever the
+               direction changes, so an immediate reversal is not held back by
+               whatever was building up the other way. */
+            let wheelAcc = 0;
+            const WHEEL_TRIP = 140;
+
+            stage.addEventListener('wheel', e => {
+                /* Once the archive is up it has a list that genuinely scrolls,
+                   so the wheel belongs to it again. Only at the very top does
+                   scrolling up mean "go back to the orbit" — otherwise reading
+                   down the index and then back up would throw you out of it. */
+                if (archiveOn) {
+                    /* Scroll the index ourselves rather than leaving it to the
+                       browser. The stage claims the wheel (preventDefault) to
+                       stop overscroll and swipe-back, and once claimed no
+                       native scrolling happens at all — so the list has to be
+                       moved by hand. Only when it is already at the very top
+                       does scrolling up mean "leave the archive", otherwise
+                       reading down and back up would throw you out of it. */
+                    const max = indexEl.scrollHeight - indexEl.clientHeight;
+                    const atTop = indexEl.scrollTop <= 1;
+                    e.preventDefault();
+                    if (!(e.deltaY < 0 && atTop)) {
+                        indexEl.scrollTop = Math.max(0, Math.min(max, indexEl.scrollTop + e.deltaY));
+                        wheelAcc = 0;
+                        return;
+                    }
+                    // at the top and still pulling up: fall through to the
+                    // accumulator, which decides when to go back to the orbit
+                }
+
+                // otherwise nothing here scrolls, so the wheel is ours to use;
+                // claiming it also stops trackpad overscroll and swipe-to-go-back
+                e.preventDefault();
+                if (archiveDir !== 0) return;          // mid-flight: let it land
+
+                if (Math.sign(e.deltaY) !== Math.sign(wheelAcc)) wheelAcc = 0;
+                wheelAcc += e.deltaY;
+
+                if (wheelAcc > WHEEL_TRIP && !archiveOn) { setArchive(true);  wheelAcc = 0; }
+                else if (wheelAcc < -WHEEL_TRIP && archiveOn) { setArchive(false); wheelAcc = 0; }
+            }, { passive: false });
+
+            /* The header button now drives the same transition as the wheel and
+               the pinch, instead of leaving for a separate page. It toggles,
+               because once the archive is up the button is the obvious way back
+               — and its label follows, since a control that does the opposite
+               of what it says is worse than no control.
+
+               Modified clicks are left alone: ctrl/cmd/middle-click still open
+               the standalone page in a new tab, which is what the href is for. */
+            const archiveBtn = document.getElementById('archiveBtn');
+            if (archiveBtn) {
+                archiveBtn.addEventListener('click', e => {
+                    if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+                    e.preventDefault();
+                    setArchive(!archiveOn);
+                });
+            }
+
+            function syncArchiveBtn() {
+                if (archiveBtn) archiveBtn.textContent = archiveOn ? 'Orbit' : 'Archive';
+            }
+            syncArchiveBtn();
+
+            // Esc is the expected way out of a full-screen state
+            window.addEventListener('keydown', e => {
+                if (e.key === 'Escape' && archiveOn) setArchive(false);
+            });
 
             pieces.forEach(p => {
                 /* pointerenter, not mouseenter: it carries pointerType, so a
@@ -1467,7 +2098,11 @@
             const relayout = () => {
                 syncSpread(); syncDrag(); syncMagnet(); syncGrip(); syncGlide();
                 syncMetroAlign();
-                measure(); render();
+                measure();
+                // the spread is sized to the stage, so a resize invalidates it
+                if (archiveOn) layout = computeArchiveLayout();
+                measureTrays();   // the description rewraps with the column
+                render();
             };
             if ('ResizeObserver' in window) new ResizeObserver(relayout).observe(stage);
             window.addEventListener('resize', relayout);   // older browsers
@@ -1539,7 +2174,7 @@
             let shown = false;
             let raf = null;
 
-            const GLYPHS = '01#%&@$*+=<>/\\|~^'.split('');
+            const GLYPHS = ''.split('');
             const POOL = 18;
             const SPAWN_PX = 9;
             const MAX_SPAWN_PER_TICK = 2;

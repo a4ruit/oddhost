@@ -328,6 +328,9 @@
         .gallery.is-archive .archive-index { pointer-events: auto; }
         .gallery.is-archive { cursor: default; }
 
+        /* phone only — the desktop archive has no line to mark */
+        .line-marker { display: none; }
+
         /* The seam. In the archive this is .stage::after — a gradient over the
            media's leading edge that sinks it into the black where it meets the
            list, so the two halves share an edge instead of butting against one.
@@ -428,15 +431,74 @@
 
         .a-desc { font-size: 13.5px; line-height: 1.5; color: #c4c4c4; }
 
+        /* Mobile opens its tray from is-open (the scroll system decides), the
+           desktop from is-hot (the cursor decides). Both end up here. */
+        .a-entry.is-open .a-tray { height: var(--tray-h, 0px); }
+
         @media (max-width: 900px) {
-            /* no room for two columns: the media takes a band across the top
-               and the index runs underneath it */
+            /* ── THE OLD PHONE ARCHIVE ──
+               Not a narrow version of the desktop archive — the scroll-driven
+               one this site already had, reached now through the pinch instead
+               of by loading another page. The list runs the full height and
+               scrolls; the media sits behind its top, fading out; a title
+               becomes current as it crosses the middle of the screen and the
+               magnet settles it exactly there once the fling stops. */
             .archive-index {
-                top: 42%;
+                top: 0;
                 width: 100%;
-                height: 58%;
-                padding: 3vh 18px 8vh 18px;
+                height: 100%;
+                /* starts the first title exactly on the 50vh line, so project
+                   01 is anchored there on arrival; the tall tail lets the last
+                   entry reach the line too. The gallery already begins 47px
+                   down, hence the subtraction. */
+                padding: calc(50vh - 47px) 22px 60vh;
             }
+
+            /* Height is driven frame by frame in JS while a tray moves, so CSS
+               must not fight it — same reason archive.html kills it here. */
+            .a-tray { transition: none; }
+
+            /* everything dims except the one on the line */
+            .archive-index.is-engaged .a-title { color: #5c5c5c; }
+            .a-entry.is-current .a-title { color: #ffffff; }
+
+            /* Marks the middle line. A landed entry puts its top edge on 50vh,
+               so the arrow drops by the head padding plus half a title line to
+               sit against the middle of the text. The em is sized from the
+               title, so it tracks the clamp. */
+            .line-marker {
+                display: block;
+                position: fixed;
+                left: 8px;
+                font-size: clamp(26px, 8vw, 44px);
+                top: calc(50vh + 14px + 0.5em);
+                transform: translateY(-50%);
+                width: 0;
+                height: 0;
+                border-top: 4px solid transparent;
+                border-bottom: 4px solid transparent;
+                border-left: 6px solid #ffffff;
+                opacity: 0;
+                z-index: 1150;
+                pointer-events: none;
+                transition: opacity 0.3s ease;
+            }
+
+            .gallery.is-archive .line-marker { opacity: 0.5; }
+
+            /* the media fills the top 65vh and dissolves into the page rather
+               than ending on an edge */
+            .archive-seam {
+                left: 0;
+                width: 100%;
+                height: calc(65vh - 47px);
+                background: linear-gradient(to bottom,
+                    rgba(14,14,14,0) 55%,
+                    rgba(14,14,14,0.55) 80%,
+                    rgba(14,14,14,0.92) 94%,
+                    #0e0e0e 100%);
+            }
+
             .a-title { font-size: clamp(26px, 8vw, 44px); }
         }
 
@@ -1449,9 +1511,12 @@
                 if (!W || !H) return null;
 
                 const narrow = W < 900;
+                /* 65vh measured from the top of the VIEWPORT, as the old phone
+                   archive had it — the gallery already starts 47px down, so
+                   that height has to come off here. */
                 const rect = narrow
-                    ? { x: 0,       y: 0, w: W,       h: H * 0.42 }   // band on top
-                    : { x: W * 0.5, y: 0, w: W * 0.5, h: H };         // right half
+                    ? { x: 0,       y: 0, w: W,       h: 0.65 * window.innerHeight - 47 }
+                    : { x: W * 0.5, y: 0, w: W * 0.5, h: H };
 
                 /* COVER, not contain: the panel is filled edge to edge and the
                    overflow is clipped, which is what the archive does and what
@@ -1505,6 +1570,13 @@
                        '<p class="a-desc">' + desc + '</p>' +
                        '</div></div></article>';
             }).join('');
+            // the arrow at the middle of the screen, phone only (CSS hides it
+            // elsewhere by never giving it display)
+            const markerEl = document.createElement('div');
+            markerEl.className = 'line-marker';
+            markerEl.setAttribute('aria-hidden', 'true');
+            stage.appendChild(markerEl);
+
             // sits under the index in the stacking order, over the media
             const seamEl = document.createElement('div');
             seamEl.className = 'archive-seam';
@@ -1526,10 +1598,17 @@
             }
             measureTrays();
 
-            function setActive(i) {
-                if (i === activeIdx || i < 0 || i >= nodes.length) return;
+            /* markHot is the desktop cursor's business; the phone marks
+               is-current instead and must not touch is-hot, because on a phone
+               is-hot is what would open a tray the scroll system has not
+               decided to open yet. */
+            function setActive(i, markHot) {
+                if (i < 0 || i >= nodes.length) return;
+                if (markHot !== false) {
+                    entryEls.forEach(function (el, j) { el.classList.toggle('is-hot', j === i); });
+                }
+                if (i === activeIdx) return;
                 activeIdx = i;
-                entryEls.forEach(function (el, j) { el.classList.toggle('is-hot', j === i); });
                 // wake, do not render: the swap is a fade over time, not a frame
                 fading = true;
                 wake();
@@ -1537,9 +1616,269 @@
 
             // hovering a title raises its media, exactly as the archive does
             indexEl.addEventListener('pointerover', function (e) {
+                if (phoneQuery.matches) return;        // the line decides, not the finger
                 const en = e.target.closest && e.target.closest('.a-entry');
                 if (en) setActive(+en.dataset.i);
             });
+
+            /* ──────────────────────────────────────────────────────────────
+               THE PHONE ARCHIVE
+
+               Ported from archive.html with its tuning intact. The single
+               structural change: there, the window scrolled; here the index
+               element does, because the landing page itself never scrolls. So
+               every scrollY becomes indexEl.scrollTop and every scrollTo
+               becomes an assignment to it.
+
+               The reasoning that shaped it is worth keeping:
+
+               The magnet does NOT fire on touchend. Letting go is the START of
+               a fling, so magnetting there kills the throw and you can never
+               toss the list and watch it land. Instead the scroll position is
+               watched; only once it has genuinely stopped — unchanged across
+               consecutive ticks, finger off — does the magnet run.
+
+               And nothing that moves the list may happen mid-scroll. Only the
+               highlight, which changes a colour and costs no layout. */
+            const phoneQuery = window.matchMedia('(max-width: 900px)');
+
+            const MAGNET_MS = 340;
+            const MAGNET_DEADZONE = 1.5;    // px — already close enough
+            const REST_TICK_MS = 80;
+            const REST_TICKS = 2;           // consecutive still ticks == landed
+            const TRAY_MS = 500;
+
+            let phoneOn = false, magnetAnim = null, magnetting = false, touching = false;
+            let magnetStart = 0;
+
+            /* The magnet suppresses the rest watcher while it runs, so that its
+               own scrolling does not look like the user scrolling. But that
+               makes a magnet which never finishes fatal: the flag stays up and
+               the watcher is disabled for good, so nothing ever snaps again.
+               A rAF chain can stall — a backgrounded tab is enough — so the
+               flag is treated as stale once it has outlived any real run. */
+            function magnetBusy() {
+                if (!magnetting) return false;
+                if (performance.now() - magnetStart > MAGNET_MS * 4) {
+                    cancelMagnet();     // it was never going to finish
+                    return false;
+                }
+                return true;
+            }
+            let restTimer = null, restLastY = 0, restStill = 0;
+            let trayAnim = null, primed = false, armedAt = 0;
+
+            function lineTop() { return window.innerHeight * 0.5; }
+
+            function entryOnLine() {
+                const line = lineTop();
+                let best = entryEls[0], bestGap = Infinity;
+                entryEls.forEach(function (e) {
+                    const gap = Math.abs(e.getBoundingClientRect().top - line);
+                    if (gap < bestGap) { bestGap = gap; best = e; }
+                });
+                return best;
+            }
+
+            function highlightOnLine() {
+                const hit = entryOnLine();
+                if (!hit || hit.classList.contains('is-current')) return;
+                entryEls.forEach(function (e) { e.classList.toggle('is-current', e === hit); });
+                setActive(+hit.dataset.i, false);      // media follows the line
+            }
+
+            /* Both trays move off one eased progress, so the outgoing closes at
+               exactly the rate the incoming opens and the list never gains or
+               loses height in a jump. The closing tray sits above the opening
+               one when moving down, which would drag the newly current title
+               away from the line — holding it still each frame cancels that. */
+            function animateTrays(openEntry, from, anchorEl) {
+                const trays = entryEls.map(function (e) { return e.querySelector('.a-tray'); });
+                const to = entryEls.map(function (e) {
+                    return e === openEntry ? (parseFloat(e.style.getPropertyValue('--tray-h')) || 0) : 0;
+                });
+                const held = anchorEl || openEntry;
+
+                if (trayAnim) cancelAnimationFrame(trayAnim);
+                const start = performance.now();
+                const ease = function (t) { return 1 - Math.pow(1 - t, 3); };
+
+                (function step(now) {
+                    const k = ease(Math.min(1, (now - start) / TRAY_MS));
+                    const anchor = held ? held.getBoundingClientRect().top : 0;
+
+                    trays.forEach(function (c, i) {
+                        c.style.height = (from[i] + (to[i] - from[i]) * k) + 'px';
+                    });
+
+                    if (held) {
+                        const shift = held.getBoundingClientRect().top - anchor;
+                        if (shift) indexEl.scrollTop += shift;
+                    }
+
+                    if (k < 1) {
+                        trayAnim = requestAnimationFrame(step);
+                    } else {
+                        trayAnim = null;
+                        trays.forEach(function (c) { c.style.height = ''; });   // back to CSS
+                    }
+                })(start);
+            }
+
+            function closeAllTrays() {
+                if (!entryEls.some(function (e) { return e.classList.contains('is-open'); })) return;
+                const trays = entryEls.map(function (e) { return e.querySelector('.a-tray'); });
+                const from = trays.map(function (c) { return c.getBoundingClientRect().height; });
+
+                entryEls.forEach(function (el) {
+                    el.classList.remove('is-open');
+                    el.classList.toggle('is-current', el === entryEls[0]);
+                });
+                setActive(0, false);
+
+                trays.forEach(function (c, i) { c.style.height = from[i] + 'px'; });
+                animateTrays(null, from, entryEls[0]);
+            }
+
+            function openOnly(entry) {
+                if (entry.classList.contains('is-open')) return;
+                // Measure BEFORE the class swap: height snaps instantly here, so
+                // reading after would give the new values and nothing would move.
+                const trays = entryEls.map(function (e) { return e.querySelector('.a-tray'); });
+                const from = trays.map(function (c) { return c.getBoundingClientRect().height; });
+
+                entryEls.forEach(function (el) {
+                    el.classList.toggle('is-open', el === entry);
+                    el.classList.toggle('is-current', el === entry);
+                });
+                setActive(+entry.dataset.i, false);
+
+                // pin the old heights in the same task, so no frame paints the snap
+                trays.forEach(function (c, i) { c.style.height = from[i] + 'px'; });
+                animateTrays(entry, from);
+            }
+
+            function stopRestWatch() {
+                if (restTimer) clearInterval(restTimer);
+                restTimer = null;
+                restStill = 0;
+            }
+
+            function startRestWatch() {
+                if (restTimer) return;
+                restLastY = indexEl.scrollTop;
+                restStill = 0;
+
+                restTimer = setInterval(function () {
+                    if (!phoneOn) { stopRestWatch(); return; }
+                    const y = indexEl.scrollTop;
+
+                    // finger still down, or the fling is still travelling
+                    if (touching || Math.abs(y - restLastY) > 0.5) {
+                        restLastY = y;
+                        restStill = 0;
+                        return;
+                    }
+                    if (++restStill < REST_TICKS) return;
+                    stopRestWatch();
+
+                    // Everything that moves the list happens HERE, once the
+                    // fling is over — never while it is still travelling.
+                    if (indexEl.scrollTop <= 1) closeAllTrays();
+                    else magnetToLine();
+                }, REST_TICK_MS);
+            }
+
+            function cancelMagnet() {
+                if (magnetAnim) cancelAnimationFrame(magnetAnim);
+                magnetAnim = null;
+                magnetting = false;
+            }
+
+            function magnetToLine() {
+                const target = entryOnLine();
+                if (!target) return;
+                const delta = target.getBoundingClientRect().top - lineTop();
+                if (Math.abs(delta) < MAGNET_DEADZONE) { openOnly(target); return; }
+
+                const startY = indexEl.scrollTop;
+                const t0 = performance.now();
+                const ease = function (t) { return 1 - Math.pow(1 - t, 3); };
+                magnetting = true;
+                magnetStart = t0;
+
+                (function step(now) {
+                    const t = Math.min(1, (now - t0) / MAGNET_MS);
+                    indexEl.scrollTop = startY + delta * ease(t);
+                    if (t < 1) {
+                        magnetAnim = requestAnimationFrame(step);
+                    } else {
+                        magnetAnim = null;
+                        magnetting = false;
+                        openOnly(target);        // anchors, so the alignment holds
+                    }
+                })(t0);
+            }
+
+            function onPhoneScroll() {
+                if (!primed) {
+                    if (performance.now() - armedAt < 350) return;
+                    primed = true;
+                }
+                highlightOnLine();
+                if (!magnetBusy()) startRestWatch();   // the magnet must not restart it
+            }
+            function onTouchStart() { touching = true; cancelMagnet(); stopRestWatch(); }
+            function onTouchEnd() { touching = false; startRestWatch(); }
+
+            function startPhoneMode() {
+                if (phoneOn) return;
+                phoneOn = true;
+                armedAt = performance.now();
+                primed = false;
+                indexEl.classList.add('is-engaged');
+                entryEls.forEach(function (e) { e.classList.remove('is-hot'); });
+
+                indexEl.addEventListener('scroll', onPhoneScroll, { passive: true });
+                indexEl.addEventListener('touchstart', onTouchStart, { passive: true });
+                indexEl.addEventListener('touchend', onTouchEnd, { passive: true });
+                indexEl.addEventListener('touchcancel', onTouchEnd, { passive: true });
+
+                // name the entry on the line without opening it, so project 01
+                // reads as current against its media while its tray stays shut
+                const hit = entryOnLine() || entryEls[0];
+                entryEls.forEach(function (e) { e.classList.toggle('is-current', e === hit); });
+                setActive(+hit.dataset.i, false);
+            }
+
+            function stopPhoneMode() {
+                if (!phoneOn) return;
+                phoneOn = false;
+                indexEl.removeEventListener('scroll', onPhoneScroll);
+                indexEl.removeEventListener('touchstart', onTouchStart);
+                indexEl.removeEventListener('touchend', onTouchEnd);
+                indexEl.removeEventListener('touchcancel', onTouchEnd);
+                cancelMagnet();
+                stopRestWatch();
+                if (trayAnim) { cancelAnimationFrame(trayAnim); trayAnim = null; }
+                touching = false;
+                primed = false;
+                indexEl.classList.remove('is-engaged');
+                entryEls.forEach(function (e) {
+                    e.classList.remove('is-open', 'is-current');
+                    const t = e.querySelector('.a-tray');
+                    if (t) t.style.height = '';
+                });
+            }
+
+            // crossing the breakpoint mid-session swaps which archive is live
+            function syncPhoneMode() {
+                if (archiveOn && phoneQuery.matches) startPhoneMode();
+                else stopPhoneMode();
+            }
+            phoneQuery.addEventListener
+                ? phoneQuery.addEventListener('change', syncPhoneMode)
+                : phoneQuery.addListener(syncPhoneMode);
 
             // eased both ways, so opening and closing feel like one gesture
             function easeInOut(k) {
@@ -1597,6 +1936,7 @@
                 // every route in and out runs through here, so the header
                 // button's label only needs updating in this one place
                 syncArchiveBtn();
+                syncPhoneMode();        // and the phone's scroll system armed
                 wake();
             }
 

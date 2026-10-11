@@ -44,8 +44,22 @@
                  pieces <= 1000 < seam 1050 < index 1100 < header 1200
                  < scrim 1300 < sidebar 1400 */
             z-index: 1200;
-            display: flex;
+            /* 1fr auto 1fr, matching project.css: the wordmark is its own
+               column, so it lands on the page's true centre instead of
+               wherever the width of the Menu button happens to leave it.
+               align-items:stretch keeps the full-height cell dividers that
+               give this header its look — the project pages have no dividers,
+               only the centring is shared. */
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: stretch;
+            /* 47px is a CONSTANT here, not an outcome. The gallery's
+               margin-top, the archive's `calc(50vh - 47px)` padding and the
+               seam's `calc(65vh - 47px)` all subtract it by hand, so a header
+               that drifts with its font metrics opens a hairline gap under
+               itself and throws the archive's line off by the same amount.
+               Stated once, rather than left to the tallest cell. */
+            min-height: 47px;
             border-bottom: 1px solid #ffffff1a;
             background: rgba(14,14,14,0.72);
             backdrop-filter: blur(14px);
@@ -86,13 +100,16 @@
 
         .menu-btn:hover .menu-bars { transform: scaleX(0.72); }
 
+        /* Centred, so it carries no divider: a bordered cell reads as part
+           of the left-hand group, which is exactly what it no longer is. */
         .header-name {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-self: center;
             padding: 14px 22px;
             font-size: 13px;
             font-weight: 700;
             letter-spacing: -0.01em;
-            border-right: 1px solid #ffffff1a;
             white-space: nowrap;
             color: #ffffff;
             text-decoration: none;
@@ -102,27 +119,37 @@
 
         .header-name:hover { opacity: 0.7; }
 
+        /* Menu + byline share the first column. They were siblings in a flex
+           row before; as a grid the wordmark needs a column of its own, so
+           these are grouped rather than each taking a track. */
+        .header-left {
+            display: flex;
+            align-items: stretch;
+            min-width: 0;
+        }
+
         .header-meta {
             padding: 14px 22px;
+            border-left: 1px solid #ffffff1a;
             font-size: 11px;
             color: #999;
             display: flex;
             align-items: center;
             gap: 26px;
-            flex: 1;
         }
 
         .header-meta a { color: #999; text-decoration: none; }
         .header-meta a:hover { color: #ffffff; }
         .header-meta .sep { color: #3a3a3a; }
 
-        /* header-meta is hidden under 900px, taking its flex:1 spacer with
-           it — this keeps the button pinned right at every width */
+        /* header-meta is hidden under 900px; the grid keeps the button at the
+           right edge and the wordmark on centre at every width regardless */
         .corner-btn {
             display: flex;
             align-items: center;
             flex-shrink: 0;
-            margin-left: auto;
+            /* grid pins it now; margin-left:auto was the flex equivalent */
+            justify-self: end;
             padding: 0 22px;
             border-left: 1px solid #ffffff1a;
             font-size: 10px;
@@ -147,8 +174,7 @@
             transition: opacity 0.3s ease, visibility 0.3s;
             /* Above the orbit, not below it. These used to be 130/140, written
                against the header's 120 — but that predates the landing page,
-               where .piece carries an inline z-index up to 1000 and .metro sits
-               at 1200. .gallery is position:relative with z-index auto, so it
+               where .piece carries an inline z-index up to 1000. .gallery is position:relative with z-index auto, so it
                opens no stacking context of its own and every piece competes
                directly with the menu at the root level. The result was
                thumbnails punching through an open sidebar, and staying
@@ -278,11 +304,6 @@
                under 1 — at 1 it would never stop. */
             --glide: 0.95;
 
-            /* Which edge of the description block is flush.
-               hug  = flush against the metro line (typographic default)
-               edge = flush toward the screen edge, ragged edge facing inward */
-            --metro-align: hug;
-
             position: relative;
             width: 100%;
             margin-top: 47px;
@@ -298,6 +319,10 @@
         }
 
         .gallery.is-dragging { cursor: grabbing; }
+
+        /* Still a texture rather than an animation under this preference:
+           the footage holds on one frame (the script pauses it) and the wall
+           stops turning with the orbit. The curve stays — it is geometry. */
 
         /* ── ARCHIVE ──
            The orbit does not switch to another page, it resolves into one.
@@ -575,117 +600,100 @@
         .sm { --w: 17vmin; }
         .xs { --w: 14vmin; }
 
-        /* ── METRO INFO ──
-           Information sprawls out of the hovered piece the way a transit line
-           leaves an interchange: a start node just clear of the thumbnail, a
-           45-degree leg out of it, then a straight run with a labelled stop
-           for each field. Stops are ordered outward — title, year, then the
-           description — so more can be appended later without moving any of
-           the existing ones.
+        /* ── TITLE LABELS ──
+           The title floats BESIDE its thumbnail rather than being painted on
+           it or wired to it by a drawn line. Each one is a real element in a
+           layer of its own, positioned per frame against the piece it belongs
+           to — so it tracks the thumbnail around the orbit without ever
+           covering the work.
 
-           The whole thing is drawn away from the sphere's centre, which is the
-           one direction guaranteed to be empty, so it never lies over the
-           media it belongs to. Geometry is computed per hover in the script;
-           this only styles it. */
-        .metro {
+           A layer rather than a child of the piece, for two reasons. A child
+           inherits the piece's scale(), which would set the type in a
+           different size at every depth; and the pieces carry a clip-path in
+           archive mode, which clips — so anything hanging outside the
+           thumbnail's own box would be cut off at its edge.
+
+           Hierarchy is entirely state, not depth: the focal title is larger,
+           white, and plated. Everything else is a murmur, dimmed by the same
+           depth opacity as its media so a title at the back of the sphere
+           recedes exactly as far as the thumbnail it names. */
+        .label-layer {
             position: absolute;
             inset: 0;
             pointer-events: none;
-            /* pieces carry inline z-index up to 1000 */
-            z-index: 1200;
-            opacity: 0;
-            transition: opacity 0.22s ease;
+            /* pieces carry an inline z-index up to 1000 */
+            z-index: 1100;
         }
 
-        .metro.is-on { opacity: 1; }
-
-        .metro svg {
+        .ptitle {
             position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            overflow: visible;
-        }
-
-        .metro-line {
-            fill: none;
-            stroke: #ffffff;
-            stroke-width: 1.5;
-            stroke-linecap: round;
-            stroke-linejoin: round;
-        }
-
-        /* the origin reads as an interchange, the stops as ordinary stations */
-        .metro-origin { fill: #0e0e0e; stroke: #ffffff; stroke-width: 1.5; }
-        .metro-stop   { fill: #ffffff; }
-
-        .metro-label {
-            position: absolute;
+            left: 0;
+            top: 0;
+            max-width: 40vw;
+            font-size: 10.5px;
+            font-weight: 500;
+            letter-spacing: 0.01em;
+            line-height: 1.25;
+            color: #d6d6d6;
             white-space: nowrap;
-            opacity: 0;
-            transition: opacity 0.26s ease;
+            /* The plate is on an inline span so it clones per line fragment
+               when a focal title wraps — stacked bars following the ragged
+               edge, rather than one rectangle over the gap beside it. */
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+            will-change: transform, opacity;
+            transition: font-size 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                        color 0.28s ease,
+                        font-weight 0.28s ease;
         }
 
-        .metro.is-on .metro-label { opacity: 1; }
-
-        /* The focal piece sits at the front of the sphere, so its info sprawls
-           out across whatever media is behind it — that is the only case that
-           needs a plate. Hovering a background piece puts the text over empty
-           stage, where a black bar would just be noise, so the plate is scoped
-           to .is-focal. The padding stays on either way, so the measured label
-           width (and therefore the layout) does not shift between the two.
-
-           The plate is on an inline span rather than the label box:
-           box-decoration-break makes it repeat per line fragment, so a wrapped
-           paragraph reads as stacked bars that follow the ragged right edge
-           instead of one rectangle over the empty space beside it. */
-        .metro-label > span {
+        .ptitle > span {
             display: inline;
             background: transparent;
             box-decoration-break: clone;
             -webkit-box-decoration-break: clone;
-            padding: 0.22em 0.5em;
+            padding: 0.2em 0.45em;
         }
 
-        .metro.is-focal .metro-label > span { background: #000000; }
-
-        .metro-label.t {
-            font-size: 14px;
+        /* The one at the front of the sphere — the one the magnet parks on
+           and a click would open. It is also the only one whose text can land
+           over other media, since it sits forward of everything, so it is the
+           only one that needs a plate behind it. */
+        .ptitle.is-focal {
+            font-size: 15px;
             font-weight: 700;
             letter-spacing: -0.01em;
-            transition-delay: 0.30s;
-        }
-
-        .metro-label.y {
-            font-size: 10px;
-            font-weight: 500;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: #8f8f8f;
-            transition-delay: 0.42s;
-        }
-
-        .metro-label.d {
+            color: #ffffff;
             white-space: normal;
-            width: 210px;
-            font-size: 11.5px;
-            font-weight: 400;
-            /* loose enough that the per-line plates stack without overlapping */
-            line-height: 1.95;
-            color: #c4c4c4;
-            transition-delay: 0.54s;
+            max-width: 220px;
         }
+
+        .ptitle.is-focal > span { background: #000000; }
+
+        /* Hover reads as "this one, if you click" — the same promotion the
+           focal title gets, short of the plate. */
+        .ptitle.is-hot { color: #ffffff; }
+
+        /* Measuring only. A label caught mid-transition reports an
+           intermediate width, which would then be cached as the real one. */
+        .label-layer.is-measuring .ptitle { transition: none !important; }
 
         @media (max-width: 900px) {
-            /* without this, header-meta's flex:1 squeezes down to nothing,
-               the "Adrian Frichitthavong" text wraps to two lines, and that
-               wrap stretches the whole header taller — breaking the 47px
-               the gallery/menu math depends on */
+            /* No room for the byline beside a centred wordmark on a phone:
+               squeezed, it wraps to two lines and pushes the header past the
+               47px the gallery and archive both subtract by hand. The grid
+               keeps the wordmark centred once this column is empty. */
             .header-meta { display: none; }
 
-            /* less room to sprawl into on a phone */
-            .metro-label.d { width: 150px; font-size: 11px; }
-            .metro-label.t { font-size: 12.5px; }
+            /* A phone holds the orbit at --scale 2.5, so the thumbnails are
+               large but there are fewer of them legible at once. The titles
+               come down a little so a long one does not wrap across a third of
+               its own thumbnail. */
+            /* A phone holds the orbit at --scale 2.5: the thumbnails are
+               large and crowd each other, so the background titles come down
+               to stay out of the way and the focal one keeps most of its
+               size, since it is the only one being read. */
+            .ptitle { font-size: 9px; max-width: 46vw; }
+            .ptitle.is-focal { font-size: 13px; max-width: 150px; }
 
             /* Portrait has no spare width: the stage is only vmin wide, so the
                orbit has to pull in and the pieces come down with it, or the
@@ -697,8 +705,9 @@
                it and the phone silently inherits the base rule, which is what
                put a 333ms drag lag back on touch. Higher = tracks the thumb
                more closely; 1 is exact, 0.05 is nearly frozen. */
-            .gallery { --spread: 1.3; --scale: 2.5; --sweep: 2.2; --magnet: .02; --grip: .2; --glide: .95;
-                       --metro-align: edge; }
+            /* A shorter throw on the phone: there is less stage for the
+               slide to hide in, and the thumbnails are scaled up 2.5x. */
+            .gallery { --spread: 1.3; --scale: 2.5; --sweep: 2.2; --magnet: .02; --grip: .2; --glide: .95; }
 
             .xl { --w: 26vmin; }
             .lg { --w: 22vmin; }
@@ -708,21 +717,17 @@
         }
 
         @media (prefers-reduced-motion: reduce) {
-            /* Shortened, not switched off. 0.01ms made the metro labels pop in
-               with no fade, which is a harder visual event than a quick one. */
-            .piece img, .piece video, .metro, .metro-label, .sidebar {
+            /* Shortened, not switched off. 0.01ms made the labels pop in with
+               no fade, which is a harder visual event than a quick one. */
+            .piece img, .piece video, .ptitle, .sidebar {
                 transition-duration: 0.12s;
             }
 
-            /* The stops arrive together instead of marching outward: the
-               staggered reveal is decorative sequencing, and that is the part
-               worth dropping. The fade itself stays. */
-            .metro-label.t, .metro-label.y, .metro-label.d { transition-delay: 0s; }
-
-            /* The line appears rather than drawing itself on — a stroke
-               travelling across the screen is the sustained motion to avoid.
-               The JS sets this inline, so it needs the override. */
-            .metro-line { transition: none !important; stroke-dashoffset: 0 !important; }
+            /* Type resizing as the focal point moves is a size change on every
+               drag — exactly the sustained motion this preference is asking
+               about. The focal title keeps its weight and its brightness; only
+               the growth is dropped. */
+            .ptitle, .ptitle.is-focal { transition-property: color; }
         }
 
         /* ── CURSOR DOT ── */
@@ -779,14 +784,16 @@
 
     <!-- HEADER -->
     <header class="site-header">
-        <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">
-            <span class="menu-bars"></span>Menu
-        </button>
+        <div class="header-left">
+            <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">
+                <span class="menu-bars"></span>Menu
+            </button>
+            <div class="header-meta">
+                <span>Adrian Frichitthavong</span>
+            </div>
+        </div>
         <a class="header-name" href="https://www.instagram.com/oddh0st/"
            target="_blank" rel="noopener noreferrer">@oddh0st</a>
-        <div class="header-meta">
-            <span>Adrian Frichitthavong</span>
-        </div>
         <!-- The href stays as a no-JS fallback and for open-in-new-tab, but the
              script below intercepts the ordinary click and resolves the orbit
              into the archive in place rather than navigating. -->
@@ -831,6 +838,19 @@
 
     <main class="gallery">
 
+        <!-- The showreel, not as a thing to watch but as the room the orbit
+             turns inside. Two encodes because this is pure decoration: a phone
+             should not spend 2.7MB and a 1280-wide decode on something it
+             renders at 12% opacity under a blur. The source order is picked by
+             the script, not by <source media>, since that is resolved once at
+             parse time and would strand a rotated phone with the wrong file.
+             Muted + playsinline are what make autoplay legal; the poster
+             covers the gap before the first frame decodes. -->
+        <!-- One floating title per piece, filled and positioned by the
+             script. aria-hidden because each one duplicates the accessible
+             name of the link it labels. -->
+        <div class="label-layer" id="labelLayer" aria-hidden="true"></div>
+
         <!-- No boost. Matching Held on AREA was the wrong call: a 16:9 has to be
              about 1.8x wider than a 1.77 portrait to cover the same area, which
              made this 335px wide when nothing else on screen passed 236px, and
@@ -865,11 +885,19 @@
             <img src="images/heldinstant.png" alt="" width="582" height="1029">
         </a>
 
-        <a href="magi-milk-bar.html" class="piece md" data-title="MAGI Milk Bar" data-desc="Interactive studio project for MAGI at RMIT." data-year="2025">
+        <a href="magi-milk-bar.html" class="piece md" data-title="Lost &amp; Found Milk Bar" data-desc="Interactive studio project for MAGI at RMIT." data-year="2025">
             <img src="images/milkbar.png" alt="" width="555" height="723">
         </a>
 
-        <a href="touchdesigner-blender.html" class="piece md" data-title="TouchDesigner + Blender" data-desc="Projection mapping and real-time VFX, from TouchDesigner nodes into Blender. Free, hands-on, for anyone who turned up." data-year="2025">
+        <!-- ORBIT ONLY. data-noindex keeps this out of the archive list,
+             the one place every other piece also appears: it is a workshop
+             rather than a project, and the point of it being here is that the
+             sphere looks lived-in. Clicking it goes straight to its page
+             instead of opening an archive that has no row for it. -->
+        <a href="touchdesigner-blender.html" class="piece md" data-noindex
+           data-title="TouchDesigner + Blender"
+           data-desc="Projection mapping and real-time VFX, from TouchDesigner nodes into Blender. Free, hands-on, for anyone who turned up."
+           data-year="2025">
             <img src="images/workshop.png" alt="" width="763" height="1012">
         </a>
 
@@ -889,19 +917,30 @@
             <img src="images/sos2.png" alt="" width="765" height="976">
         </a>
 
-        <!-- metro info overlay: line + stops in SVG, labels as real text -->
-        <div class="metro" id="metro" aria-hidden="true">
-            <svg id="metroSvg">
-                <path class="metro-line" id="metroLine"></path>
-                <g id="metroStops"></g>
-            </svg>
-            <div class="metro-label t" id="metroT"><span></span></div>
-            <div class="metro-label y" id="metroY"><span></span></div>
-            <div class="metro-label d" id="metroD"><span></span></div>
-        </div>
+        <!-- The showreel, as a piece of the orbit. data-external is what makes
+             it behave differently from everything else here: in the orbit a
+             click on any piece opens the archive, so an href alone would never
+             fire. The script checks for this attribute first and leaves for
+             YouTube instead.
+
+             Placed LAST so the Fibonacci distribution of the other eleven is
+             untouched and the page still opens parked on PACK MENTALITY; move
+             it up the list to change either.
+
+             Reusing the 854 encode already in the repo rather than adding a
+             thumbnail file — it is small, 16:9, and silent. --boost 1.35
+             matches the other landscape piece: at the same tier width a 16:9
+             carries far less visual bulk than a portrait. -->
+        <a href="https://youtu.be/dOE_eJJjcTg" class="piece lg" target="_blank" rel="noopener"
+           data-external="https://youtu.be/dOE_eJJjcTg"
+           data-title="Showreel" style="--boost: 1.35" data-desc="" data-year="2026">
+            <video autoplay muted loop playsinline width="854" height="480"
+                   poster="images/projectmedia/showreel/skybox-poster.jpg">
+                <source src="images/projectmedia/showreel/skybox-854.mp4" type="video/mp4">
+            </video>
+        </a>
 
     </main>
-
 
     <!-- CURSOR DOT + GLITCH TRAIL -->
     <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
@@ -937,14 +976,9 @@
            is the FRONT of the sphere, the centre of gravity is behind it. */
         (function orbit() {
             const stage = document.querySelector('.gallery');
+
+            const labelLayer = document.getElementById('labelLayer');
             const pieces = [...document.querySelectorAll('.piece')];
-            const metro     = document.getElementById('metro');
-            const metroSvg  = document.getElementById('metroSvg');
-            const metroLine = document.getElementById('metroLine');
-            const metroStops= document.getElementById('metroStops');
-            const capT = document.getElementById('metroT');
-            const capY = document.getElementById('metroY');
-            const capD = document.getElementById('metroD');
             if (!stage || !pieces.length) return;
 
             const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1270,199 +1304,99 @@
                 return best || nodes[0];
             }
 
-            /* ── METRO INFO ──
-               Builds the line for one piece. Everything is laid out in the
-               stage's own coordinate space, which is why the overlay lives
-               inside .gallery: no page-offset arithmetic to get wrong.
+            /* One label per piece, in DOM order, so nodes[i] and its title are
+               the same index forever — no lookup, no map, nothing to fall out
+               of sync when the piece list changes. */
+            const titleEls = nodes.map(function (n) {
+                const el = document.createElement('div');
+                el.className = 'ptitle';
+                const sp = document.createElement('span');
+                sp.textContent = n.el.dataset.title || '';
+                el.appendChild(sp);
+                labelLayer.appendChild(el);
+                return el;
+            });
 
-               Shape is a transit line leaving an interchange — origin node
-               clear of the thumbnail, a 45deg leg, then a straight run with a
-               stop per field. STOPS is the whole schema, so adding a fourth
-               field later is one more entry here and nothing else. */
-            const M_GAP   = 16;   // clearance between thumbnail edge and origin
-            const M_LEG   = 30;   // the 45deg elbow
-            const M_STEP  = 30;   // spacing between stops along the run
-            const M_TEXT  = 14;   // gap from the line to the label
-            const M_EDGE  = 12;   // keep the whole thing off the stage edges
-            /* The focal piece is the biggest thing on screen and sits at the
-               front of the orbit, so dropping straight into the elbow puts its
-               stops right against its own edge. It gets a horizontal lead first
-               — out, then angle, then down — which carries the whole run clear
-               of the orbit before any text starts. */
-            const M_LEAD  = 24;
+            /* How far off the thumbnail's edge a title sits. Enough to read as
+               floating beside the piece rather than stuck to it. */
+            const LBL_GAP  = 10;
+            const LBL_EDGE = 8;    // keep the whole label on the stage
 
-            // 'hug' or 'edge' — see where it is applied, further down. Read from
-            // CSS so the breakpoint owns it, same as --spread and the rest.
-            let metroAlign = 'hug';
-            function syncMetroAlign() {
-                const v = getComputedStyle(stage).getPropertyValue('--metro-align').trim();
-                metroAlign = (v === 'edge') ? 'edge' : 'hug';
+            /* Measured sizes are CACHED. Reading offsetWidth inside the render
+               loop would force a synchronous layout for every label on every
+               frame — eleven flushes at 60fps, in the one piece of code that
+               has to stay cheap. A label's box only changes when its text
+               changes (never), when the focal class resizes it, or when the
+               breakpoint does, so it is re-measured on exactly those events. */
+            /* BOTH sizes are measured up front — the plain one and the
+               larger focal one — so changing which piece is focal costs
+               nothing. The first version re-measured on every focal change,
+               which during a drag meant 22 offsetWidth reads landing straight
+               after render() had written 22 transforms: a forced synchronous
+               layout of the whole stage, several times a second, in the one
+               code path that has to stay cheap.
+
+               Transitions are suppressed while measuring, or a label caught
+               mid-resize reports whatever width it happened to be passing
+               through. */
+            const lblBox = titleEls.map(function () {
+                return { w: 0, h: 0, fw: 0, fh: 0 };
+            });
+
+            function measureLabels() {
+                labelLayer.classList.add('is-measuring');
+                for (let i = 0; i < titleEls.length; i++) {
+                    const el = titleEls[i];
+                    const wasFocal = el.classList.contains('is-focal');
+                    el.classList.remove('is-focal');
+                    lblBox[i].w = el.offsetWidth;
+                    lblBox[i].h = el.offsetHeight;
+                    el.classList.add('is-focal');
+                    lblBox[i].fw = el.offsetWidth;
+                    lblBox[i].fh = el.offsetHeight;
+                    if (!wasFocal) el.classList.remove('is-focal');
+                }
+                labelLayer.classList.remove('is-measuring');
             }
 
-            const STOPS = [
-                { el: capT, key: 'title', extra: 0 },
-                { el: capY, key: 'year',  extra: 0 },
-                /* hang: the block grows DOWNWARD from its stop instead of being
-                   centred on it. A single-line stop centres fine, but a wrapped
-                   one centred on its stop grows in both directions, and every
-                   line it gains pushes half a line upward into the stop above —
-                   so a long description collided with the year. Hanging it
-                   means length only ever consumes empty space below. */
-                { el: capD, key: 'desc',  extra: 22, hang: true }
-            ];
-            STOPS.forEach(s => { s.txt = s.el.firstElementChild; });
+            /* ── TITLE EMPHASIS ──
+               All that is left of the old caption system. The labels
+               themselves are plain elements in their own layer, so the only
+               thing left to decide is WHICH piece counts as focal, and which
+               one the cursor is on.
 
-            function hideMetro() { metro.classList.remove('is-on'); }
+               Tracked live, including mid-drag: the class follows the front of
+               the sphere as it turns, so the emphasis travels with the work
+               coming forward rather than snapping on once everything has
+               stopped. The old metro had to hide during a drag because it was
+               redrawing an SVG path per hover; a class toggle costs nothing.
 
-            function buildMetro(p, isFocal) {
-                metro.classList.toggle('is-focal', !!isFocal);
-                const sr = stage.getBoundingClientRect();
-                const r  = p.getBoundingClientRect();
-
-                // piece centre and half-extent, in stage space
-                const px = r.left - sr.left + r.width / 2;
-                const py = r.top  - sr.top  + r.height / 2;
-                const hw = r.width / 2, hh = r.height / 2;
-
-                // Run outward from the sphere's centre: that is the one
-                // direction with nothing else in it, so the line never lies
-                // across the media it describes.
-                let sx = px < sr.width / 2 ? -1 : 1;
-                let sy = py < sr.height / 2 ? -1 : 1;
-
-                // Text goes on the inner span, which carries the black plate.
-                // Pin to left:0 before measuring, or the width comes back as
-                // whatever the previous hover's offset squeezed it to.
-                STOPS.forEach(s => {
-                    s.txt.textContent = p.dataset[s.key] || '';
-                    s.el.style.left = '0px';
-                    s.el.style.right = 'auto';
-                });
-                STOPS.forEach(s => { s.w = s.el.offsetWidth; });
-                const need = Math.max(...STOPS.map(s => s.w)) + M_TEXT + M_EDGE;
-
-                // Outward stays the default. A back piece projects near the
-                // middle of the stage, so both sides have room — picking purely
-                // on slack sent those inward, across the sphere. Only overrule
-                // the outward choice when it genuinely will not fit, and even
-                // then only if the other side is actually better; on a phone
-                // neither may fit, and the clamp below is the real guarantee.
-                const lead = isFocal ? M_LEAD : 0;
-                const slack = s => {
-                    const o = px + s * (hw + M_GAP) + s * (lead + M_LEG + need);
-                    return s > 0 ? sr.width - o : o;
-                };
-                if (slack(sx) < 0 && slack(-sx) > slack(sx)) sx = -sx;
-
-                // How far the whole thing reaches vertically. The last label is
-                // centred on its stop, so it hangs half its own height past the
-                // end of the line — and the description's height depends on how
-                // many lines the text wrapped to, so it has to be measured, not
-                // assumed. Estimating it here is what put it off the bottom.
-                let runLen = M_LEG;
-                STOPS.forEach(s => { runLen += M_STEP + s.extra; });
-                // a hanging block reaches its whole height past the last stop,
-                // where a centred one only reaches half
-                const last = STOPS[STOPS.length - 1];
-                const tail = runLen + last.el.offsetHeight * (last.hang ? 1 : 0.5) + M_EDGE;
-                if (py + sy * tail > sr.height || py + sy * tail < 0) sy = -sy;
-
-                const ox = px + sx * (hw + M_GAP);      // origin, clear of the piece
-                const oy = py;
-                const bx = ox + sx * lead;              // end of the horizontal lead
-                const ex = bx + sx * M_LEG;             // elbow, 45deg out
-                const ey = oy + sy * M_LEG;
-
-                // out (focal only), angle, then down: stops march along the
-                // vertical run that starts at the elbow
-                let y = ey, d = `M ${ox} ${oy}` + (lead ? ` L ${bx} ${oy}` : '') + ` L ${ex} ${ey}`;
-                const marks = [];
-                STOPS.forEach(s => {
-                    y += sy * (M_STEP + s.extra);
-                    marks.push({ x: ex, y, el: s.el });
-                });
-                d += ` L ${ex} ${y}`;
-                metroLine.setAttribute('d', d);
-
-                metroStops.innerHTML =
-                    `<circle class="metro-origin" cx="${ox}" cy="${oy}" r="3.5"></circle>` +
-                    marks.map(m => `<circle class="metro-stop" cx="${m.x}" cy="${m.y}" r="2.5"></circle>`).join('');
-
-                marks.forEach((m, i) => {
-                    const el = m.el, w = STOPS[i].w;
-                    el.style.top = m.y + 'px';
-                    // labels sit on the outward side, so text runs away from
-                    // the sphere rather than back across it
-                    let left = sx > 0 ? m.x + M_TEXT : m.x - M_TEXT - w;
-                    // then pulled back onto the stage if the side ran short
-                    left = Math.max(M_EDGE, Math.min(left, sr.width - w - M_EDGE));
-                    el.style.left = left + 'px';
-                    el.style.right = 'auto';
-                    /* A hanging block is offset by half of its FIRST LINE, not
-                       half of itself, so that line sits centred on the stop just
-                       like a single-line label does — the stops stay evenly
-                       spaced and only the text below extends. Measured from the
-                       rendered line box rather than computed from line-height,
-                       because the plate's padding counts toward it too. */
-                    if (STOPS[i].hang) {
-                        const rects = m.el.firstElementChild.getClientRects();
-                        const h = rects.length ? rects[0].height : 0;
-                        /* Hang AWAY from the stops above, which means following
-                           the run: downward runs put the first line on the stop
-                           and grow down, upward runs put the LAST line on the
-                           stop and grow up. Always hanging down was still
-                           colliding on the upward runs, since the block then
-                           grew straight back over the year it was meant to
-                           clear. Either way the stop keeps a line centred on
-                           it, so the spacing still reads as even. */
-                        const off = sy > 0 ? h / 2 : el.offsetHeight - h / 2;
-                        el.style.transform = 'translateY(-' + off.toFixed(1) + 'px)';
-                    } else {
-                        el.style.transform = 'translateY(-50%)';
-                    }
-                    /* Two defensible readings, and they want opposite results,
-                       so this is a setting rather than a rule:
-
-                       'hug'  — flush against the line, ragged edge outward.
-                                The typographic convention: the line acts as the
-                                margin the block is set against. Wants room to
-                                run into, so it suits the wide stage.
-                       'edge' — flush toward the screen edge, ragged edge facing
-                                back at the sphere. Reads better where the block
-                                is close to the edge and the line is crowded in
-                                among the media, as on a phone.
-
-                       Only the description shows the difference — the title and
-                       year sit in shrink-to-fit boxes where both render alike. */
-                    el.style.textAlign = (metroAlign === 'edge')
-                        ? (sx > 0 ? 'right' : 'left')
-                        : (sx > 0 ? 'left'  : 'right');
-                });
-
-                // draw the line on, rather than having it simply appear
-                const len = metroLine.getTotalLength();
-                metroLine.style.transition = 'none';
-                metroLine.style.strokeDasharray = len;
-                metroLine.style.strokeDashoffset = len;
-                void metroLine.getBoundingClientRect();
-                metroLine.style.transition = 'stroke-dashoffset 0.62s cubic-bezier(0.22, 1, 0.36, 1)';
-                metroLine.style.strokeDashoffset = 0;
-
-                metro.classList.add('is-on');
-            }
-
+               `touchInput` still matters: a tap latches `hovered` onto
+               whatever was under the finger with no matching leave event, so
+               on touch the focal point is the only honest answer. */
+            let focalEl = null;
             function paintCaption() {
-                // nothing mid-throw; the hovered piece wins once still, and
-                // failing that the piece the magnet parked on the focal point.
-                // On touch there is no real hover, so the focal point is the
-                // only honest answer — see touchInput above.
-                // the spread has its own labels; the metro belongs to the orbit
-                if (archiveOn) { hideMetro(); return; }
-                const h = touchInput ? null : hovered;
-                const p = dragging ? null : (h || (settled ? focal : null));
-                if (!p) { hideMetro(); return; }
-                buildMetro(p, p === focal);
+                // in the archive the list is the label; nothing is focal there
+                const want = archiveOn ? null : focal;
+                if (want !== focalEl) {
+                    const wasI = nodes.findIndex(function (n) { return n.el === focalEl; });
+                    const isI  = nodes.findIndex(function (n) { return n.el === want; });
+                    if (wasI >= 0) titleEls[wasI].classList.remove('is-focal');
+                    if (isI  >= 0) titleEls[isI].classList.add('is-focal');
+                    focalEl = want;
+                    // no re-measure: both sizes are already cached
+                }
+                /* Hover is a class here rather than a :hover selector, because
+                   the label is not inside the piece any more — there is no
+                   ancestor relationship for the selector to travel down.
+                   Mid-drag it is ignored: pieces sweep past a stationary
+                   cursor, and each would light in turn. */
+                const hot = (dragging || touchInput) ? null : hovered;
+                for (let i = 0; i < nodes.length; i++) {
+                    titleEls[i].classList.toggle('is-hot', nodes[i].el === hot);
+                }
             }
+            function hideMetro() { paintCaption(); }
 
             /* ── SPREAD ──
                Not a second view of the work — the orbit itself, unfolded. Every
@@ -1554,8 +1488,14 @@
             const FADE_POP = 0.04;     // the 1.04 the archive comes in from
             const indexEl = document.createElement('div');
             indexEl.className = 'archive-index';
+            /* data-i stays the node's ORIGINAL index, not its position in
+               this list. The two stopped matching the moment a piece could be
+               left out, and every lookup here reads data-i rather than
+               counting rows — so the only thing filtering costs is that the
+               two `j ===` comparisons below had to learn the same. */
             indexEl.innerHTML = nodes.map(function (n, i) {
                 const d = n.el.dataset;
+                if (d.noindex !== undefined) return '';
                 const href = n.el.getAttribute('href');
                 const title = d.title || '';
                 const desc = d.desc || '';
@@ -1605,7 +1545,9 @@
             function setActive(i, markHot) {
                 if (i < 0 || i >= nodes.length) return;
                 if (markHot !== false) {
-                    entryEls.forEach(function (el, j) { el.classList.toggle('is-hot', j === i); });
+                    entryEls.forEach(function (el) {
+                        el.classList.toggle('is-hot', +el.dataset.i === i);
+                    });
                 }
                 if (i === activeIdx) return;
                 activeIdx = i;
@@ -1922,9 +1864,17 @@
                     hideMetro();
                     // carry the piece you were looking at into the archive,
                     // so the transition lands on the same work it left on
+                    /* Carry the piece you were looking at into the archive,
+                       so the transition lands on the same work it left on —
+                       unless that piece has no row here, in which case fall
+                       back to the first one that does. */
                     const fi = nodes.findIndex(function (q) { return q.el === focal; });
-                    activeIdx = fi < 0 ? 0 : fi;
-                    entryEls.forEach(function (el, j) { el.classList.toggle('is-hot', j === activeIdx); });
+                    const listed = entryEls.some(function (el) { return +el.dataset.i === fi; });
+                    activeIdx = (fi >= 0 && listed) ? fi
+                              : (entryEls.length ? +entryEls[0].dataset.i : 0);
+                    entryEls.forEach(function (el) {
+                        el.classList.toggle('is-hot', +el.dataset.i === activeIdx);
+                    });
                     indexEl.scrollTop = 0;
                     fading = true;      // fade the chosen one up as it arrives
                 } else {
@@ -1976,6 +1926,12 @@
                 // layout coords are stage-relative, orbit coords are measured
                 // from the centre — shifting one lets the two be interpolated
                 const cw = stage.clientWidth / 2, ch = stage.clientHeight / 2;
+
+                /* The labels belong to the orbit, not to the archive it
+                   resolves into — where the list IS the label and a second set
+                   of titles floating over it is just noise. They leave as it
+                   arrives. */
+                const labelOp = 1 - archiveP;
 
                 for (let i = 0; i < nodes.length; i++) {
                     const n = nodes[i];
@@ -2035,6 +1991,54 @@
                         'calc(-50% + ' + Y.toFixed(1) + 'px)) scale(' + S.toFixed(4) + ')';
                     n.el.style.opacity = O.toFixed(3);
                     n.el.style.zIndex = String(Z);
+
+                    /* ── THE FLOATING TITLE ──
+                       Placed against the piece's CURRENT box, so it follows
+                       the thumbnail everywhere — through the drag, the coast,
+                       the magnet and the drop — without any animation of its
+                       own. Set in stage pixels and never scaled, which is what
+                       keeps every title the same size on screen no matter how
+                       far back its piece is.
+
+                       It goes on the side facing AWAY from the sphere's
+                       centre, the one direction with nothing in it, so a title
+                       never lies across the media of the piece behind it. Then
+                       clamped back onto the stage, since the outward side runs
+                       short for pieces near the edge. */
+                    const tEl = titleEls[i];
+                    const halfW2 = n.w * S / 2, halfH2 = n.h * S / 2;
+                    const cxs2 = cw + X, cys2 = ch + Y;
+                    // reading a class costs no layout; reading a box would
+                    const fo = tEl.classList.contains('is-focal');
+                    const tw = fo ? lblBox[i].fw : lblBox[i].w;
+                    const th = fo ? lblBox[i].fh : lblBox[i].h;
+
+                    /* Outward is the default — away from the centre is the one
+                       direction with nothing in it. But a piece near the edge
+                       has no room out there, and the clamp below would then
+                       drag the label back across its OWN media. So the side is
+                       flipped when outward will not fit and inward will: the
+                       title still floats clear of the thumbnail, just on the
+                       other side of it. When neither fits (a phone, mostly)
+                       outward stands and the clamp is the guarantee. */
+                    const fits = function (sd) {
+                        const x = sd > 0 ? cxs2 + halfW2 + LBL_GAP
+                                         : cxs2 - halfW2 - LBL_GAP - tw;
+                        return x >= LBL_EDGE && x + tw <= stage.clientWidth - LBL_EDGE;
+                    };
+                    let side = X < 0 ? -1 : 1;
+                    if (!fits(side) && fits(-side)) side = -side;
+
+                    let lx = side > 0 ? cxs2 + halfW2 + LBL_GAP
+                                      : cxs2 - halfW2 - LBL_GAP - tw;
+                    let ly = cys2 + halfH2 - th;   // sits level with the bottom edge
+                    lx = Math.max(LBL_EDGE, Math.min(lx, stage.clientWidth - tw - LBL_EDGE));
+                    ly = Math.max(LBL_EDGE, Math.min(ly, stage.clientHeight - th - LBL_EDGE));
+
+                    tEl.style.transform = 'translate(' + lx.toFixed(1) + 'px, ' + ly.toFixed(1) + 'px)';
+                    // the title fades with its own media, so depth reads once
+                    tEl.style.opacity = (O * labelOp).toFixed(3);
+                    tEl.style.textAlign = side > 0 ? 'left' : 'right';
                 }
 
                 // the index and its seam arrive with the media they describe
@@ -2044,6 +2048,8 @@
                 // same edge rule the magnet aims with, so the caption and the
                 // thing it lands on can never disagree
                 focal = pickFocal(yaw, pitch).el;
+                // the emphasis belongs to whatever is at the front, right now
+                paintCaption();
             }
 
             function frame(now) {
@@ -2326,7 +2332,29 @@
 
                 e.preventDefault();
                 e.stopPropagation();
-                if (el) setArchive(true);
+                if (!el) return;
+
+                /* A piece carrying data-external is not a project on this
+                   site, so the archive has nothing to show for it — it leaves
+                   for the link instead. New tab, because the orbit is the
+                   site and a back button would land you on a fresh page with
+                   the sphere re-seeded rather than where you left it.
+
+                   noopener is not optional on a window.open to a third party:
+                   without it the opened page gets a handle on this one
+                   through window.opener and can navigate it. */
+                const ext = el.dataset.external;
+                if (ext) { window.open(ext, '_blank', 'noopener'); return; }
+
+                /* A piece with no row in the archive has nothing to open there,
+                   so it behaves like an ordinary link. Same tab: it is a page
+                   on this site, not somewhere else. */
+                if (el.dataset.noindex !== undefined) {
+                    const href = el.getAttribute('href');
+                    if (href) { location.href = href; return; }
+                }
+
+                setArchive(true);
             }, true);
 
             /* The wheel, accumulated. A single trackpad flick arrives as a long
@@ -2437,8 +2465,8 @@
                keeps its default. That is exactly what happened to --grip. */
             const relayout = () => {
                 syncSpread(); syncDrag(); syncMagnet(); syncGrip(); syncGlide();
-                syncMetroAlign();
                 measure();
+                measureLabels();   // max-width is in vw, so the boxes rewrap
                 // the spread is sized to the stage, so a resize invalidates it
                 if (archiveOn) layout = computeArchiveLayout();
                 measureTrays();   // the description rewraps with the column
@@ -2457,7 +2485,7 @@
             syncMagnet();
             syncGrip();
             syncGlide();
-            syncMetroAlign();
+            measureLabels();
             measure();
             const start = targetFor(nodes[0]);
             yaw = start.yaw; pitch = start.pitch;
@@ -2472,6 +2500,15 @@
                all three look identical from the outside — nothing changes.
                This prints what the physics is ACTUALLY using, on the device
                itself. Add #debug to the URL; it costs nothing otherwise. */
+            /* The archive is a state of this page, not a page of its own, so
+               it needs a way to be linked TO — the project pages' "Index"
+               points here expecting the list of works, not the orbit. The
+               unfold is left to animate rather than being snapped open: it is
+               the one thing that shows the list and the orbit are the same
+               set of work, and a visitor arriving straight into a list would
+               never otherwise see it. */
+            if (/(^|[#&])archive/.test(location.hash)) setArchive(true);
+
             const wantDebug = location.hash.indexOf('debug') !== -1 ||
                               location.search.indexOf('debug') !== -1 ||
                               (function () { try { return localStorage.orbitDebug === '1'; }

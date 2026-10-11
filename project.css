@@ -348,16 +348,35 @@ video.ph-tall, video.ph-wide, video.ph-square {
 }
 
 /* ── NEXT / FOOTER ── */
+/* A pager, not a single link. It used to be one anchor with "Next project"
+   on the left and the destination on the right — two halves of the same
+   target, which made the label look like a choice it wasn't. Now each side is
+   its own link with its own destination. The projects form a closed loop of
+   twelve, so every page has both. */
 .next {
     border-top: 1px solid var(--ink);
     margin: 60px 30px 0;
     padding: 24px 0 90px;
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     justify-content: space-between;
-    gap: 20px;
+    gap: 30px;
+}
+
+.next-side {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
     text-decoration: none;
     color: var(--ink);
+    min-width: 0;
+}
+
+/* The forward half is right-aligned, so the pair reads outward from the
+   centre of the page and each title sits against the margin it points at. */
+.next-side + .next-side {
+    align-items: flex-end;
+    text-align: right;
 }
 
 .next-label {
@@ -368,14 +387,16 @@ video.ph-tall, video.ph-wide, video.ph-square {
 }
 
 .next-title {
-    font-size: clamp(28px, 4vw, 56px);
+    /* Smaller than when this was one title holding the whole row: two of
+       these at the old size collide at any width short of a desktop. */
+    font-size: clamp(19px, 2.9vw, 40px);
     font-weight: 700;
     letter-spacing: -0.035em;
     line-height: 1;
     transition: opacity 0.2s ease;
 }
 
-.next:hover .next-title { opacity: 0.55; }
+.next-side:hover .next-title { opacity: 0.55; }
 
 .site-footer {
     border-top: 1px solid var(--rule-soft);
@@ -394,6 +415,12 @@ video.ph-tall, video.ph-wide, video.ph-square {
 
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
+    /* Side by side, two long titles leave each a half-column and both wrap to
+       three lines. Stacked, each gets the full width; the forward one returns
+       to the left margin because there is no longer a pair to read outward. */
+    .next { flex-direction: column; gap: 34px; }
+    .next-side + .next-side { align-items: flex-start; text-align: left; }
+
     .site-header { padding: 14px 18px; }
     .crumb .crumb-text { display: none; }
     .header-right .hide-sm { display: none; }
@@ -426,4 +453,356 @@ video.ph-tall, video.ph-wide, video.ph-square {
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
     * { transition-duration: 0.01ms !important; }
+}
+
+/* ── PROJECT NAV PANEL ──
+   Built by project-nav.js, which is also where the project list lives. The
+   hamburger opens this instead of being a second link to the index; the
+   "Work" crumb beside it still does that job.
+
+   Fixed and above the header: the header is z-index 100, and a panel that
+   slid out underneath the bar it was opened from would read as broken. */
+.proj-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    background: rgba(17, 17, 17, 0.42);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+}
+
+.proj-scrim.is-open { opacity: 1; visibility: visible; }
+
+.proj-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1300;
+    width: min(330px, 84vw);
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    border-right: 1px solid var(--rule);
+    transform: translateX(-100%);
+    transition: transform 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.proj-panel.is-open { transform: none; }
+.proj-panel:focus { outline: none; }
+
+.proj-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--rule-soft);
+}
+
+.proj-label {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.proj-close {
+    background: none;
+    border: 0;
+    padding: 0 2px;
+    font: inherit;
+    font-size: 19px;
+    line-height: 1;
+    color: var(--ink);
+    cursor: pointer;
+}
+
+.proj-close:hover { opacity: 0.55; }
+
+/* The list is the only part that scrolls, so a long list never pushes the
+   footer link off the bottom of the panel. */
+.proj-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 0;
+}
+
+/* Compact by design: the point is to see the whole body of work at once and
+   jump, not to browse. Grid rather than flex so the numbers and years line
+   up in columns regardless of how long a title runs. */
+.proj-row {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 10px;
+    align-items: baseline;
+    padding: 9px 20px;
+    text-decoration: none;
+    color: var(--ink);
+    transition: background 0.18s ease;
+}
+
+.proj-row:hover { background: rgba(0, 0, 0, 0.05); }
+
+.proj-n {
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+}
+
+.proj-t {
+    font-size: 13.5px;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+}
+
+.proj-y {
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+}
+
+/* Where you already are. Marked rather than removed from the list: a gap
+   where the current project should be is harder to read than a highlight. */
+.proj-row.is-current { background: rgba(0, 0, 0, 0.06); }
+.proj-row.is-current .proj-t { font-weight: 700; }
+.proj-row.is-current .proj-n { color: var(--accent); }
+
+.proj-foot {
+    padding: 14px 20px 18px;
+    border-top: 1px solid var(--rule-soft);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.proj-foot:hover { color: var(--ink); }
+
+/* The panel covers the screen on a phone, so the page behind must not scroll
+   under it — otherwise closing it returns you somewhere you never went. */
+body.proj-nav-open { overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+    .proj-panel, .proj-scrim { transition-duration: 0.12s; }
+}
+
+
+/* ── LIVE SITE EMBED ──
+   A website running inside a project page, in a frame that reads as a browser
+   window rather than as a panel of this page that happens to move.
+
+   The site is laid out at --ew x --eh and scaled to fit the column.
+   site-embed.js measures the column and writes --escale, because CSS cannot
+   divide a length by a length to recover a scale factor. Both are declared
+   unitless so the calc() below can give them px. */
+.site-embed {
+    --escale: 0.44;        /* sane until the script measures */
+    --ew: 1280;
+    --eh: 760;
+    width: 100%;
+}
+
+.site-frame {
+    width: 100%;
+    border: 1px solid var(--rule);
+    background: #000;
+}
+
+.site-bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    background: var(--ph);
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.site-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--rule);
+    flex-shrink: 0;
+}
+
+.site-screen {
+    position: relative;
+    width: 100%;
+    /* the scaled height of the laid-out page, so the box is exactly as tall
+       as what it holds — no crop, no letterbox */
+    height: calc(var(--eh) * 1px * var(--escale));
+    overflow: hidden;
+    background: #000;
+}
+
+.site-screen iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(var(--ew) * 1px);
+    height: calc(var(--eh) * 1px);
+    border: 0;
+    transform: scale(var(--escale));
+    transform-origin: top left;
+}
+
+.site-cap {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    margin-top: 10px;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.site-cap a { color: var(--muted); }
+
+/* itch.io's own embed card. Not the game — itch blocks hotlinking the
+   build, detecting it by referrer and serving an interstitial — but this is
+   the embed they do sanction, and it carries the cover, the blurb and a Play
+   button through to the real page.
+
+   552x167 is the size the widget is drawn at; it has no responsive mode, so
+   it is scaled like any other embed rather than squeezed. */
+.site-embed.is-card { --ew: 552; --eh: 167; }
+
+@media (max-width: 900px) {
+    /* Native width on a phone: the site's own mobile layout is what belongs
+       there, and scaling a 1280px desktop page into a 340px column would make
+       it unreadable. The script clears --escale below this breakpoint. */
+    .site-screen { height: 560px; }
+
+    .site-screen iframe {
+        width: 100%;
+        height: 560px;
+        transform: none;
+    }
+
+    /* ...except a card, which has a fixed design and no mobile layout to fall
+       back to. It keeps scaling all the way down. */
+    .site-embed.is-card .site-screen {
+        height: calc(var(--eh) * 1px * var(--escale));
+    }
+
+    .site-embed.is-card .site-screen iframe {
+        width: calc(var(--ew) * 1px);
+        height: calc(var(--eh) * 1px);
+        transform: scale(var(--escale));
+    }
+}
+
+/* A square build rather than a browser window — Unity canvases are whatever
+   shape they were authored at, and this one is 960x960. */
+.site-embed.is-square { --ew: 960; --eh: 960; }
+
+/* ── CLICK TO PLAY ──
+   For embeds too heavy to load unasked. The iframe holds its URL in data-src
+   until this is pressed, so nothing is fetched by a visitor who only came to
+   read the page. itch.io's own page works exactly this way, for the same
+   reason. */
+.site-poster {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: #000 center/cover no-repeat;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    gap: 9px;
+    font: inherit;
+    color: #fff;
+}
+
+.site-poster::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    transition: background 0.3s ease;
+}
+
+.site-poster:hover::before { background: rgba(0, 0, 0, 0.3); }
+
+.site-poster span,
+.site-poster em {
+    position: relative;
+    display: block;
+    text-align: center;
+}
+
+.site-poster span {
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    border: 1px solid rgba(255, 255, 255, 0.75);
+    padding: 11px 17px;
+}
+
+/* The download is stated up front rather than discovered. */
+.site-poster em {
+    font-style: normal;
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.62);
+}
+
+
+/* ── VIDEO FRAME ──
+   A YouTube player, in the hero or anywhere in a media column. No scaling
+   wrapper like .site-embed needs: the player is responsive by design, so it
+   only wants a box of the right shape. aspect-ratio is stated rather than
+   inferred so the box reserves its height before the iframe loads. */
+.video-frame {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 1px solid var(--rule-soft);
+    background: #000;
+}
+
+
+/* ── NATURAL MEDIA STACK ──
+   The default .ph slots force a shape and crop the media to fill it, which is
+   right when a page needs a tidy grid out of mismatched sources. Add .natural
+   to the stack instead and every item keeps its OWN ratio — nothing is cut.
+
+   Use it when the frames are composed. Pair items that already share a ratio
+   so the rows sit level without cropping anything to make them match.
+
+   (pack-mentality.html and held-instantaneously.html still carry identical
+   page-local copies of these rules from before they were shared; they are
+   harmless duplicates and can be deleted whenever those pages are next
+   touched.) */
+.hero-natural,
+.media-stack.natural img,
+.media-stack.natural video {
+    width: 100%;
+    height: auto;          /* the ratio comes from the file itself */
+    display: block;
+    border: 1px solid var(--rule-soft);
+    background: var(--ph);
+}
+
+.media-stack.natural { gap: 14px; }
+
+/* align-items:start so an odd pair steps rather than stretches */
+.media-stack.natural .media-pair { gap: 14px; align-items: start; }
+
+@media (max-width: 900px) {
+    /* one column: side by side at phone width leaves each frame too small to
+       read, a portrait pair especially */
+    .media-stack.natural .media-pair { grid-template-columns: 1fr; }
 }

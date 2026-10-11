@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official MAGI Website — @oddh0st</title>
+    <link rel="icon" type="image/png" href="images/logo/oddh0stlogo.png">
+    <link rel="apple-touch-icon" href="images/logo/oddh0stlogo.png">
+    <link rel="preconnect" href="https://api.fontshare.com">
+    <link href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,700,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="project.css">
+</head>
+<!--
+    OFFICIAL MAGI WEBSITE — the RMIT MAGI portal, rmitmagi.com, 2026.
+
+    The hero is a STILL, not the live site. rmitmagi.com answers with
+    `X-Frame-Options: SAMEORIGIN`, which tells every browser to refuse the
+    page inside a frame from another origin — so an embed renders empty
+    (Firefox says so outright, Chrome just goes black). It is the other
+    server's instruction; nothing here can override it.
+
+    To make the hero live the way MAGI EXPO 2025 and the 2024 expo are, that
+    header has to be dropped server-side or replaced with
+    `Content-Security-Policy: frame-ancestors 'self' https://oddh0st.com`.
+    Then swap this <img> for a .site-embed block and load site-embed.js.
+
+    The still is a headless-Chrome capture of the site's own home page.
+-->
+<body>
+
+    <header class="site-header">
+        <nav class="crumb">
+            <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
+            <span class="crumb-text"><a href="index.html">Work</a></span>
+            <span class="sep crumb-text">/</span>
+            <span class="crumb-text">Official MAGI Website</span>
+        </nav>
+        <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
+           rel="noopener noreferrer">@oddh0st</a>
+        <div class="header-right">
+            <!-- the list of works, which is a state of the index rather than
+                 a separate page; without JS this still lands on the orbit -->
+            <a href="index.html#archive">Index</a>
+        </div>
+    </header>
+
+    <!-- ── HERO ── -->
+    <section class="hero">
+        <div class="hero-text">
+            <div class="eyebrow">Website Development & Design</div>
+            <h1 class="project-title">Official MAGI<br>Website</h1>
+            <div class="title-meta">
+                <span class="meta-lead">2026</span>
+                <span class="meta-sub">Website</span>
+                <span class="meta-note">
+                    Live at rmitmagi.com<br>
+                    <a href="https://rmitmagi.com/" target="_blank" rel="noopener">Visit the site →</a>
+                </span>
+            </div>
+        </div>
+
+        <div class="hero-media">
+            <!-- NO HERO MEDIA YET — and a live embed is not an option.
+
+                 rmitmagi.com answers with `X-Frame-Options: SAMEORIGIN`,
+                 which tells every browser to refuse the page inside a frame
+                 from any other origin. Firefox says so outright; Chrome just
+                 renders black. It is the OTHER server's instruction, so
+                 nothing in this file can override it. The header has to be
+                 dropped server-side, or replaced with
+                 `Content-Security-Policy: frame-ancestors 'self' https://oddh0st.com`.
+
+                 Until then this wants a still. Replace with your own file:
+                   <img class="hero-shot" src="images/..." alt="" width="W" height="H">
+                 .hero-shot crops to 16:9. To keep a file's own shape instead,
+                 copy the .hero-natural rule out of pack-mentality.html. -->
+            <img class="hero-natural"
+                 src="images/projectmedia/magiweb/magi-portal.png"
+                 alt="The MAGI portal home page — the MAGI wordmark over the four category panels"
+                 width="1600" height="1000">
+        </div>
+    </section>
+
+    <!-- ── DETAIL ── -->
+    <section class="detail" id="info">
+        <div class="detail-info">
+            <div class="field">
+                <div class="field-label">Description</div>
+                <p class="body-copy">The MAGI website was developed using VSCode to capture the essence of what MAGI represents, community and the cross pollination of animation, games and interactivity. The logo itself becomes a playful signature interaction of the website's core identitiy. It aims to host students works, workshops and the community's larger scope of guest talks, lectures and panels. <br><br> Can a website foster community? and if so, how does it fit into the bigger picture and legacy of what MAGI represents and thrives off of? If we think of websites as architecture than websites must be cared for, designed with people in mind and serve the community. With that in mind, MAGI's website must house and maintain play, community interaction and creative preservation all in one place.  </p>
+                <!-- more paragraphs: repeat <p class="body-copy">...</p> -->
+            </div>
+
+            <div class="field">
+                <div class="field-label">More info</div>
+                <ul class="spec">
+                    <li><span class="k">(01) Year</span><span class="v">2026&ndash;</span></li>
+                    <li><span class="k">(02) Type</span><span class="v">Website Architecture</span></li>
+                    <li><span class="k">(03) Role</span><span class="v">Website Designer & Developer</span></li>
+                    <!-- copy a line and renumber to add more -->
+                </ul>
+            </div>
+
+            <div class="field">
+                <div class="field-label">Built with</div>
+                <div class="tags">
+                    <span class="tag">VSCode</span>
+                    <span class="tag">HTML, CSS, JS</span>
+                </div>
+            </div>
+
+            <a class="cta" href="index.html">Back to index</a>
+        </div>
+
+        <!-- Nothing here yet. Stills of the site go in as <img>; add
+             `natural` to the stack class to keep each file's own ratio
+             instead of cropping it to a slot. -->
+        <div class="media-stack" id="gallery"></div>
+    </section>
+
+    <!-- Two links, not one. This was a single anchor wearing a "Next
+         project" label on the left and the destination's title on the right,
+         so both halves went to the same place and the label read as if it
+         named something you could choose. -->
+    <nav class="next">
+        <a class="next-side" href="pack-mentality.html">
+            <span class="next-label">Previous project</span>
+            <span class="next-title">&larr; PACK MENTALITY</span>
+        </a>
+        <a class="next-side" href="luminous-festival.html">
+            <span class="next-label">Next project</span>
+            <span class="next-title">Luminous Festival &rarr;</span>
+        </a>
+    </nav>
+
+    <footer class="site-footer">
+        <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
+        <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
+    </footer>
+
+    <script src="project-nav.js" defer></script>
+</body>
+</html>

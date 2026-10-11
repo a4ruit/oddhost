@@ -72,7 +72,7 @@ const projectInfo = {
         description: 'Exhibition website combining TikTok-style interfaces with Unity camera control systems for the Digital Media showcase.'
     },
     'milkbar.png': {
-        title: 'MAGI Milk Bar Project',
+        title: 'Lost & Found Milk Bar',
         description: 'Interactive project developed as part of the Masters of Animation, Games & Interactivity program.'
     },
     'workshop.png': {

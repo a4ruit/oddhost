@@ -63,25 +63,27 @@
             <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
             <span class="crumb-text"><a href="index.html">Work</a></span>
             <span class="sep crumb-text">/</span>
-            <span class="crumb-text">[category]</span>
+            <span class="crumb-text">CatOS</span>
         </nav>
         <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
            rel="noopener noreferrer">@oddh0st</a>
         <div class="header-right">
-            <a href="index.html">Index</a>
+            <!-- the list of works, which is a state of the index rather than
+                 a separate page; without JS this still lands on the orbit -->
+            <a href="index.html#archive">Index</a>
         </div>
     </header>
 
     <!-- ── HERO ── -->
     <section class="hero">
         <div class="hero-text">
-            <div class="eyebrow">[kind of work]</div>
+            <div class="eyebrow">Game Jam</div>
             <h1 class="project-title">CatOS</h1>
             <div class="title-meta">
                 <span class="meta-lead">2025</span>
-                <span class="meta-sub">[type]</span>
+                <span class="meta-sub">Game</span>
                 <span class="meta-note">
-                    [short note]<br>
+                    Collaborate mini-game<br>
                     <a href="#info">Full credits ↓</a>
                 </span>
             </div>
@@ -98,7 +100,7 @@
         <div class="detail-info">
             <div class="field">
                 <div class="field-label">Description</div>
-                <p class="body-copy">[description]</p>
+                <p class="body-copy">CatOS is a collaborative 20-second long game developed by Kora Lee, Thao Tran & Adrian Frichitthavong. The team was formed as part of a game jam that utilised the art direction of Kora & Thao with the development and game design by Adrian. <br><br> In CatOS you must embark on a 20 second sprint to delete all of the neighbours cat's pitcures before your own cat discovers what you've been storing on your computer. To do so you must weave your way through every advertisement, every obsolete Teams meeting call and make sure all the evidence of other cats are deleted. </p>
                 <!-- more paragraphs: repeat <p class="body-copy">...</p> -->
             </div>
 
@@ -106,8 +108,8 @@
                 <div class="field-label">More info</div>
                 <ul class="spec">
                     <li><span class="k">(01) Year</span><span class="v">2025</span></li>
-                    <li><span class="k">(02) Type</span><span class="v">[type]</span></li>
-                    <li><span class="k">(03) Role</span><span class="v">[role]</span></li>
+                    <li><span class="k">(02) Type</span><span class="v">Micro-game</span></li>
+                    <li><span class="k">(03) Role</span><span class="v">Game developer & designer</span></li>
                     <!-- copy a line and renumber to add more -->
                 </ul>
             </div>
@@ -115,8 +117,8 @@
             <div class="field">
                 <div class="field-label">Built with</div>
                 <div class="tags">
-                    <span class="tag">[tool]</span>
-                    <span class="tag">[tool]</span>
+                    <span class="tag">[Unity]</span>
+                    <span class="tag">[Asesprite]</span>
                 </div>
             </div>
 
@@ -124,6 +126,31 @@
         </div>
 
         <div class="media-stack natural" id="gallery">
+
+            <!-- itch.io's own embed card, not the game.
+
+                 The build CANNOT be embedded here. The project page sends
+                 `frame-ancestors 'self' https://itch.io`, and the inner build
+                 URL — which has no such header — is protected a second way:
+                 itch checks the referrer server-side and serves an
+                 anti-hotlink notice instead of the game. Headers alone do not
+                 tell you that; it only shows up when you actually frame it.
+
+                 This is the embed itch does sanction. To make catOS playable
+                 on this page the WebGL build has to be hosted here, at which
+                 point this card is replaced by a click-to-play frame. -->
+            <div class="site-embed is-card">
+                <div class="site-screen">
+                    <iframe title="catOS on itch.io"
+                            src="https://itch.io/embed/4123850"
+                            loading="lazy"></iframe>
+                </div>
+                <div class="site-cap">
+                    <span>Playable on itch.io</span>
+                    <a href="https://lactosefreecat.itch.io/catos" target="_blank" rel="noopener">View on itch.io ↗</a>
+                </div>
+            </div>
+
             <!-- 800x644 -->
             <img src="images/projectmedia/catos/catos-restart.png"
                  alt="The restart screen" width="800" height="644">
@@ -131,15 +158,27 @@
         </div>
     </section>
 
-    <a class="next" href="sos2.html">
-        <span class="next-label">Next project</span>
-        <span class="next-title">S0S2 →</span>
-    </a>
+    <!-- Two links, not one. This was a single anchor wearing a "Next
+         project" label on the left and the destination's title on the right,
+         so both halves went to the same place and the label read as if it
+         named something you could choose. -->
+    <nav class="next">
+        <a class="next-side" href="neurometrix.html">
+            <span class="next-label">Previous project</span>
+            <span class="next-title">&larr; NeuroMetrix&trade;</span>
+        </a>
+        <a class="next-side" href="sos2.html">
+            <span class="next-label">Next project</span>
+            <span class="next-title">S0S2 &rarr;</span>
+        </a>
+    </nav>
 
     <footer class="site-footer">
         <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
         <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
     </footer>
 
+    <script src="project-nav.js" defer></script>
+    <script src="site-embed.js" defer></script>
 </body>
 </html>

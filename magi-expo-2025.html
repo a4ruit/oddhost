@@ -17,12 +17,14 @@
             <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
             <span class="crumb-text"><a href="index.html">Work</a></span>
             <span class="sep crumb-text">/</span>
-            <span class="crumb-text">Web</span>
+            <span class="crumb-text">MAGI EXPO 2025</span>
         </nav>
         <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
            rel="noopener noreferrer">@oddh0st</a>
         <div class="header-right">
-            <a href="index.html">Index</a>
+            <!-- the list of works, which is a state of the index rather than
+                 a separate page; without JS this still lands on the orbit -->
+            <a href="index.html#archive">Index</a>
         </div>
     </header>
 
@@ -42,7 +44,28 @@
         </div>
 
         <div class="hero-media">
-            <img class="hero-shot" src="images/magiexpo.png" alt="MAGI EXPO 2025">
+            <!-- The hero is the work itself, running. A still of a real-time
+                 scene was only ever standing in for this, so it is gone
+                 rather than repeated underneath.
+
+                 No loading="lazy" here, unlike when this sat further down the
+                 page: the hero is above the fold, so deferring it would defer
+                 the one thing the page opens on. -->
+            <div class="site-embed">
+                <div class="site-frame">
+                    <div class="site-bar"><span class="site-dot"></span>magiexpo2025.com</div>
+                    <div class="site-screen">
+                        <iframe title="MAGI EXPO 2025 — live site"
+                                src="https://magiexpo2025.com/"
+                                allow="fullscreen; autoplay"
+                                referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                </div>
+                <div class="site-cap">
+                    <span>Live build — interactive</span>
+                    <a href="https://magiexpo2025.com" target="_blank" rel="noopener">Open full size ↗</a>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -81,6 +104,7 @@
         </div>
 
         <div class="media-stack" id="gallery">
+
             <div>
                 <div class="ph ph-wide"><span class="ph-label">Screen 01 — 16:9</span></div>
                 <p class="caption">Orbital view — category planets</p>
@@ -100,15 +124,27 @@
         </div>
     </section>
 
-    <a class="next" href="held-instantaneously.html">
-        <span class="next-label">Next project</span>
-        <span class="next-title">Held, Instantaneously →</span>
-    </a>
+    <!-- Two links, not one. This was a single anchor wearing a "Next
+         project" label on the left and the destination's title on the right,
+         so both halves went to the same place and the label read as if it
+         named something you could choose. -->
+    <nav class="next">
+        <a class="next-side" href="cctv-installation.html">
+            <span class="next-label">Previous project</span>
+            <span class="next-title">&larr; CCTV Installation</span>
+        </a>
+        <a class="next-side" href="held-instantaneously.html">
+            <span class="next-label">Next project</span>
+            <span class="next-title">Held, Instantaneously &rarr;</span>
+        </a>
+    </nav>
 
     <footer class="site-footer">
         <span>© 2025 Adrian Frichitthavong — Melbourne, AU</span>
         <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
     </footer>
 
+    <script src="project-nav.js" defer></script>
+    <script src="site-embed.js" defer></script>
 </body>
 </html>

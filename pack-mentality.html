@@ -35,6 +35,102 @@
             background: var(--ph);
         }
 
+        /* project.css pins this column with position:sticky, which works while
+           it is a one-line description and two spec lists. It now runs well
+           past a viewport, and a sticky box taller than the viewport sticks at
+           its TOP — so its own bottom can never be scrolled to, and the last
+           field becomes unreachable. Static here, and the grid's align-items:
+           start keeps it where sticky was putting it anyway. */
+        .detail-info { position: static; }
+
+        /* The author's own one-line summary of the premise, set as a line
+           rather than buried mid-paragraph. The separators are dimmed because
+           they are punctuation doing the work of an arrow, not words.
+
+           Deliberately NOT uppercased, though every other micro-label on the
+           page is: text-transform would re-case the author's sentence, and the
+           copy on this page is reproduced exactly as written. */
+        .pipeline {
+            margin: 1.3em 0;
+            font-size: 15px;
+            line-height: 1.6;
+            max-width: 32ch;
+        }
+
+        .pipeline span {
+            color: var(--muted);
+            margin: 0 0.45em;
+        }
+
+        /* ── THE PLAYABLE PHONE ──
+           The controller half of the work, embedded and actually usable, in a
+           frame that says "phone" so it is obvious what you are holding.
+
+           It runs at a real phone's CSS width (390px) and is scaled down to
+           fit the column, rather than being squeezed into a narrow iframe.
+           The game ships a `width=device-width, user-scalable=no` viewport, so
+           a 290px-wide frame would lay it out AS a 290px phone — tighter than
+           any device it was designed for. Laying it out at 390 and scaling the
+           result keeps the proportions the work was built against.
+
+           --pscale is the single dial: everything else derives from it, since
+           CSS cannot divide by a length to recover a scale factor. */
+        .phone-demo {
+            --pscale: 0.78;          /* 390 x 844 -> 304 x 658 */
+            margin-bottom: 6px;
+            /* Centred in the column. Everything else in this stack is a
+               full-width frame, so a handset narrower than the column reads
+               as misaligned against them unless it sits on their centre line
+               rather than their left edge. */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .phone-shell {
+            width: calc(390px * var(--pscale) + 16px);
+            padding: 8px;
+            border: 1px solid var(--rule);
+            border-radius: 34px;
+            background: #101010;
+            /* the handset reads as an object sitting on the page */
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+        }
+
+        .phone-screen {
+            position: relative;
+            width: calc(390px * var(--pscale));
+            height: calc(844px * var(--pscale));
+            border-radius: 26px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .phone-screen iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 390px;
+            height: 844px;
+            border: 0;
+            transform: scale(var(--pscale));
+            transform-origin: top left;
+        }
+
+        .phone-cap {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            width: calc(390px * var(--pscale) + 16px);
+            margin-top: 10px;
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .phone-cap a { color: var(--muted); }
+
         .media-stack.natural { gap: 14px; }
 
         .media-stack.natural img,
@@ -58,6 +154,12 @@
             /* one column: side by side at phone width leaves each frame too
                small to read, and a portrait pair especially */
             .media-stack.natural .media-pair { grid-template-columns: 1fr; }
+
+            /* A phone inside a phone. Pulled in so the frame still fits the
+               column on a 320px device, where the content column is ~284px.
+               Kept rather than hidden: a visitor on a phone is holding the
+               exact device this half of the work was written for. */
+            .phone-demo { --pscale: 0.66; }
         }
     </style>
 </head>
@@ -68,12 +170,14 @@
             <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
             <span class="crumb-text"><a href="index.html">Work</a></span>
             <span class="sep crumb-text">/</span>
-            <span class="crumb-text">Installation</span>
+            <span class="crumb-text">PACK MENTALITY</span>
         </nav>
         <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
            rel="noopener noreferrer">@oddh0st</a>
         <div class="header-right">
-            <a href="index.html">Index</a>
+            <!-- the list of works, which is a state of the index rather than
+                 a separate page; without JS this still lands on the orbit -->
+            <a href="index.html#archive">Index</a>
         </div>
     </header>
 
@@ -102,9 +206,51 @@
     <!-- ── DETAIL ── -->
     <section class="detail" id="info">
         <div class="detail-info">
+            <!-- VERBATIM. The copy below is the author's own text, set as
+                 written — spelling, punctuation and phrasing included. The only
+                 things added are the paragraph breaks that were already in the
+                 source, the field headings, and a link on the one project name
+                 that has a page. Do not "tidy" it. -->
             <div class="field">
                 <div class="field-label">Description</div>
-                <p class="body-copy">A phone-controlled multiplayer game installation.</p>
+                <p class="body-copy">Pack Mentality is a phone-based multiplayer installation where a crowd
+                    gathers together to populate a collective screen. It combines game design (Unity on the
+                    collective screen) and web design (html, css &amp; js on the user’s phone). Where the QR
+                    code of the installation becomes the door to the user interacting with the environment.</p>
+            </div>
+
+            <div class="field">
+                <div class="field-label">Origins</div>
+                <p class="body-copy">I’ve developed this idea of wanting an interactive diorama since my
+                    bachelor studies in Digital Media, combined with the website hosted on the phone component
+                    developed further post-graduate studies that included projects like
+                    <a href="sos2.html">SOS2</a> to stress-test those initial ideas back in 2024. That core
+                    idea of linking an interactive component linked with a user’s phone by taking them to a
+                    website ultimately kicked off a series of works in this very format.</p>
+                <p class="pipeline">User’s phone <span>&gt;</span> QR Code <span>&gt;</span> Collective experience.</p>
+                <p class="body-copy">This project became the flagship piece of my practice thus far. It was
+                    the longest standing project that I’ve ever worked on, expanding from first year MAGI
+                    (CPS class) until now. It’s undergone the most transformational major updates as it goes
+                    into dissemination mode. Several playtests this year have given the direction and
+                    decisions that will eventually lead to the project’s final completion.</p>
+            </div>
+
+            <div class="field">
+                <div class="field-label">The game</div>
+                <p class="body-copy">The game design itself consists of player’s choosing a role, then opening
+                    categories of playing cards that spawn in whatever that card is shown as.</p>
+                <p class="body-copy">Each card has a unique abiility that directly effects what is being shown
+                    in the envrionemnt. The envrironment then responds to those cards being chosen. Each
+                    interaction contribues to a progress counter, which then sends in waves of enemies that
+                    they player can react to using their cards.</p>
+                <p class="body-copy">Their collective goal is feed the environment and fend off monsters as
+                    they do so.</p>
+                <p class="body-copy">The game mechanics are inspired by games such as World of Warcraft
+                    Classic (Dungeon gameplay loop). Risk of Rain 2 (ability mechanics and visuals) and
+                    Terraria (art direction). It’s really just been a huge passion project inspired by a lot
+                    of the games I’ve played in the past. I’ve attempted to synthesise a succinct experience
+                    in an installation design format where player’s are forced to gather around socially. The
+                    games latest iterations attempt to foster and play with those incidental conditions.</p>
             </div>
 
             <div class="field">
@@ -117,16 +263,19 @@
                 </ul>
             </div>
 
-            <!-- BUILT WITH — omitted rather than invented. To add it, paste this
-                 back in above the CTA and fill the tags:
-
+            <!-- The two halves of the work, named as such in the description:
+                 Unity drives the collective screen, a plain web page drives the
+                 phone. Nothing here is inferred — add a tag only for something
+                 you can point at in the build. -->
             <div class="field">
                 <div class="field-label">Built with</div>
                 <div class="tags">
-                    <span class="tag">…</span>
+                    <span class="tag">Unity</span>
+                    <span class="tag">HTML</span>
+                    <span class="tag">CSS</span>
+                    <span class="tag">JavaScript</span>
                 </div>
             </div>
-            -->
 
             <a class="cta" href="index.html">Back to index</a>
         </div>
@@ -134,6 +283,39 @@
         <!-- Ratios noted per row: pairs share one, so the rows sit level with no
              cropping. Reordering is safe as long as a pair keeps matched ratios. -->
         <div class="media-stack natural" id="gallery">
+
+            <!-- The phone half of the work, live. It sits at the top of the
+                 media column because it IS the first piece of media: the thing
+                 a visitor would otherwise only see photographed. -->
+            <div class="phone-demo">
+                <div class="phone-shell">
+                    <div class="phone-screen">
+                        <!-- Loaded straight to the controller's own landing
+                             screen: the username / tag colour / role sheet is
+                             the real front door of the work, and putting a
+                             play button in front of it would only be a second,
+                             invented one.
+
+                             loading="lazy" is what keeps that affordable. The
+                             game is ~30 scripts, audio and a live WebSocket
+                             session, so it is fetched when the frame nears the
+                             viewport rather than on arrival — a visitor who
+                             reads the description and leaves never pays for
+                             it, and anyone who scrolls to the phone finds it
+                             already on the username screen. -->
+                        <iframe id="phoneFrame" title="PACK MENTALITY — phone controller"
+                                src="https://packmentalitygame.com/"
+                                loading="lazy"
+                                allow="autoplay; fullscreen"
+                                referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                </div>
+
+                <div class="phone-cap">
+                    <span>Live build — the phone half</span>
+                    <a href="https://packmentalitygame.com/" target="_blank" rel="noopener">Open full size ↗</a>
+                </div>
+            </div>
 
             <!-- 3:2 -->
             <img src="images/projectmedia/packmentality26/exhibition-01.jpg"
@@ -204,15 +386,26 @@
         </div>
     </section>
 
-    <a class="next" href="luminous-festival.html">
-        <span class="next-label">Next project</span>
-        <span class="next-title">Luminous Festival →</span>
-    </a>
+    <!-- Two links, not one. This was a single anchor wearing a "Next
+         project" label on the left and the destination's title on the right,
+         so both halves went to the same place and the label read as if it
+         named something you could choose. -->
+    <nav class="next">
+        <a class="next-side" href="sos2.html">
+            <span class="next-label">Previous project</span>
+            <span class="next-title">&larr; S0S2</span>
+        </a>
+        <a class="next-side" href="magi-website.html">
+            <span class="next-label">Next project</span>
+            <span class="next-title">MAGI Website &rarr;</span>
+        </a>
+    </nav>
 
     <footer class="site-footer">
         <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
         <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
     </footer>
 
+    <script src="project-nav.js" defer></script>
 </body>
 </html>

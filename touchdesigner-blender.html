@@ -32,12 +32,14 @@
             <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
             <span class="crumb-text"><a href="index.html">Work</a></span>
             <span class="sep crumb-text">/</span>
-            <span class="crumb-text">[category]</span>
+            <span class="crumb-text">TouchDesigner + Blender</span>
         </nav>
         <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
            rel="noopener noreferrer">@oddh0st</a>
         <div class="header-right">
-            <a href="index.html">Index</a>
+            <!-- the list of works, which is a state of the index rather than
+                 a separate page; without JS this still lands on the orbit -->
+            <a href="index.html#archive">Index</a>
         </div>
     </header>
 
@@ -121,15 +123,26 @@
         </div>
     </section>
 
-    <a class="next" href="n0-r3ply-collective.html">
-        <span class="next-label">Next project</span>
-        <span class="next-title">N0_R3PLY Collective →</span>
-    </a>
+    <!-- Two links, not one. This was a single anchor wearing a "Next
+         project" label on the left and the destination's title on the right,
+         so both halves went to the same place and the label read as if it
+         named something you could choose. -->
+    <nav class="next">
+        <a class="next-side" href="magi-milk-bar.html">
+            <span class="next-label">Previous project</span>
+            <span class="next-title">&larr; Lost &amp; Found Milk Bar</span>
+        </a>
+        <a class="next-side" href="n0-r3ply-collective.html">
+            <span class="next-label">Next project</span>
+            <span class="next-title">N0_R3PLY Collective &rarr;</span>
+        </a>
+    </nav>
 
     <footer class="site-footer">
         <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
         <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
     </footer>
 
+    <script src="project-nav.js" defer></script>
 </body>
 </html>

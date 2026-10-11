@@ -32,12 +32,14 @@
             <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
             <span class="crumb-text"><a href="index.html">Work</a></span>
             <span class="sep crumb-text">/</span>
-            <span class="crumb-text">[category]</span>
+            <span class="crumb-text">Digital Media Exhibition</span>
         </nav>
         <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
            rel="noopener noreferrer">@oddh0st</a>
         <div class="header-right">
-            <a href="index.html">Index</a>
+            <!-- the list of works, which is a state of the index rather than
+                 a separate page; without JS this still lands on the orbit -->
+            <a href="index.html#archive">Index</a>
         </div>
     </header>
 
@@ -57,15 +59,24 @@
         </div>
 
         <div class="hero-media">
-            <!-- Replace with your own file:
-                   <img class="hero-shot" src="images/..." alt="" width="W" height="H">
-                 or a video:
-                   <video class="hero-shot" autoplay muted loop playsinline
-                          poster="..."><source src="..." type="video/mp4"></video>
-
-                 .hero-shot crops to 16:9. To keep a file's own shape instead,
-                 copy the .hero-natural rule out of pack-mentality.html. -->
-            <div class="ph ph-wide"><span class="ph-label">Hero — 16:9</span></div>
+            <!-- The hero is the work itself, running. No loading="lazy":
+                 the hero is above the fold, so deferring it would defer the
+                 one thing the page opens on. -->
+            <div class="site-embed">
+                <div class="site-frame">
+                    <div class="site-bar"><span class="site-dot"></span>2024.rmitdigitalmedia.com</div>
+                    <div class="site-screen">
+                        <iframe title="RMIT Digital Media Expo 2024 — live site"
+                                src="https://2024.rmitdigitalmedia.com/"
+                                allow="fullscreen; autoplay"
+                                referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                </div>
+                <div class="site-cap">
+                    <span>Live build — interactive</span>
+                    <a href="https://2024.rmitdigitalmedia.com/" target="_blank" rel="noopener">Open full size ↗</a>
+                </div>
+            </div>
         </div>
     </section>
 
@@ -121,15 +132,27 @@
         </div>
     </section>
 
-    <a class="next" href="magi-milk-bar.html">
-        <span class="next-label">Next project</span>
-        <span class="next-title">MAGI Milk Bar →</span>
-    </a>
+    <!-- Two links, not one. This was a single anchor wearing a "Next
+         project" label on the left and the destination's title on the right,
+         so both halves went to the same place and the label read as if it
+         named something you could choose. -->
+    <nav class="next">
+        <a class="next-side" href="held-instantaneously.html">
+            <span class="next-label">Previous project</span>
+            <span class="next-title">&larr; Held, Instantaneously</span>
+        </a>
+        <a class="next-side" href="magi-milk-bar.html">
+            <span class="next-label">Next project</span>
+            <span class="next-title">Lost &amp; Found Milk Bar &rarr;</span>
+        </a>
+    </nav>
 
     <footer class="site-footer">
         <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
         <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
     </footer>
 
+    <script src="project-nav.js" defer></script>
+    <script src="site-embed.js" defer></script>
 </body>
 </html>

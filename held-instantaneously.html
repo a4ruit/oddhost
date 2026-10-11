@@ -30,6 +30,74 @@
             background: var(--ph);
         }
 
+        /* ── THE PLAYABLE PHONE ──
+           The phone half of the work, embedded and actually usable, in a
+           frame that says "phone" so it is obvious what you are holding.
+           Same construction as the controller on PACK MENTALITY.
+
+           It runs at a real phone's CSS width (390px) and is scaled down to
+           fit the column, rather than being squeezed into a narrow iframe.
+           SwipeMe ships a `width=device-width, user-scalable=no` viewport, so
+           a 290px frame would lay it out AS a 290px phone — tighter than any
+           device it was built against. Laying it out at 390 and scaling the
+           result keeps the proportions intact.
+
+           --pscale is the single dial: everything else derives from it, since
+           CSS cannot divide by a length to recover a scale factor. */
+        .phone-demo {
+            --pscale: 0.78;          /* 390 x 844 -> 304 x 658 */
+            margin-bottom: 6px;
+            /* Centred: everything else in this stack is a full-width frame,
+               so a handset narrower than the column reads as misaligned
+               against them unless it sits on their centre line. */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .phone-shell {
+            width: calc(390px * var(--pscale) + 16px);
+            padding: 8px;
+            border: 1px solid var(--rule);
+            border-radius: 34px;
+            background: #101010;
+            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+        }
+
+        .phone-screen {
+            position: relative;
+            width: calc(390px * var(--pscale));
+            height: calc(844px * var(--pscale));
+            border-radius: 26px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .phone-screen iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 390px;
+            height: 844px;
+            border: 0;
+            transform: scale(var(--pscale));
+            transform-origin: top left;
+        }
+
+        .phone-cap {
+            display: flex;
+            justify-content: space-between;
+            gap: 14px;
+            width: calc(390px * var(--pscale) + 16px);
+            margin-top: 10px;
+            font-size: 9px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .phone-cap a { color: var(--muted); }
+
         .media-stack.natural { gap: 14px; }
 
         /* pairs are grouped by matching ratio, so rows sit level without
@@ -38,6 +106,12 @@
 
         @media (max-width: 900px) {
             .media-stack.natural .media-pair { grid-template-columns: 1fr; }
+
+            /* A phone inside a phone. Pulled in so the frame still fits the
+               column on a 320px device, where the content column is ~284px.
+               Kept rather than hidden: a visitor on a phone is holding the
+               exact device this half of the work was written for. */
+            .phone-demo { --pscale: 0.66; }
         }
     </style>
 </head>
@@ -63,25 +137,27 @@
             <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
             <span class="crumb-text"><a href="index.html">Work</a></span>
             <span class="sep crumb-text">/</span>
-            <span class="crumb-text">[category]</span>
+            <span class="crumb-text">Held, Instantaneously</span>
         </nav>
         <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
            rel="noopener noreferrer">@oddh0st</a>
         <div class="header-right">
-            <a href="index.html">Index</a>
+            <!-- the list of works, which is a state of the index rather than
+                 a separate page; without JS this still lands on the orbit -->
+            <a href="index.html#archive">Index</a>
         </div>
     </header>
 
     <!-- ── HERO ── -->
     <section class="hero">
         <div class="hero-text">
-            <div class="eyebrow">[kind of work]</div>
+            <div class="eyebrow">Interactive Installation</div>
             <h1 class="project-title">Held,<br>Instantaneously</h1>
             <div class="title-meta">
                 <span class="meta-lead">2025</span>
-                <span class="meta-sub">[type]</span>
+                <span class="meta-sub">Installation</span>
                 <span class="meta-note">
-                    [short note]<br>
+                    Phone-integrated, Unity environment<br>
                     <a href="#info">Full credits ↓</a>
                 </span>
             </div>
@@ -99,7 +175,7 @@
         <div class="detail-info">
             <div class="field">
                 <div class="field-label">Description</div>
-                <p class="body-copy">[description]</p>
+                <p class="body-copy">What if you could see your dating app swipes in real-time? Swipe left, swipe right, regardless of sides, your actions spawn NPCs that fall into world in front of you. This work was a response and reflection of what the digital dating age felt like. Like an NPC in a digital prison. </p>
                 <!-- more paragraphs: repeat <p class="body-copy">...</p> -->
             </div>
 
@@ -125,6 +201,30 @@
         </div>
 
         <div class="media-stack natural" id="gallery">
+
+            <!-- The phone half of the work, live — the thing a visitor would
+                 otherwise only see filmed.
+
+                 loading="lazy" matters more here than elsewhere — the host
+                 sleeps when idle, so fetching this on arrival would wake a
+                 server for someone who never scrolls to it. -->
+            <div class="phone-demo">
+                <div class="phone-shell">
+                    <div class="phone-screen">
+                        <iframe title="SwipeMe — the phone piece"
+                                src="https://swipemeapp.onrender.com/"
+                                loading="lazy"
+                                allow="autoplay; fullscreen"
+                                referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                </div>
+
+                <div class="phone-cap">
+                    <span>Live build — the phone half</span>
+                    <a href="https://swipemeapp.onrender.com/" target="_blank" rel="noopener">Open full size ↗</a>
+                </div>
+            </div>
+
             <!-- 9:16 + 9:16 — both clips, so the row sits level.
                  720x1280 and genuinely portrait: the sources were 1920x1080
                  with a -90deg rotation matrix, and the rotation is baked into
@@ -140,6 +240,19 @@
                 </video>
             </div>
 
+            <!-- The walkthrough, after the clips: the two short loops above
+                 show the thing, this explains it. -->
+            <div>
+                <iframe class="video-frame"
+                        src="https://www.youtube-nocookie.com/embed/2TGdlg7bdN4"
+                        title="Interaction Playthrough Series"
+                        loading="lazy"
+                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen></iframe>
+                <p class="caption">Interaction playthrough</p>
+            </div>
+
             <!-- 700x940 -->
             <img src="images/projectmedia/heldinstant/held-night.jpg"
                  alt="The display seen from the next room" width="700" height="940">
@@ -147,15 +260,26 @@
         </div>
     </section>
 
-    <a class="next" href="digital-media-exhibition.html">
-        <span class="next-label">Next project</span>
-        <span class="next-title">Digital Media Exhibition →</span>
-    </a>
+    <!-- Two links, not one. This was a single anchor wearing a "Next
+         project" label on the left and the destination's title on the right,
+         so both halves went to the same place and the label read as if it
+         named something you could choose. -->
+    <nav class="next">
+        <a class="next-side" href="magi-expo-2025.html">
+            <span class="next-label">Previous project</span>
+            <span class="next-title">&larr; MAGI EXPO 2025</span>
+        </a>
+        <a class="next-side" href="digital-media-exhibition.html">
+            <span class="next-label">Next project</span>
+            <span class="next-title">Digital Media Exhibition &rarr;</span>
+        </a>
+    </nav>
 
     <footer class="site-footer">
         <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
         <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
     </footer>
 
+    <script src="project-nav.js" defer></script>
 </body>
 </html>

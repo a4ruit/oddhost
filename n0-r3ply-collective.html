@@ -32,12 +32,14 @@
             <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
             <span class="crumb-text"><a href="index.html">Work</a></span>
             <span class="sep crumb-text">/</span>
-            <span class="crumb-text">[category]</span>
+            <span class="crumb-text">N0_R3PLY Collective</span>
         </nav>
         <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
            rel="noopener noreferrer">@oddh0st</a>
         <div class="header-right">
-            <a href="index.html">Index</a>
+            <!-- the list of works, which is a state of the index rather than
+                 a separate page; without JS this still lands on the orbit -->
+            <a href="index.html#archive">Index</a>
         </div>
     </header>
 
@@ -99,7 +101,33 @@
             <a class="cta" href="index.html">Back to index</a>
         </div>
 
-        <div class="media-stack" id="gallery">
+        <div class="media-stack natural" id="gallery">
+
+            <!-- 720x1280, genuinely portrait: the source was a 1920x1080
+                 iPhone recording carrying a -90deg rotation matrix, and the
+                 rotation is baked into this file rather than left for the
+                 browser to apply. Silent, because it autoplays. -->
+            <video autoplay muted loop playsinline width="720" height="1280"
+                   poster="images/projectmedia/n0reply/n0reply-clip-01-poster.jpg">
+                <source src="images/projectmedia/n0reply/n0reply-clip-01.mp4" type="video/mp4">
+            </video>
+            <p class="caption">[caption]</p>
+
+            <!-- The other two, paired: same 9:16, so the row sits level with
+                 nothing cropped to make it. Same rotation treatment — both
+                 sources were 1920x1080 carrying -90deg, baked in here. -->
+            <div class="media-pair">
+                <video autoplay muted loop playsinline width="720" height="1280"
+                       poster="images/projectmedia/n0reply/n0reply-clip-02-poster.jpg">
+                    <source src="images/projectmedia/n0reply/n0reply-clip-02.mp4" type="video/mp4">
+                </video>
+                <video autoplay muted loop playsinline width="720" height="1280"
+                       poster="images/projectmedia/n0reply/n0reply-clip-03-poster.jpg">
+                    <source src="images/projectmedia/n0reply/n0reply-clip-03.mp4" type="video/mp4">
+                </video>
+            </div>
+            <p class="caption">[caption]</p>
+
             <!-- Replace each <div class="ph ..."> with real media:
                    <img class="ph ph-tall" src="..." alt="" width="W" height="H">
                  The class sets the shape and the media is cropped to fill it.
@@ -121,15 +149,26 @@
         </div>
     </section>
 
-    <a class="next" href="neurometrix.html">
-        <span class="next-label">Next project</span>
-        <span class="next-title">NeuroMetrix&trade; →</span>
-    </a>
+    <!-- Two links, not one. This was a single anchor wearing a "Next
+         project" label on the left and the destination's title on the right,
+         so both halves went to the same place and the label read as if it
+         named something you could choose. -->
+    <nav class="next">
+        <a class="next-side" href="magi-milk-bar.html">
+            <span class="next-label">Previous project</span>
+            <span class="next-title">&larr; Lost &amp; Found Milk Bar</span>
+        </a>
+        <a class="next-side" href="neurometrix.html">
+            <span class="next-label">Next project</span>
+            <span class="next-title">NeuroMetrix&trade; &rarr;</span>
+        </a>
+    </nav>
 
     <footer class="site-footer">
         <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
         <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
     </footer>
 
+    <script src="project-nav.js" defer></script>
 </body>
 </html>

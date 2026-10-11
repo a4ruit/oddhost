@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MAGI Milk Bar — @oddh0st</title>
+    <title>Lost &amp; Found Milk Bar — @oddh0st</title>
     <link rel="icon" type="image/png" href="images/logo/oddh0stlogo.png">
     <link rel="apple-touch-icon" href="images/logo/oddh0stlogo.png">
     <link rel="preconnect" href="https://api.fontshare.com">
@@ -32,12 +32,14 @@
             <a href="index.html" aria-label="Back to index"><span class="menu-bars"></span></a>
             <span class="crumb-text"><a href="index.html">Work</a></span>
             <span class="sep crumb-text">/</span>
-            <span class="crumb-text">[category]</span>
+            <span class="crumb-text">Lost &amp; Found Milk Bar</span>
         </nav>
         <a class="wordmark" href="https://www.instagram.com/oddh0st/" target="_blank"
            rel="noopener noreferrer">@oddh0st</a>
         <div class="header-right">
-            <a href="index.html">Index</a>
+            <!-- the list of works, which is a state of the index rather than
+                 a separate page; without JS this still lands on the orbit -->
+            <a href="index.html#archive">Index</a>
         </div>
     </header>
 
@@ -45,7 +47,7 @@
     <section class="hero">
         <div class="hero-text">
             <div class="eyebrow">[kind of work]</div>
-            <h1 class="project-title">MAGI Milk<br>Bar</h1>
+            <h1 class="project-title">Lost &amp; Found<br>Milk Bar</h1>
             <div class="title-meta">
                 <span class="meta-lead">2025</span>
                 <span class="meta-sub">[type]</span>
@@ -57,15 +59,21 @@
         </div>
 
         <div class="hero-media">
-            <!-- Replace with your own file:
-                   <img class="hero-shot" src="images/..." alt="" width="W" height="H">
-                 or a video:
-                   <video class="hero-shot" autoplay muted loop playsinline
-                          poster="..."><source src="..." type="video/mp4"></video>
+            <!-- The video of the work, playable in place.
 
-                 .hero-shot crops to 16:9. To keep a file's own shape instead,
-                 copy the .hero-natural rule out of pack-mentality.html. -->
-            <div class="ph ph-wide"><span class="ph-label">Hero — 16:9</span></div>
+                 youtube-nocookie rather than youtube.com: the player sets no
+                 tracking cookies until someone actually presses play, which
+                 is the right default for a page that merely shows a video.
+
+                 No autoplay. A hero that starts making noise on arrival is
+                 the thing every visitor immediately hunts for a way to stop. -->
+            <iframe class="video-frame"
+                    src="https://www.youtube-nocookie.com/embed/-twh5y7zn-w"
+                    title="The Lost &amp; Found Milk Bar"
+                    loading="lazy"
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                    allowfullscreen></iframe>
         </div>
     </section>
 
@@ -106,6 +114,19 @@
                  Shapes: ph-wide 16:9, ph-square 1:1, ph-tall 3:4.
                  Always give width and height so the box is reserved before load.
                  Delete any slot you do not need. -->
+            <!-- The walkthrough. Same player settings as the hero:
+                 nocookie, no autoplay, lazy because it sits below the fold. -->
+            <div>
+                <iframe class="video-frame"
+                        src="https://www.youtube-nocookie.com/embed/CIHB_1l2GDs"
+                        title="Final Interaction Playthrough"
+                        loading="lazy"
+                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen></iframe>
+                <p class="caption">Final interaction playthrough</p>
+            </div>
+
             <div>
                 <div class="ph ph-tall"><span class="ph-label">Still 01 — 3:4</span></div>
                 <p class="caption">[caption]</p>
@@ -121,15 +142,26 @@
         </div>
     </section>
 
-    <a class="next" href="touchdesigner-blender.html">
-        <span class="next-label">Next project</span>
-        <span class="next-title">TouchDesigner + Blender →</span>
-    </a>
+    <!-- Two links, not one. This was a single anchor wearing a "Next
+         project" label on the left and the destination's title on the right,
+         so both halves went to the same place and the label read as if it
+         named something you could choose. -->
+    <nav class="next">
+        <a class="next-side" href="digital-media-exhibition.html">
+            <span class="next-label">Previous project</span>
+            <span class="next-title">&larr; Digital Media Exhibition</span>
+        </a>
+        <a class="next-side" href="n0-r3ply-collective.html">
+            <span class="next-label">Next project</span>
+            <span class="next-title">N0_R3PLY Collective &rarr;</span>
+        </a>
+    </nav>
 
     <footer class="site-footer">
         <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
         <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
     </footer>
 
+    <script src="project-nav.js" defer></script>
 </body>
 </html>

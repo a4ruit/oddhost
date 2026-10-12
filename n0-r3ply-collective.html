@@ -46,28 +46,34 @@
     <!-- ── HERO ── -->
     <section class="hero">
         <div class="hero-text">
-            <div class="eyebrow">[kind of work]</div>
+            <div class="eyebrow">Collective-based Practice</div>
             <h1 class="project-title">N0_R3PLY<br>Collective</h1>
             <div class="title-meta">
                 <span class="meta-lead">2024&ndash;</span>
-                <span class="meta-sub">[type]</span>
+                <span class="meta-sub">Collective</span>
                 <span class="meta-note">
-                    [short note]<br>
+                    Collection of works<br>
                     <a href="#info">Full credits ↓</a>
                 </span>
             </div>
         </div>
 
         <div class="hero-media">
-            <!-- Replace with your own file:
-                   <img class="hero-shot" src="images/..." alt="" width="W" height="H">
-                 or a video:
-                   <video class="hero-shot" autoplay muted loop playsinline
-                          poster="..."><source src="..." type="video/mp4"></video>
-
-                 .hero-shot crops to 16:9. To keep a file's own shape instead,
-                 copy the .hero-natural rule out of pack-mentality.html. -->
-            <div class="ph ph-wide"><span class="ph-label">Hero — 16:9</span></div>
+            <!-- Press coverage, not an embed. beat.com.au answers with
+                 `X-Frame-Options: SAMEORIGIN`, so the article cannot be
+                 framed here — and reproducing its opening paragraphs on this
+                 site would be republishing someone else's reporting. The card
+                 carries the masthead, the headline, the one line that names
+                 the work, and a link to read it where it lives. -->
+            <a class="press-card" href="https://beat.com.au/cadena-melbournes-latine-creatives-unite-for-a-four-day-love-letter-to-their-community/" target="_blank" rel="noopener">
+                <div class="press-bar"><span class="site-dot"></span>beat.com.au</div>
+                <div class="press-body">
+                    <div class="press-kicker">Beat Magazine &middot; 9 October 2025 &middot; Frankie Anderson-Byrne</div>
+                    <h2 class="press-head">Cadena: Melbourne&rsquo;s Latine creatives unite for a four-day love letter to their community</h2>
+                    <blockquote class="press-quote">&ldquo;An unassuming industrial warehouse in Brunswick morphed into several different stages to cater to the laden programme, with the help of set designer Rocio Lamana and projection designer, Adrian Frichitthavong.&rdquo;</blockquote>
+                    <span class="press-cta">Read the full article on beat.com.au &#8599;</span>
+                </div>
+            </a>
         </div>
     </section>
 
@@ -76,7 +82,7 @@
         <div class="detail-info">
             <div class="field">
                 <div class="field-label">Description</div>
-                <p class="body-copy">[description]</p>
+                <p class="body-copy">I remember pitching my very first idea to Azul who had been working in ACMI at that time alongside Sen who'd been with NGV ha dboth really kickstarted and fostered all of these experimental works that came out of the first conversation. <br><br>Their event Sequence of Spaces 01 which I had the pleasure of attending, felt so immersive in the way it invited audiences into the space. So the moment you step into their space, you've become part of the world-building and performance that happens intermittently in the space, eventually resulting in a final performance piece. While SOS1 commented on the typical office space, the conversation that I had first had with Azul and Sen became the basis of SOS2. Where do you go after a day at the office? The restaurant. The conversation goes: "you know those QR codes that take you to an online menu? What if played with that idea, using a satirical menu to play with the audience, and the audience with the performances?" <br><br> These questions lead to many works and collaborations from this point onwards, creating interactive experiences for events such as Cadena Festival </p>
                 <!-- more paragraphs: repeat <p class="body-copy">...</p> -->
             </div>
 
@@ -84,8 +90,8 @@
                 <div class="field-label">More info</div>
                 <ul class="spec">
                     <li><span class="k">(01) Year</span><span class="v">2024&ndash;</span></li>
-                    <li><span class="k">(02) Type</span><span class="v">[type]</span></li>
-                    <li><span class="k">(03) Role</span><span class="v">[role]</span></li>
+                    <li><span class="k">(02) Type</span><span class="v">Collection of Works</span></li>
+                    <li><span class="k">(03) Role</span><span class="v">Creative Technologist & AV Technician </span></li>
                     <!-- copy a line and renumber to add more -->
                 </ul>
             </div>
@@ -93,8 +99,8 @@
             <div class="field">
                 <div class="field-label">Built with</div>
                 <div class="tags">
-                    <span class="tag">[tool]</span>
-                    <span class="tag">[tool]</span>
+                    <span class="tag">TouchDesigner</span>
+                    <span class="tag">VSCode</span>
                 </div>
             </div>
 
@@ -102,6 +108,18 @@
         </div>
 
         <div class="media-stack natural" id="gallery">
+
+            <!-- The Cadena cam reel, the same post Beat embedded. Served from
+                 Instagram's own /embed/ endpoint, so the video, the caption
+                 and the credit all stay on their side rather than being
+                 copied here. It reports its own height; site-embed.js
+                 listens for that and sizes the frame. -->
+            <iframe class="ig-frame"
+                    src="https://www.instagram.com/reel/DPfyeX_kaRu/embed/"
+                    title="CADENA_CAM reel by @its__noreply"
+                    loading="lazy" scrolling="no" frameborder="0"
+                    allowtransparency="true"></iframe>
+            <p class="caption">Cadena cam &mdash; @its__noreply, with @a.frich</p>
 
             <!-- 720x1280, genuinely portrait: the source was a 1920x1080
                  iPhone recording carrying a -90deg rotation matrix, and the
@@ -111,7 +129,6 @@
                    poster="images/projectmedia/n0reply/n0reply-clip-01-poster.jpg">
                 <source src="images/projectmedia/n0reply/n0reply-clip-01.mp4" type="video/mp4">
             </video>
-            <p class="caption">[caption]</p>
 
             <!-- The other two, paired: same 9:16, so the row sits level with
                  nothing cropped to make it. Same rotation treatment — both
@@ -126,26 +143,7 @@
                     <source src="images/projectmedia/n0reply/n0reply-clip-03.mp4" type="video/mp4">
                 </video>
             </div>
-            <p class="caption">[caption]</p>
 
-            <!-- Replace each <div class="ph ..."> with real media:
-                   <img class="ph ph-tall" src="..." alt="" width="W" height="H">
-                 The class sets the shape and the media is cropped to fill it.
-                 Shapes: ph-wide 16:9, ph-square 1:1, ph-tall 3:4.
-                 Always give width and height so the box is reserved before load.
-                 Delete any slot you do not need. -->
-            <div>
-                <div class="ph ph-tall"><span class="ph-label">Still 01 — 3:4</span></div>
-                <p class="caption">[caption]</p>
-            </div>
-            <div class="media-pair">
-                <div class="ph ph-square"><span class="ph-label">Still 02 — 1:1</span></div>
-                <div class="ph ph-square"><span class="ph-label">Still 03 — 1:1</span></div>
-            </div>
-            <div>
-                <div class="ph ph-wide"><span class="ph-label">Still 04 — 16:9</span></div>
-                <p class="caption">[caption]</p>
-            </div>
         </div>
     </section>
 
@@ -170,5 +168,6 @@
     </footer>
 
     <script src="project-nav.js" defer></script>
+    <script src="site-embed.js" defer></script>
 </body>
 </html>

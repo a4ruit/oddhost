@@ -806,3 +806,229 @@ body.proj-nav-open { overflow: hidden; }
        read, a portrait pair especially */
     .media-stack.natural .media-pair { grid-template-columns: 1fr; }
 }
+
+
+/* ── PRESS CARD ──
+   Coverage of the work, pointing at the publication rather than reproducing
+   it. Built to echo the .site-embed chrome so a page can hold a live site and
+   a press mention without looking like two different design languages.
+
+   It is NOT an iframe of the article: beat.com.au sends
+   `X-Frame-Options: SAMEORIGIN`, so the page cannot be framed here at all.
+   And the body of someone else's reporting does not belong copied onto this
+   site — so the card carries the masthead, the headline, one short quoted
+   line and a link, which is what sends a reader to the source. */
+.press-card {
+    display: block;
+    width: 100%;
+    border: 1px solid var(--rule);
+    background: var(--bg);
+    text-decoration: none;
+    color: var(--ink);
+    transition: background 0.2s ease;
+}
+
+.press-card:hover { background: #e7e6e3; }
+
+.press-bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    background: var(--ph);
+    border-bottom: 1px solid var(--rule-soft);
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.press-body { padding: 26px 24px 22px; }
+
+.press-kicker {
+    font-size: 9px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+}
+
+.press-head {
+    font-size: clamp(19px, 2vw, 25px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.18;
+    margin-bottom: 16px;
+}
+
+/* The one line that names the work. Quoted and attributed, not paraphrased,
+   and deliberately brief — the article is theirs to host, not ours. */
+.press-quote {
+    margin: 0 0 18px;
+    padding-left: 13px;
+    border-left: 2px solid var(--rule);
+    font-size: 14px;
+    line-height: 1.5;
+    color: #3a3a3a;
+}
+
+.press-cta {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.press-card:hover .press-cta { text-decoration: underline; }
+
+
+/* ── INSTAGRAM EMBED ──
+   Instagram's own /embed/ endpoint in a plain iframe, rather than their
+   embed.js. The script would be a third-party Meta bundle running on this
+   site for the sake of one post; the endpoint renders the same card and
+   reports its own height by postMessage, which site-embed.js listens for.
+
+   The height here is only the value before that message arrives — it stops
+   the page jumping as the card settles. */
+.ig-frame {
+    display: block;
+    width: 100%;
+    height: 900px;
+    border: 0;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+
+/* ── PHONE FRAME ──
+   A site running inside a handset, for work whose phone half is the point.
+
+   It runs at a real phone's CSS width (390px) and is scaled down to fit the
+   column rather than being squeezed into a narrow iframe. A responsive site
+   handed a 290px frame lays itself out AS a 290px phone — tighter than any
+   device it was designed against. Laying it out at 390 and scaling the result
+   keeps the proportions intact.
+
+   --pscale is the single dial: everything derives from it, since CSS cannot
+   divide by a length to recover a scale factor.
+
+   (pack-mentality.html and held-instantaneously.html carry identical
+   page-local copies of these rules from before they were shared; harmless
+   duplicates, deletable whenever those pages are next touched.) */
+.phone-demo {
+    --pscale: 0.78;          /* 390 x 844 -> 304 x 658 */
+    margin-bottom: 6px;
+    /* Centred: everything else in a media column is a full-width frame, so a
+       handset narrower than the column reads as misaligned against them
+       unless it sits on their centre line. */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.phone-shell {
+    width: calc(390px * var(--pscale) + 16px);
+    padding: 8px;
+    border: 1px solid var(--rule);
+    border-radius: 34px;
+    background: #101010;
+    box-shadow: 0 18px 44px rgba(0, 0, 0, 0.28);
+}
+
+.phone-screen {
+    position: relative;
+    width: calc(390px * var(--pscale));
+    height: calc(844px * var(--pscale));
+    border-radius: 26px;
+    overflow: hidden;
+    background: #000;
+}
+
+/* A still instead of a live frame, for a site whose mobile build cannot be
+   framed (it switches on user-agent, which an iframe always inherits from
+   the parent page). Same box, same bezel. */
+.phone-screen img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    display: block;
+}
+
+.phone-screen iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 390px;
+    height: 844px;
+    border: 0;
+    transform: scale(var(--pscale));
+    transform-origin: top left;
+}
+
+.phone-cap {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    width: calc(390px * var(--pscale) + 16px);
+    margin-top: 10px;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.phone-cap a { color: var(--muted); }
+
+@media (max-width: 900px) {
+    /* A phone inside a phone. Pulled in so the frame still fits the column on
+       a 320px device, where the content column is ~284px. */
+    .phone-demo { --pscale: 0.66; }
+}
+
+/* a credited collaborator in the spec list reads as a link, not as body text */
+.spec .v a { color: var(--accent); text-decoration: none; }
+.spec .v a:hover { text-decoration: underline; }
+
+
+/* ── SCROLLABLE SITE EMBED ──
+   The other .site-embed uses lay a page out wide and scale it down, which
+   suits a hero where the whole composition matters. This variant does the
+   opposite: native size, fixed viewport, and the reader scrolls inside it.
+
+   Used for a page whose later sections are the point. A cross-origin frame
+   cannot be scrolled from here and this one has no anchors to target, so it
+   opens at the top and the rest is a scroll away. */
+.site-embed.is-scroll .site-screen {
+    height: 620px;
+    background: #fff;
+}
+
+.site-embed.is-scroll .site-screen iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: none;
+}
+
+
+/* ── DOCUMENT EMBED ──
+   A PDF in the browser's own viewer. Taller than the scroll variant because
+   a page of A4 at this width needs the room, and white behind it so the
+   sheet does not sit on black while it loads. */
+.site-embed.is-doc .site-screen {
+    height: 760px;
+    background: #ffffff;
+}
+
+.site-embed.is-doc .site-screen iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: none;
+}

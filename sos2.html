@@ -46,28 +46,31 @@
     <!-- ── HERO ── -->
     <section class="hero">
         <div class="hero-text">
-            <div class="eyebrow">[kind of work]</div>
+            <div class="eyebrow">Experimental & Interactive Performance</div>
             <h1 class="project-title">S0S2</h1>
             <div class="title-meta">
                 <span class="meta-lead">2023</span>
-                <span class="meta-sub">[type]</span>
+                <span class="meta-sub">Performance</span>
                 <span class="meta-note">
-                    [short note]<br>
+                    Phone-based interactive hybrid performance<br>
                     <a href="#info">Full credits ↓</a>
                 </span>
             </div>
         </div>
 
         <div class="hero-media">
-            <!-- Replace with your own file:
-                   <img class="hero-shot" src="images/..." alt="" width="W" height="H">
-                 or a video:
-                   <video class="hero-shot" autoplay muted loop playsinline
-                          poster="..."><source src="..." type="video/mp4"></video>
+            <!-- The reel, as the hero. Instagram's own /embed/ endpoint in a
+                 plain iframe rather than their embed.js — the script is a
+                 third-party Meta bundle and the endpoint renders the same
+                 card without it. It reports its own height by postMessage;
+                 site-embed.js listens and sizes the frame.
 
-                 .hero-shot crops to 16:9. To keep a file's own shape instead,
-                 copy the .hero-natural rule out of pack-mentality.html. -->
-            <div class="ph ph-wide"><span class="ph-label">Hero — 16:9</span></div>
+                 Not lazy: the hero is above the fold, so deferring it would
+                 defer the one thing the page opens on. -->
+            <iframe class="ig-frame"
+                    src="https://www.instagram.com/reel/DJ5Gcpgz3qr/embed/"
+                    title="SOS2 reel on Instagram"
+                    scrolling="no" frameborder="0" allowtransparency="true"></iframe>
         </div>
     </section>
 
@@ -76,7 +79,7 @@
         <div class="detail-info">
             <div class="field">
                 <div class="field-label">Description</div>
-                <p class="body-copy">[description]</p>
+                <p class="body-copy">Sequence of Spaces 02 transformed the way I thought about creative work. It was the first-time I'd been involved in something that utilises interactivity with performance. Although not a new concept for the time, it was pushing the boundaries my personal practice and opened up a type of creative thinking that had influenced me in my creative direction today. <br><br> My role in the project had been the interaction designer in which would weave together performance, audience play and a collective visual projection all in the one space. Audience members would be walking into a fake restaurant space in which they were given physical pamphlets in which a QR code was present. This was how the audience members had used their phones to engage with the space itself. The QR code linked to a satirical menu, designed by Ava Vu, the buttons itself were fed into the live projection of a reciept that showed the audience member's fake order. While people were ordering, the numbers and pricing were the contributions to a collective debt that was projected on screen as well, which also became the threshold markers for the performers to interrogate and act amongst the crowd. <br><br> What resulted was one of the most chaotic two nights I had experienced in my new media practice and this was the most "new media" I had ever gotten in terms of experimentation and cross-pollination of mediums. <br><br> SOS2 had also started an entire series of works that had involved a phone-based interaction with a projection or collective visual, including Held, Instantaneously and Pack Mentality.</p>
                 <!-- more paragraphs: repeat <p class="body-copy">...</p> -->
             </div>
 
@@ -84,24 +87,39 @@
                 <div class="field-label">More info</div>
                 <ul class="spec">
                     <li><span class="k">(01) Year</span><span class="v">2023</span></li>
-                    <li><span class="k">(02) Type</span><span class="v">[type]</span></li>
-                    <li><span class="k">(03) Role</span><span class="v">[role]</span></li>
+                    <li><span class="k">(02) Role</span><span class="v">Interaction designer</span></li>
+                    <li><span class="k">(03) Menu &amp; web build</span><span class="v"><a href="https://avavu.au/" target="_blank" rel="noopener">Ava Vu</a></span></li>
                     <!-- copy a line and renumber to add more -->
                 </ul>
-            </div>
-
-            <div class="field">
-                <div class="field-label">Built with</div>
-                <div class="tags">
-                    <span class="tag">[tool]</span>
-                    <span class="tag">[tool]</span>
-                </div>
             </div>
 
             <a class="cta" href="index.html">Back to index</a>
         </div>
 
         <div class="media-stack natural" id="gallery">
+
+            <!-- Ava Vu's own write-up of the project, live from her site.
+                 She built the menu the audience ordered from, so this is her
+                 account of that half rather than ours restated.
+
+                 It opens at the top: the page carries no anchors, and a
+                 cross-origin frame's scroll position cannot be set from
+                 here. Scroll inside the frame to reach the menu. -->
+            <div class="site-embed is-scroll">
+                <div class="site-frame">
+                    <div class="site-bar"><span class="site-dot"></span>avavu.au</div>
+                    <div class="site-screen">
+                        <iframe title="Sequence of Space 2 — Ava Vu"
+                                src="https://avavu.au/sequence-of-space-2"
+                                loading="lazy"
+                                referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
+                </div>
+                <div class="site-cap">
+                    <span>Menu &amp; web build &mdash; Ava Vu</span>
+                    <a href="https://avavu.au/sequence-of-space-2" target="_blank" rel="noopener">Read on avavu.au &#8599;</a>
+                </div>
+            </div>
 
             <!-- 9:16 + 9:16 — both clips share a ratio, so the row sits level
                  with nothing cropped. 720x1280 and genuinely portrait: the
@@ -117,26 +135,6 @@
                        poster="images/projectmedia/SOS2/sos2-clip-02-poster.jpg">
                     <source src="images/projectmedia/SOS2/sos2-clip-02.mp4" type="video/mp4">
                 </video>
-            </div>
-            <p class="caption">[caption]</p>
-
-            <!-- Replace each <div class="ph ..."> with real media:
-                   <img class="ph ph-tall" src="..." alt="" width="W" height="H">
-                 The class sets the shape and the media is cropped to fill it.
-                 Shapes: ph-wide 16:9, ph-square 1:1, ph-tall 3:4.
-                 Always give width and height so the box is reserved before load.
-                 Delete any slot you do not need. -->
-            <div>
-                <div class="ph ph-tall"><span class="ph-label">Still 01 — 3:4</span></div>
-                <p class="caption">[caption]</p>
-            </div>
-            <div class="media-pair">
-                <div class="ph ph-square"><span class="ph-label">Still 02 — 1:1</span></div>
-                <div class="ph ph-square"><span class="ph-label">Still 03 — 1:1</span></div>
-            </div>
-            <div>
-                <div class="ph ph-wide"><span class="ph-label">Still 04 — 16:9</span></div>
-                <p class="caption">[caption]</p>
             </div>
         </div>
     </section>
@@ -162,5 +160,6 @@
     </footer>
 
     <script src="project-nav.js" defer></script>
+    <script src="site-embed.js" defer></script>
 </body>
 </html>

@@ -349,17 +349,15 @@
                      alt="" width="1444" height="1094">
             </div>
 
-            <!-- 3:4 + 3:4 -->
+            <!-- 3:4 + 3:4. These were three at this ratio, so one always sat
+                 alone; with the third gone the remaining two pair exactly.
+                 0.7494 against 0.7484 — a 0.4px step at this width. -->
             <div class="media-pair">
                 <img src="images/projectmedia/packmentality26/pack-02.png"
                      alt="" width="646" height="862">
-                <img src="images/projectmedia/packmentality26/pack-04.png"
-                     alt="" width="834" height="1112">
+                <img src="images/projectmedia/packmentality26/pack-05.png"
+                     alt="" width="830" height="1109">
             </div>
-
-            <!-- 3:4 — the odd one out of three at this ratio -->
-            <img src="images/projectmedia/packmentality26/pack-05.png"
-                 alt="" width="830" height="1109">
 
             <!-- 9:16 + 9:16 -->
             <div class="media-pair">
@@ -375,12 +373,44 @@
                      alt="" width="568" height="1004">
             </div>
 
-            <!-- both very tall, ~1:2.2 -->
-            <div class="media-pair">
-                <img src="images/projectmedia/packmentality26/pack-phone-ui.png"
-                     alt="The phone controller" width="1170" height="2532">
-                <img src="images/projectmedia/packmentality26/pack-01.jpg"
-                     alt="" width="923" height="2048">
+            <!-- 0.45 — full width, because nothing else on the page comes
+                 near that ratio any more. Same reasoning as exhibition-05
+                 above: an unpaired item takes its own row rather than being
+                 cropped to match something it does not match. -->
+            <img src="images/projectmedia/packmentality26/pack-01.jpg"
+                 alt="" width="923" height="2048">
+
+            <!-- The mechanics guide, opened at page 11.
+
+                 #page=11 is a PDF-viewer fragment, honoured by the built-in
+                 viewers in Chrome, Edge and Firefox. Safari is inconsistent
+                 about it and iOS often refuses to render a PDF in a frame at
+                 all, which is why the caption carries a direct link — that
+                 always works, and opens in the reader the visitor actually
+                 has.
+
+                 CLICK TO LOAD, deliberately: the file is 33MB. Fetching that
+                 because somebody scrolled past would be the single most
+                 expensive thing on the site, and punishing on mobile data.
+                 The size is stated on the button rather than discovered. -->
+            <div class="site-embed is-doc">
+                <div class="site-frame">
+                    <div class="site-bar"><span class="site-dot"></span>Comprehensive guide &mdash; 19pp, PDF</div>
+                    <div class="site-screen">
+                        <iframe title="PACK MENTALITY — comprehensive guide, page 11"
+                                data-src="images/projectmedia/packmentality26/PackMentality_ComprehensiveGuide.pdf#page=11"
+                                hidden></iframe>
+                        <button class="site-poster" type="button">
+                            <span>Open the guide at page 11</span>
+                            <em>33 MB — loads on open</em>
+                        </button>
+                    </div>
+                </div>
+                <div class="site-cap">
+                    <span>Back-end mechanics &mdash; from page 11</span>
+                    <a href="images/projectmedia/packmentality26/PackMentality_ComprehensiveGuide.pdf#page=11"
+                       target="_blank" rel="noopener">Open the PDF &#8599;</a>
+                </div>
             </div>
 
         </div>
@@ -407,5 +437,6 @@
     </footer>
 
     <script src="project-nav.js" defer></script>
+    <script src="site-embed.js" defer></script>
 </body>
 </html>

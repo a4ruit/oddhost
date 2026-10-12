@@ -19,6 +19,35 @@
 (function () {
     'use strict';
 
+    /* ── INSTAGRAM, SELF-SIZING ──
+       Instagram's embed endpoint posts {type:'MEASURE', details:{height}} to
+       its parent as the card settles, and again whenever it reflows. Reading
+       that is what their embed.js does; doing it here is eight lines instead
+       of a third-party bundle.
+
+       The message is matched to the iframe by comparing event.source against
+       each frame's contentWindow — not by trusting anything in the payload,
+       and only from an instagram.com origin. */
+    var igFrames = [].slice.call(document.querySelectorAll('.ig-frame'));
+    if (igFrames.length) {
+        window.addEventListener('message', function (e) {
+            if (!/^https?:\/\/(www\.)?instagram\.com$/.test(e.origin)) return;
+
+            var data = e.data;
+            if (typeof data === 'string') {
+                try { data = JSON.parse(data); } catch (err) { return; }
+            }
+            if (!data || data.type !== 'MEASURE' || !data.details) return;
+
+            var h = parseInt(data.details.height, 10);
+            if (!h || h < 120 || h > 4000) return;
+
+            igFrames.forEach(function (f) {
+                if (f.contentWindow === e.source) f.style.height = h + 'px';
+            });
+        });
+    }
+
     var boxes = [].slice.call(document.querySelectorAll('.site-embed'));
     if (!boxes.length) return;
 

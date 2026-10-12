@@ -805,12 +805,12 @@
     <aside class="sidebar" id="sidebar">
         <button class="sidebar-close" id="sidebarClose" aria-label="Close menu">×</button>
         <div class="sidebar-section">
-            <p class="sidebar-bio"><strong>oddh0st</strong> is the online handle of Adrian Frichitthavong, a Naarm-based experimental game maker. His work has explored interactive web interfaces, real-time motion capture. Using TouchDesigner, and Unity to build immersive digital environments and live audiovisual installations.</p>
+            <p class="sidebar-bio">Through their online-alias, <strong>oddh0st</strong> is an experimental game-maker working in between mobile interaction and public space, making installations where strangers play together through their phones. I’m targetting exhibition, festival contexts and studios working in interactive or site-specific experience design.</p>
         </div>
         <div class="sidebar-section">
             <div class="sidebar-label">Education</div>
             <p>Master of Animation, Games &amp; Interactivity, 2026</p>
-            <p style="margin-top:6px">Bachelor's of Digital Media — Dean's Award Recipient 2024</p>
+            <p style="margin-top:6px">Bachelor's of Digital Media, Dean's Award Recipient 2024</p>
             <p style="margin-top:6px">Advanced Diploma of Building Design, 2016</p>
         </div>
         <div class="sidebar-section">
@@ -819,14 +819,14 @@
             <p>Platform Presents, "SOUND CHECK: HYBRID 003" Sep 2026</p>
             <p>Platform Presents, "SOUND CHECK: HYBRID 001" Dec 2025</p>
             <p style="margin-top:6px">Platform Presents, "Held, Briefly" Nov 2025</p>
-            <p style="margin-top:6px">N0_R3PLY Collective, 2024 — Present</p>
+            <p style="margin-top:6px">N0_R3PLY Collective, 2024 to present</p>
         </div>
         <div class="sidebar-section">
             <div class="sidebar-label">Workshops</div>
             <p>"Unity + Smartphone Integration", RMIT 2026</p>
-            <p>"End the Boring Internet" — Three.js + GitHub Pages, RMIT 2025</p>
+            <p>"End the Boring Internet", Three.js + GitHub Pages, RMIT 2025</p>
             <p style="margin-top:6px">TouchDesigner + Blender, RMIT 2025</p>
-            <p style="margin-top:6px">Friday Blender, RMIT 2021 — 2024</p>
+            <p style="margin-top:6px">Friday Blender, RMIT 2021 to 2024</p>
         </div>
         <div class="sidebar-section">
             <div class="sidebar-label">Contact</div>
@@ -867,6 +867,17 @@
             </video>
         </a>
 
+        <!-- Second, matching project-nav.js: both are 2026 and the list runs
+             reverse-chronologically. Inserted here rather than appended so
+             the archive, which is generated from these nodes in source
+             order, stays in date order without a sort. PACK MENTALITY keeps
+             index 0, so the orbit still opens parked on it. -->
+        <a href="magi-website.html" class="piece lg" data-title="MAGI Website" style="--boost: 1.35"
+           data-desc="Community portal for RMIT's Master of Animation, Games &amp; Interactivity. A living archive, a community board, and a platform pairing makers with sound designers."
+           data-year="2026">
+            <img src="images/projectmedia/magiweb/magi-portal.png" alt="" width="1600" height="1000">
+        </a>
+
         <a class="piece xl" href="luminous-festival.html" data-title="Luminous Festival" data-desc="Outdoor forest installation on dual vertical displays. Hand tracking drives an ASCII boid flock as a live force field, hunted by a whale." data-year="2025">
             <video autoplay muted loop playsinline width="1080" height="1920" poster="images/luminous.png">
                 <source src="images/luminous.mp4" type="video/mp4">
@@ -899,6 +910,16 @@
            data-desc="Projection mapping and real-time VFX, from TouchDesigner nodes into Blender. Free, hands-on, for anyone who turned up."
            data-year="2025">
             <img src="images/workshop.png" alt="" width="763" height="1012">
+        </a>
+
+        <!-- CatOS had a page and a row in project-nav.js but no thumbnail,
+             so the orbit and the archive were the only places it could not
+             be reached from. Placed after the Milk Bar to hold the 2025
+             group together and keep the archive in date order. -->
+        <a href="catos.html" class="piece sm" data-title="CatOS"
+           data-desc="A twenty-second game jam micro-game. Delete the neighbour's cat pictures before your own cat finds them."
+           data-year="2025">
+            <img src="images/projectmedia/catos/catos-key.png" alt="" width="1024" height="1024">
         </a>
 
         <a href="digital-media-exhibition.html" class="piece sm" data-title="Digital Media Exhibition" style="--boost: 1.70" data-desc="Minimalist styled card profile system" data-year="2024">

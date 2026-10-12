@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PACK MENTALITY — @oddh0st</title>
+    <title>PACK MENTALITY, @oddh0st</title>
     <link rel="icon" type="image/png" href="images/logo/oddh0stlogo.png">
     <link rel="apple-touch-icon" href="images/logo/oddh0stlogo.png">
     <link rel="preconnect" href="https://api.fontshare.com">
@@ -34,14 +34,6 @@
             border: 1px solid var(--rule-soft);
             background: var(--ph);
         }
-
-        /* project.css pins this column with position:sticky, which works while
-           it is a one-line description and two spec lists. It now runs well
-           past a viewport, and a sticky box taller than the viewport sticks at
-           its TOP — so its own bottom can never be scrolled to, and the last
-           field becomes unreachable. Static here, and the grid's align-items:
-           start keeps it where sticky was putting it anyway. */
-        .detail-info { position: static; }
 
         /* The author's own one-line summary of the premise, set as a line
            rather than buried mid-paragraph. The separators are dimmed because
@@ -198,7 +190,7 @@
 
         <div class="hero-media">
             <img class="hero-natural" src="images/projectmedia/packmentality26/exhibition-02.jpg"
-                 alt="PACK MENTALITY installed — players gathered around the projected table"
+                 alt="PACK MENTALITY installed, players gathered around the projected table"
                  width="2400" height="1600">
         </div>
     </section>
@@ -217,40 +209,6 @@
                     gathers together to populate a collective screen. It combines game design (Unity on the
                     collective screen) and web design (html, css &amp; js on the user’s phone). Where the QR
                     code of the installation becomes the door to the user interacting with the environment.</p>
-            </div>
-
-            <div class="field">
-                <div class="field-label">Origins</div>
-                <p class="body-copy">I’ve developed this idea of wanting an interactive diorama since my
-                    bachelor studies in Digital Media, combined with the website hosted on the phone component
-                    developed further post-graduate studies that included projects like
-                    <a href="sos2.html">SOS2</a> to stress-test those initial ideas back in 2024. That core
-                    idea of linking an interactive component linked with a user’s phone by taking them to a
-                    website ultimately kicked off a series of works in this very format.</p>
-                <p class="pipeline">User’s phone <span>&gt;</span> QR Code <span>&gt;</span> Collective experience.</p>
-                <p class="body-copy">This project became the flagship piece of my practice thus far. It was
-                    the longest standing project that I’ve ever worked on, expanding from first year MAGI
-                    (CPS class) until now. It’s undergone the most transformational major updates as it goes
-                    into dissemination mode. Several playtests this year have given the direction and
-                    decisions that will eventually lead to the project’s final completion.</p>
-            </div>
-
-            <div class="field">
-                <div class="field-label">The game</div>
-                <p class="body-copy">The game design itself consists of player’s choosing a role, then opening
-                    categories of playing cards that spawn in whatever that card is shown as.</p>
-                <p class="body-copy">Each card has a unique abiility that directly effects what is being shown
-                    in the envrionemnt. The envrironment then responds to those cards being chosen. Each
-                    interaction contribues to a progress counter, which then sends in waves of enemies that
-                    they player can react to using their cards.</p>
-                <p class="body-copy">Their collective goal is feed the environment and fend off monsters as
-                    they do so.</p>
-                <p class="body-copy">The game mechanics are inspired by games such as World of Warcraft
-                    Classic (Dungeon gameplay loop). Risk of Rain 2 (ability mechanics and visuals) and
-                    Terraria (art direction). It’s really just been a huge passion project inspired by a lot
-                    of the games I’ve played in the past. I’ve attempted to synthesise a succinct experience
-                    in an installation design format where player’s are forced to gather around socially. The
-                    games latest iterations attempt to foster and play with those incidental conditions.</p>
             </div>
 
             <div class="field">
@@ -280,8 +238,17 @@
             <a class="cta" href="index.html">Back to index</a>
         </div>
 
-        <!-- Ratios noted per row: pairs share one, so the rows sit level with no
-             cropping. Reordering is safe as long as a pair keeps matched ratios. -->
+        <!-- The case study and the media in one track, the same way
+             magi-website.html runs: a claim and the photograph of it stay a
+             scroll apart at most, and the summary opposite stays sticky.
+
+             Origins and The game were fields in the left column. Their words
+             are untouched — the file says not to tidy them — they have only
+             moved to where there is room to read them.
+
+             Ratios noted per row: pairs share one, so the rows sit level with
+             no cropping. Reordering is safe as long as a pair keeps matched
+             ratios. -->
         <div class="media-stack natural" id="gallery">
 
             <!-- The phone half of the work, live. It sits at the top of the
@@ -303,7 +270,7 @@
                              reads the description and leaves never pays for
                              it, and anyone who scrolls to the phone finds it
                              already on the username screen. -->
-                        <iframe id="phoneFrame" title="PACK MENTALITY — phone controller"
+                        <iframe id="phoneFrame" title="PACK MENTALITY, phone controller"
                                 src="https://packmentalitygame.com/"
                                 loading="lazy"
                                 allow="autoplay; fullscreen"
@@ -312,9 +279,31 @@
                 </div>
 
                 <div class="phone-cap">
-                    <span>Live build — the phone half</span>
+                    <span>Live build, the phone half</span>
                     <a href="https://packmentalitygame.com/" target="_blank" rel="noopener">Open full size ↗</a>
                 </div>
+            </div>
+
+            <div class="case-head">
+                <div class="field-label">Case Study</div>
+                <h2 class="case-title">PACK MENTALITY Case Study</h2>
+            </div>
+
+            <div class="case-body">
+                <div class="case-sub">Origins</div>
+
+                <p class="body-copy">I’ve developed this idea of wanting an interactive diorama since my
+                    bachelor studies in Digital Media, combined with the website hosted on the phone component
+                    developed further post-graduate studies that included projects like
+                    <a href="sos2.html">SOS2</a> to stress-test those initial ideas back in 2024. That core
+                    idea of linking an interactive component linked with a user’s phone by taking them to a
+                    website ultimately kicked off a series of works in this very format.</p>
+                <p class="pipeline">User’s phone <span>&gt;</span> QR Code <span>&gt;</span> Collective experience.</p>
+                <p class="body-copy">This project became the flagship piece of my practice thus far. It was
+                    the longest standing project that I’ve ever worked on, expanding from first year MAGI
+                    (CPS class) until now. It’s undergone the most transformational major updates as it goes
+                    into dissemination mode. Several playtests this year have given the direction and
+                    decisions that will eventually lead to the project’s final completion.</p>
             </div>
 
             <!-- 3:2 -->
@@ -335,11 +324,24 @@
                  alt="Players either side of the table, projector on its stand"
                  width="1800" height="1200">
 
-            <!-- 2:3 — full width. Pairing it with a 3:4 stepped the row by 53px,
-                 and nothing else on the page shares 2:3, so it takes its own. -->
-            <img src="images/projectmedia/packmentality26/exhibition-05.jpg"
-                 alt="A hand reaching onto the projected surface"
-                 width="1200" height="1800">
+            <div class="case-body">
+                <div class="case-sub">The game</div>
+
+                <p class="body-copy">The game design itself consists of player’s choosing a role, then opening
+                    categories of playing cards that spawn in whatever that card is shown as.</p>
+                <p class="body-copy">Each card has a unique abiility that directly effects what is being shown
+                    in the envrionemnt. The envrironment then responds to those cards being chosen. Each
+                    interaction contribues to a progress counter, which then sends in waves of enemies that
+                    they player can react to using their cards.</p>
+                <p class="body-copy">Their collective goal is feed the environment and fend off monsters as
+                    they do so.</p>
+                <p class="body-copy">The game mechanics are inspired by games such as World of Warcraft
+                    Classic (Dungeon gameplay loop). Risk of Rain 2 (ability mechanics and visuals) and
+                    Terraria (art direction). It’s really just been a huge passion project inspired by a lot
+                    of the games I’ve played in the past. I’ve attempted to synthesise a succinct experience
+                    in an installation design format where player’s are forced to gather around socially. The
+                    games latest iterations attempt to foster and play with those incidental conditions.</p>
+            </div>
 
             <!-- 4:3 + 4:3 -->
             <div class="media-pair">
@@ -380,6 +382,113 @@
             <img src="images/projectmedia/packmentality26/pack-01.jpg"
                  alt="" width="923" height="2048">
 
+            <!-- 2:3 — full width. Pairing it with a 3:4 stepped the row by 53px,
+                 and nothing else on the page shares 2:3, so it takes its own. -->
+            <img src="images/projectmedia/packmentality26/exhibition-05.jpg"
+                 alt="A hand reaching onto the projected surface"
+                 width="1200" height="1800">
+
+            <div class="case-body">
+            <div class="case-sub">The back end</div>
+
+            <p>The phone and the installation have to agree with each other in
+                real time, and almost every hard problem on this project came
+                from that one requirement rather than from the game design.
+                The guide documents three attempts at it.</p>
+
+            <p>The first was a Node WebSocket relay on Render&rsquo;s free tier.
+                It worked, and it was free, and it was fine for low-level
+                interactions like spawning an object into Unity from a phone.
+                What it was not fine for was feel: the free instances sit in
+                Singapore, which put roughly 150ms of round trip between a
+                thumb and the screen it was meant to be driving. Interactions
+                rubber-banded. In an installation where the whole proposition
+                is that the thing in your hand moves the thing on the wall,
+                that latency is not a performance detail, it is the work
+                failing.</p>
+
+            <p>The second attempt moved the server closer: an Ubuntu droplet
+                in Sydney, running 24/7 on Node and PM2 behind a firewall. That
+                fixed the distance and introduced a different problem.</p>
+
+            <p class="case-lead">Browsers require a secure WSS. But WSS needs a
+                domain and a certificate.</p>
+
+            <p>A free DuckDNS subdomain answered that, and worked perfectly at
+                home. It then failed at the venue, because the campus network
+                would not resolve the subdomain at the installation site. This
+                is the kind of fault that only exists in public space: nothing
+                about the code was wrong, and the work still did not run in the
+                room it was built for.</p>
+
+            <p>So the third attempt bought a real domain. packmentality.cc now
+                terminates at the Sydney droplet through Caddy, which handles
+                certificates automatically, with the original Render relay kept
+                as a fallback. Phones join over whatever network they have,
+                venue wi-fi or their own data; the installation machine runs
+                Unity and a WebSocket client, and holds the object spawning,
+                player list, QR onboarding and chat log.</p>
+
+            <!-- Page 11 of the guide, redrawn rather than screenshotted.
+
+                 The original is a three-column terminal diagram. Three
+                 columns in this column gives each one about 180px, so a
+                 screen capture would be illegible and an SVG would scale
+                 its own type down to nothing. As boxes it reflows and keeps
+                 the body text size, and the stages fall in the order the
+                 data travels.
+
+                 The droplet's IP is in the guide and is deliberately NOT
+                 here: a live server's address does not belong in a public
+                 page's markup. -->
+            <figure class="case-fig">
+                <div class="netmap">
+
+                    <div class="net-stage">
+                        <div class="net-head">Phone users</div>
+                        <p class="net-where">Players, on their own phone network or the venue wi-fi</p>
+                        <p class="net-does">Web app front end, onboarded by the QR code in the environment</p>
+                        <p class="net-does">Interactions: joystick, cards, name tags, WebRTC stream</p>
+                    </div>
+
+                    <div class="net-hop">
+                        <span class="net-wire"></span>
+                        <span class="net-what">wss://packmentality.cc</span>
+                        <span class="net-arrow">&#9660;</span>
+                    </div>
+
+                    <div class="net-stage">
+                        <div class="net-head">Always on</div>
+                        <p class="net-where">DigitalOcean droplet, Sydney</p>
+                        <p class="net-does">Caddy auto-TLS reverse proxy, packmentality.cc:443</p>
+                    </div>
+
+                    <div class="net-hop">
+                        <span class="net-wire"></span>
+                        <span class="net-what">broadcast / relay</span>
+                        <span class="net-arrow">&#9660;</span>
+                    </div>
+
+                    <div class="net-stage">
+                        <div class="net-head">Venue dependent</div>
+                        <p class="net-where">Installation, projector or screen</p>
+                        <p class="net-does">Unity environment, WS_Client.cs</p>
+                        <p class="net-does">Spawns objects, player lists and QR, chat logs</p>
+                    </div>
+
+                </div>
+                <p class="caption">The established back end, from page 11 of the guide</p>
+            </figure>
+
+            <p>What that stack buys is not just reliability. It makes the piece
+                portable: a venue needs a network, a computer and a screen, and
+                if it wants more simultaneous players than the current lobby
+                cap, that is a server cost rather than a rebuild. The phone
+                side also outlives any particular installation, since the web
+                app keeps working whether or not a projector is pointed at a
+                wall.</p>
+            </div>
+
             <!-- The mechanics guide, opened at page 11.
 
                  #page=11 is a PDF-viewer fragment, honoured by the built-in
@@ -395,19 +504,19 @@
                  The size is stated on the button rather than discovered. -->
             <div class="site-embed is-doc">
                 <div class="site-frame">
-                    <div class="site-bar"><span class="site-dot"></span>Comprehensive guide &mdash; 19pp, PDF</div>
+                    <div class="site-bar"><span class="site-dot"></span>Comprehensive guide (19pp, PDF)</div>
                     <div class="site-screen">
-                        <iframe title="PACK MENTALITY — comprehensive guide, page 11"
+                        <iframe title="PACK MENTALITY, comprehensive guide, page 11"
                                 data-src="images/projectmedia/packmentality26/PackMentality_ComprehensiveGuide.pdf#page=11"
                                 hidden></iframe>
                         <button class="site-poster" type="button">
                             <span>Open the guide at page 11</span>
-                            <em>33 MB — loads on open</em>
+                            <em>33 MB, loads on open</em>
                         </button>
                     </div>
                 </div>
                 <div class="site-cap">
-                    <span>Back-end mechanics &mdash; from page 11</span>
+                    <span>Back-end mechanics, from page 11</span>
                     <a href="images/projectmedia/packmentality26/PackMentality_ComprehensiveGuide.pdf#page=11"
                        target="_blank" rel="noopener">Open the PDF &#8599;</a>
                 </div>
@@ -432,7 +541,7 @@
     </nav>
 
     <footer class="site-footer">
-        <span>© 2026 Adrian Frichitthavong — Melbourne, AU</span>
+        <span>© 2026 Adrian Frichitthavong, Melbourne, AU</span>
         <a href="https://www.instagram.com/oddh0st/" target="_blank">@oddh0st</a>
     </footer>
 

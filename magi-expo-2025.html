@@ -103,25 +103,17 @@
             <a class="cta" href="https://magiexpo2025.com" target="_blank">Visit the site</a>
         </div>
 
-        <div class="media-stack" id="gallery">
+        <!-- Empty on purpose. The hero runs the live site, so the five slots
+             that stood here were showing captioned grey boxes for screens a
+             visitor can already reach by scrolling the real thing.
 
-            <div>
-                <div class="ph ph-wide"><span class="ph-label">Screen 01 (16:9)</span></div>
-                <p class="caption">Orbital view, category planets</p>
-            </div>
-            <div class="media-pair">
-                <div class="ph ph-square"><span class="ph-label">Screen 02</span></div>
-                <div class="ph ph-square"><span class="ph-label">Screen 03</span></div>
-            </div>
-            <div>
-                <div class="ph ph-tall"><span class="ph-label">Mobile (3:4)</span></div>
-                <p class="caption">Mobile build</p>
-            </div>
-            <div>
-                <div class="ph ph-wide"><span class="ph-label">Clip 01 (16:9)</span></div>
-                <p class="caption">Flying to a student profile</p>
-            </div>
-        </div>
+             Media drops straight in. For a still that keeps its own shape,
+             add `natural` to the class above and use a plain <img> with its
+             width and height. For one cropped to a fixed slot, use
+             <img class="ph ph-tall"> (ph-wide 16:9, ph-square 1:1,
+             ph-tall 3:4). Always give width and height so the box is
+             reserved before the file loads. -->
+        <div class="media-stack" id="gallery"></div>
     </section>
 
     <!-- Two links, not one. This was a single anchor wearing a "Next

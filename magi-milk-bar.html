@@ -107,39 +107,18 @@
             <a class="cta" href="index.html">Back to index</a>
         </div>
 
-        <div class="media-stack" id="gallery">
-            <!-- Replace each <div class="ph ..."> with real media:
-                   <img class="ph ph-tall" src="..." alt="" width="W" height="H">
-                 The class sets the shape and the media is cropped to fill it.
-                 Shapes: ph-wide 16:9, ph-square 1:1, ph-tall 3:4.
-                 Always give width and height so the box is reserved before load.
-                 Delete any slot you do not need. -->
-            <!-- The walkthrough. Same player settings as the hero:
-                 nocookie, no autoplay, lazy because it sits below the fold. -->
-            <div>
-                <iframe class="video-frame"
-                        src="https://www.youtube-nocookie.com/embed/ElN8634YBpM"
-                        title="Final Interaction Playthrough"
-                        loading="lazy"
-                        allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        referrerpolicy="strict-origin-when-cross-origin"
-                        allowfullscreen></iframe>
-                <p class="caption">Final interaction playthrough</p>
-            </div>
+        <!-- Empty on purpose. The final interaction playthrough sat here and
+             kept showing "video unavailable" on the author's machine, so it
+             has been pulled; the interaction walkthrough in the hero carries
+             that ground instead.
 
-            <div>
-                <div class="ph ph-tall"><span class="ph-label">Still 01 (3:4)</span></div>
-                <p class="caption">[caption]</p>
-            </div>
-            <div class="media-pair">
-                <div class="ph ph-square"><span class="ph-label">Still 02 (1:1)</span></div>
-                <div class="ph ph-square"><span class="ph-label">Still 03 (1:1)</span></div>
-            </div>
-            <div>
-                <div class="ph ph-wide"><span class="ph-label">Still 04 (16:9)</span></div>
-                <p class="caption">[caption]</p>
-            </div>
-        </div>
+             Media drops straight in. For a still that keeps its own shape,
+             add `natural` to the class above and use a plain <img> with its
+             width and height. For one cropped to a fixed slot, use
+             <img class="ph ph-tall"> (ph-wide 16:9, ph-square 1:1,
+             ph-tall 3:4). Always give width and height so the box is
+             reserved before the file loads. -->
+        <div class="media-stack" id="gallery"></div>
     </section>
 
     <!-- Two links, not one. This was a single anchor wearing a "Next

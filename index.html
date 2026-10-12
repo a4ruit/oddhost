@@ -930,7 +930,22 @@
             <img src="images/cadenacam.png" alt="" width="459" height="982">
         </a>
 
-        <a href="neurometrix.html" class="piece xs" data-title="NeuroMetrix&trade;" style="--boost: 1.45" data-desc="Capstone installation for the Bachelor of Digital Media. Dean's Award, 2024." data-year="2023">
+        <!-- NOT LINKED, on purpose. Its page is unfinished, so the href is
+             off until it is ready: the piece still orbits and still gets an
+             archive row with its year and description, but neither one can
+             be opened.
+
+             No href is all it takes. The archive row only wraps its title in
+             a link when the node has one (see the renderer below), and a
+             click on a piece in the orbit opens the archive rather than
+             navigating, so nothing else has to know about this. Keeping the
+             <a> rather than swapping in a <div> means every .piece rule and
+             the orbit maths are untouched; an anchor without an href is not
+             a link, and drops out of the tab order by itself.
+
+             TO RESTORE: put the href back and re-add the row to
+             project-nav.js. Nothing else was changed. -->
+        <a class="piece xs" data-title="NeuroMetrix&trade;" style="--boost: 1.45" data-desc="Capstone installation for the Bachelor of Digital Media. Dean's Award, 2024." data-year="2023">
             <img src="images/neurometrix.png" alt="" width="826" height="978">
         </a>
 

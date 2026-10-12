@@ -14,9 +14,15 @@
 (function () {
     'use strict';
 
-    /* Source order matches the orbit and the archive. CatOS is in here but
-       has no orbit thumbnail, so this list is the only place it can be
-       reached from — worth knowing before reordering anything. */
+    /* Source order matches the orbit and the archive.
+
+       NeuroMetrix is deliberately absent: its page is unfinished, so it has
+       no row here and no href on its orbit piece in index.html. It still
+       appears in both the orbit and the archive, just as something you
+       cannot open. Put the row back here and the href back there together.
+
+       The pager at the foot of catos.html and n0-r3ply-collective.html
+       still points at that page, so it is not fully sealed off. */
     var PROJECTS = [
         { href: 'pack-mentality.html',           title: 'PACK MENTALITY',           year: '2026' },
         { href: 'magi-website.html',             title: 'MAGI Website',             year: '2026' },
@@ -28,7 +34,6 @@
         { href: 'catos.html',                    title: 'CatOS',                    year: '2025' },
         { href: 'digital-media-exhibition.html', title: 'Digital Media Exhibition', year: '2024' },
         { href: 'n0-r3ply-collective.html',      title: 'N0_R3PLY Collective',      year: '2024' },
-        { href: 'neurometrix.html',              title: 'NeuroMetrix™',        year: '2023' },
         { href: 'sos2.html',                     title: 'S0S2',                     year: '2023' }
     ];
 

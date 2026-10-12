@@ -1859,6 +1859,9 @@
 
                 if (on) {
                     layout = next;
+                    /* The wheel, the header button and the keyboard all open
+                       this without a pointerdown to clear the drag state. */
+                    dragDist = 0;
                     dragging = false; snapping = false; coasting = false;
                     vYaw = vPitch = 0;
                     hideMetro();
@@ -2210,8 +2213,19 @@
                    either finger lifting would end the throw. First one down owns
                    the gesture until it leaves. */
                 if (dragging) return;
+
+                /* Every press starts a fresh measurement. This used to sit
+                   BELOW the archive return, so it never ran once the archive
+                   was open — and nothing else clears it, endDrag included.
+                   The last orbit drag's distance therefore survived into the
+                   archive, where the click handler's `dragDist > CLICK_SLOP`
+                   guard read it as the tail of a throw and swallowed every
+                   click on a title. Drag the sphere, open the list, and none
+                   of it was clickable for the rest of the visit. */
+                dragDist = 0;
+
                 // no spinning a grid: in the spread a one-finger drag does
-                // nothing, and dragDist must stay 0 or the click that follows
+                // nothing, and dragDist must be 0 or the click that follows
                 // would be dropped as the tail of a throw
                 if (archiveOn) return;
                 // set before the synthetic mouseenter that a tap triggers, so
